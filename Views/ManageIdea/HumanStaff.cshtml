@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý nhân sự phòng Ý tưởng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageIdea/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/ManageIdea/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
+    <a href="/ManageIdea/HumanStaff" class="nav-item active"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageIdea/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Trần Thanh Hải</div>
+          <div class="role-title">Quản lý Ý tưởng</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Quản lý Nhân viên &amp; Phân công kịch bản</div>
+        <div class="page-sub">Giao việc viết kịch bản, theo dõi workload Copywriter và chấm điểm KPI hàng tháng</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Nhân sự phòng Ý tưởng &amp; Sáng tạo</div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Nhân viên</th>
+            <th>Số lượng Tasks đang chạy</th>
+            <th>Trực thuộc quản lý</th>
+            <th>Hiệu suất hoàn thành (T8)</th>
+            <th>Đánh giá năng lực</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Đỗ Minh Khôi</strong></td>
+            <td>4 tasks đang làm</td>
+            <td>Trần Thanh Hải</td>
+            <td><span class="bar-mini"><span class="bar-mini-fill" style="width:87%"></span></span>87%</td>
+            <td><span class="status-chip status-good">Tốt</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openTaskModal('Đỗ Minh Khôi')">Giao task</button>
+              <button class="btn-mini" onclick="openKPIModal('Đỗ Minh Khôi', 87, 'Tốt')">Đánh giá KPI</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Lê Văn C</strong></td>
+            <td>1 task đang làm</td>
+            <td>Trần Thanh Hải</td>
+            <td><span class="bar-mini"><span class="bar-mini-fill" style="width:60%"></span></span>60%</td>
+            <td><span class="status-chip status-warn">Cần theo dõi</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openTaskModal('Lê Văn C')">Giao task</button>
+              <button class="btn-mini" onclick="openKPIModal('Lê Văn C', 60, 'Theo dõi')">Đánh giá KPI</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Ý tưởng — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL GIAO TASK -->
+<div class="modal-backdrop" id="taskModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Giao công việc kịch bản sáng tạo</div>
+      <button class="modal-close" onclick="closeModal('taskModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Copywriter thực hiện</label>
+        <input type="text" id="taskStaff" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Tên Task công việc</label>
+        <input type="text" class="form-control" placeholder="Ví dụ: Viết kịch bản TikTok Vinamilk Tết...">
+      </div>
+      <div class="form-group">
+        <label>Mô tả chi tiết kịch bản/concept</label>
+        <textarea class="form-control" rows="3" placeholder="Nhập định hướng sáng tạo, insight yêu cầu..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Hạn chót hoàn thành (Deadline)</label>
+        <input type="date" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('taskModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã giao task sáng tạo thành công!'); closeModal('taskModal');">Giao task</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ĐÁNH GIÁ KPI -->
+<div class="modal-backdrop" id="kpiModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Đánh giá hiệu suất nhân viên</div>
+      <button class="modal-close" onclick="closeModal('kpiModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nhân viên sáng tạo</label>
+        <input type="text" id="kpiStaff" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Hiệu suất chất lượng kịch bản (%)</label>
+        <input type="number" id="kpiValueInput" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Phân loại đánh giá</label>
+        <select class="form-control" id="kpiEvaluationSelect">
+          <option value="Tốt">Tốt (Ý tưởng chất lượng)</option>
+          <option value="Theo dõi">Theo dõi (Kịch bản chậm trễ/Sơ sài)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('kpiModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã lưu kết quả đánh giá KPI phòng sáng tạo!'); closeModal('kpiModal');">Lưu kết quả</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openTaskModal(name) {
+    document.getElementById('taskStaff').value = name;
+    openModal('taskModal');
+  }
+
+  function openKPIModal(name, score, evalStatus) {
+    document.getElementById('kpiStaff').value = name;
+    document.getElementById('kpiValueInput').value = score;
+    document.getElementById('kpiEvaluationSelect').value = evalStatus;
+    openModal('kpiModal');
+  }
+</script>
+</body>
+</html>

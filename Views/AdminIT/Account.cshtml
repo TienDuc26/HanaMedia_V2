@@ -1,0 +1,287 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý Tài khoản (AdminIT)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/AdminIT/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Quản trị hệ thống</div>
+    <a href="/AdminIT/Account" class="nav-item active"><i class="ti ti-users"></i>Quản lý tài khoản</a>
+    <a href="/AdminIT/AuditLog" class="nav-item"><i class="ti ti-shield-check"></i>Nhật ký hệ thống</a>
+    <a href="/AdminIT/ConfigSystem" class="nav-item"><i class="ti ti-settings"></i>Cấu hình kỹ thuật</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">IT</div>
+        <div>
+          <div class="role-name">Lê Minh Hoàng</div>
+          <div class="role-title">AdminIT</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Quản lý Tài khoản người dùng</div>
+        <div class="page-sub">Tạo tài khoản mới, phân quyền truy cập, reset mật khẩu và theo dõi lịch sử kết nối của nhân sự</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="action-bar">
+        <div style="flex: 1; max-width: 300px;">
+          <input type="text" class="form-control" placeholder="Tìm tài khoản, họ tên...">
+        </div>
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addAccountModal')"><i class="ti ti-plus"></i> Tạo tài khoản mới</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tên tài khoản (User)</th>
+            <th>Họ và tên</th>
+            <th>Vai trò (Role)</th>
+            <th>Trạng thái</th>
+            <th>IP Đăng nhập cuối</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>nguyenvana</strong></td>
+            <td>Nguyễn Văn A</td>
+            <td>Giám đốc</td>
+            <td><span class="status-chip status-good">Đang hoạt động</span></td>
+            <td>192.168.1.2</td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openLoginHistory('Nguyễn Văn A', 'nguyenvana', [{'time':'12/08/2026 08:15', 'action':'Đăng nhập', 'device':'MacOS / Chrome', 'ip':'192.168.1.2'}, {'time':'11/08/2026 17:30', 'action':'Đăng xuất', 'device':'MacOS / Chrome', 'ip':'192.168.1.2'}])">Lịch sử</button>
+              <button class="btn-mini" onclick="openRoleModal('nguyenvana', 'Giám đốc')">Đổi Quyền</button>
+              <button class="btn-mini" onclick="alert('Đã reset mật khẩu tài khoản nguyenvana thành mặc định (HanaMedia@2026)!')">Reset PW</button>
+              <button class="btn-mini reject" onclick="alert('Đã khóa tài khoản!')">Khóa</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>nguyenanhtuan</strong></td>
+            <td>Nguyễn Anh Tuấn</td>
+            <td>QL Booking</td>
+            <td><span class="status-chip status-good">Đang hoạt động</span></td>
+            <td>192.168.1.10</td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openLoginHistory('Nguyễn Anh Tuấn', 'nguyenanhtuan', [{'time':'12/08/2026 07:50', 'action':'Đăng nhập', 'device':'Windows 11 / Edge', 'ip':'192.168.1.10'}])">Lịch sử</button>
+              <button class="btn-mini" onclick="openRoleModal('nguyenanhtuan', 'QL Booking')">Đổi Quyền</button>
+              <button class="btn-mini" onclick="alert('Đã reset mật khẩu!')">Reset PW</button>
+              <button class="btn-mini reject" onclick="alert('Đã khóa tài khoản!')">Khóa</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>nguyenvanb</strong></td>
+            <td>Nguyễn Văn B</td>
+            <td>NV Booking</td>
+            <td><span class="status-chip status-bad">Đang khóa (Tạm thời)</span></td>
+            <td>192.168.1.15</td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openLoginHistory('Nguyễn Văn B', 'nguyenvanb', [{'time':'12/08/2026 08:05', 'action':'Thất bại (5 lần)', 'device':'iPhone / Safari', 'ip':'192.168.1.15'}])">Lịch sử</button>
+              <button class="btn-mini" onclick="openRoleModal('nguyenvanb', 'NV Booking')">Đổi Quyền</button>
+              <button class="btn-mini" onclick="alert('Đã reset mật khẩu!')">Reset PW</button>
+              <button class="btn-mini approve" onclick="alert('Đã mở khóa tài khoản!')">Mở khóa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL TẠO TÀI KHOẢN MỚI -->
+<div class="modal-backdrop" id="addAccountModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Tạo tài khoản người dùng mới</div>
+      <button class="modal-close" onclick="closeModal('addAccountModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tên đăng nhập (Username)</label>
+        <input type="text" class="form-control" placeholder="Ví dụ: hoanglm">
+      </div>
+      <div class="form-group">
+        <label>Họ và tên nhân sự</label>
+        <input type="text" class="form-control" placeholder="Nhập họ và tên đầy đủ...">
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu khởi tạo</label>
+        <input type="password" class="form-control" value="HanaMedia@2026">
+      </div>
+      <div class="form-group">
+        <label>Vai trò hệ thống (Role)</label>
+        <select class="form-control">
+          <option value="Giám đốc">Giám đốc</option>
+          <option value="AdminIT">AdminIT</option>
+          <option value="QL HCNS">Quản lý HCNS</option>
+          <option value="NV HCNS">Nhân viên HCNS</option>
+          <option value="QL Booking">Quản lý Booking</option>
+          <option value="NV Booking">Nhân viên Booking</option>
+          <option value="QL Ý tưởng">Quản lý Ý tưởng</option>
+          <option value="NV Ý tưởng">Nhân viên Ý tưởng</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('addAccountModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Tạo tài khoản thành công!'); closeModal('addAccountModal');">Tạo tài khoản</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PHÂN QUYỀN / ĐỔI ROLE -->
+<div class="modal-backdrop" id="roleModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Thay đổi vai trò tài khoản</div>
+      <button class="modal-close" onclick="closeModal('roleModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tài khoản</label>
+        <input type="text" id="roleUsername" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Vai trò hiện tại</label>
+        <input type="text" id="roleCurrent" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Vai trò mới đề xuất</label>
+        <select class="form-control">
+          <option value="Giám đốc">Giám đốc</option>
+          <option value="AdminIT">AdminIT</option>
+          <option value="QL HCNS">Quản lý HCNS</option>
+          <option value="NV HCNS">Nhân viên HCNS</option>
+          <option value="QL Booking">Quản lý Booking</option>
+          <option value="NV Booking">Nhân viên Booking</option>
+          <option value="QL Ý tưởng">Quản lý Ý tưởng</option>
+          <option value="NV Ý tưởng">Nhân viên Ý tưởng</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('roleModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã cập nhật vai trò mới thành công!'); closeModal('roleModal');">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LỊCH SỬ ĐĂNG NHẬP -->
+<div class="modal-backdrop" id="loginHistoryModal">
+  <div class="modal-card" style="width:600px;">
+    <div class="modal-header">
+      <div class="modal-title">Lịch sử kết nối thiết bị</div>
+      <button class="modal-close" onclick="closeModal('loginHistoryModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size: 13.5px; margin-bottom: 12px; font-weight:600; color:var(--navy);">
+        Lịch sử đăng nhập/đăng xuất của <span id="histUser" style="color:var(--blue-700);">User</span> (<span id="histUsername">username</span>)
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Hành động</th>
+            <th>Thiết bị / Browser</th>
+            <th>Địa chỉ IP</th>
+          </tr>
+        </thead>
+        <tbody id="histTableBody">
+          <!-- Dynamic details -->
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini approve" onclick="closeModal('loginHistoryModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openRoleModal(username, currentRole) {
+    document.getElementById('roleUsername').value = username;
+    document.getElementById('roleCurrent').value = currentRole;
+    openModal('roleModal');
+  }
+
+  function openLoginHistory(fullname, username, list) {
+    document.getElementById('histUser').innerText = fullname;
+    document.getElementById('histUsername').innerText = username;
+    
+    const tbody = document.getElementById('histTableBody');
+    tbody.innerHTML = '';
+    
+    list.forEach(item => {
+      let r = tbody.insertRow();
+      let c1 = r.insertCell(0);
+      let c2 = r.insertCell(1);
+      let c3 = r.insertCell(2);
+      let c4 = r.insertCell(3);
+      
+      c1.innerText = item.time;
+      
+      if(item.action.includes('Thất bại')) {
+        c2.innerHTML = `<span class="badge badge-danger">${item.action}</span>`;
+      } else if (item.action.includes('nhập')) {
+        c2.innerHTML = `<span class="badge badge-success">${item.action}</span>`;
+      } else {
+        c2.innerHTML = `<span class="badge badge-info">${item.action}</span>`;
+      }
+      
+      c3.innerText = item.device;
+      c4.innerText = item.ip;
+    });
+
+    openModal('loginHistoryModal');
+  }
+</script>
+</body>
+</html>

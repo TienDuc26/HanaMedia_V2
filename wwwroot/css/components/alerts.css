@@ -1,0 +1,46 @@
+/* SYSTEM ALERTS, WARNINGS & BADGES */
+.alert-box {
+  background: var(--amber-bg);
+  border: 1px solid #F3D9A6;
+  border-radius: 10px;
+  padding: 11px 13px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.alert-box i {
+  color: var(--amber);
+  font-size: 17px;
+  margin-top: 1px;
+}
+
+.alert-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #8A5A0B;
+}
+
+.alert-desc {
+  font-size: 12px;
+  color: #8A5A0B;
+  opacity: .85;
+  margin-top: 2px;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+
+.badge-info { background: var(--blue-100); color: var(--blue-700); }
+.badge-success { background: var(--green-bg); color: var(--green); }
+.badge-warning { background: var(--amber-bg); color: var(--amber); }
+.badge-danger { background: var(--red-bg); color: var(--red); }

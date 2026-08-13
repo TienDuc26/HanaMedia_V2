@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Dashboard AdminIT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/AdminIT/Dashboard" class="nav-item active"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Quản trị hệ thống</div>
+    <a href="/AdminIT/Account" class="nav-item"><i class="ti ti-users"></i>Quản lý tài khoản</a>
+    <a href="/AdminIT/AuditLog" class="nav-item"><i class="ti ti-shield-check"></i>Nhật ký hệ thống</a>
+    <a href="/AdminIT/ConfigSystem" class="nav-item"><i class="ti ti-settings"></i>Cấu hình kỹ thuật</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">IT</div>
+        <div>
+          <div class="role-name">Lê Minh Hoàng</div>
+          <div class="role-title">AdminIT</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Hệ thống Giám sát Kỹ thuật</div>
+        <div class="page-sub">Trạng thái hạ tầng, người dùng đang hoạt động và nỗ lực truy cập mạng nội bộ</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="period-tabs">
+          <div class="period-tab active">Hôm nay</div>
+          <div class="period-tab">Tuần này</div>
+        </div>
+        <div class="icon-btn"><i class="ti ti-bell"></i><span class="dot"></span></div>
+      </div>
+    </div>
+
+    <!-- KPI GRID -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Lượt đăng nhập hôm nay</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-login-2"></i></div>
+        </div>
+        <div class="kpi-value">47</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+10% so với ngày thường</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Người dùng online</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-users"></i></div>
+        </div>
+        <div class="kpi-value">31</div>
+        <div class="kpi-note">Phiên hoạt động hiện tại</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Truy cập ngoài bị chặn</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-wifi-off"></i></div>
+        </div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-delta down"><i class="ti ti-alert-triangle"></i>Whitelist IP đang kích hoạt</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Cảnh báo bảo mật</div>
+          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-shield-alert"></i></div>
+        </div>
+        <div class="kpi-value">2</div>
+        <div class="kpi-note">Cần xem xét nhật ký</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Trạng thái server</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-server"></i></div>
+        </div>
+        <div class="kpi-value">99.9%</div>
+        <div class="kpi-note">Hoạt động ổn định</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Cảnh báo bảo mật cần xem xét</div>
+        </div>
+        <div class="alert-box" style="margin-top:0;">
+          <i class="ti ti-alert-triangle" style="color:var(--red);"></i>
+          <div>
+            <div class="alert-title" style="color:#721C24;">Đăng nhập thất bại liên tiếp (1 tài khoản)</div>
+            <div class="alert-desc" style="color:#721C24;">Tài khoản 'nguyenvanb' nhập sai mật khẩu 5 lần liên tiếp từ IP mạng nội bộ (192.168.1.15). Đã tự động khóa tài khoản tạm thời.</div>
+          </div>
+        </div>
+        <div class="alert-box">
+          <i class="ti ti-shield-lock" style="color:var(--amber);"></i>
+          <div>
+            <div class="alert-title">Cố gắng kết nối ngoài mạng LAN (3 lần, cùng 1 IP)</div>
+            <div class="alert-desc">Request gửi từ ngoài IP whitelist văn phòng bị tường lửa từ chối. IP nguồn: 14.226.24.88.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Phiên hoạt động gần đây</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Người dùng</th>
+              <th>Role</th>
+              <th>IP thiết bị</th>
+              <th>Thời gian</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Nguyễn Văn A</strong></td>
+              <td>Giám đốc</td>
+              <td>192.168.1.2</td>
+              <td>Vừa mới đây</td>
+            </tr>
+            <tr>
+              <td><strong>Nguyễn Anh Tuấn</strong></td>
+              <td>QL Booking</td>
+              <td>192.168.1.10</td>
+              <td>15 phút trước</td>
+            </tr>
+            <tr>
+              <td><strong>Vũ Ngọc Lan</strong></td>
+              <td>QL HCNS</td>
+              <td>192.168.1.5</td>
+              <td>1 giờ trước</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+</body>
+</html>

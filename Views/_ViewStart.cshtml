@@ -1,3 +1,11 @@
-﻿@{
-    Layout = "_Layout";
+@{
+    var controller = ViewContext.RouteData.Values["Controller"]?.ToString();
+    if (controller != null && controller != "Home")
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
 }

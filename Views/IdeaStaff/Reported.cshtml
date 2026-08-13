@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Báo cáo cá nhân (Nhân viên Ý tưởng)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/IdeaStaff/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kịch bản &amp; Ý tưởng</a>
+    <a href="/IdeaStaff/Reported" class="nav-item active"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Đỗ Minh Khôi</div>
+          <div class="role-title">Nhân viên Ý tưởng</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Báo cáo hiệu suất sáng tạo cá nhân</div>
+        <div class="page-sub">Xem phân tích số lượng kịch bản hoàn thành, tỷ lệ phê duyệt của quản lý và tiến độ hoàn thành các KPI sáng tạo cá nhân</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Số lượng kịch bản nộp theo tháng</div>
+        </div>
+        <div style="position:relative; height:220px;">
+          <canvas id="scriptsHistoryChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Năng suất KPI Sáng tạo (Tháng 8/2026)</div>
+        </div>
+        <div style="text-align:center; padding-top:20px;">
+          <h2 style="font-size:36px; color:var(--blue-500); font-weight:800; margin-bottom:10px;">87%</h2>
+          <div class="status-chip status-good" style="font-size:14px; margin-bottom:20px;">Hoàn thành tốt chỉ tiêu kịch bản tháng</div>
+          <span class="bar-mini" style="width:70%; height:10px;"><span class="bar-mini-fill" style="width:87%;"></span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-head">
+        <div class="card-title">Chi tiết lịch sử duyệt kịch bản</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tên ý tưởng kịch bản</th>
+            <th>Client &amp; Chiến dịch</th>
+            <th>Hạn chót (Deadline)</th>
+            <th>Trạng thái hiện tại</th>
+            <th>Lần cuối cập nhật</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hành trình Xanh cùng Cocoon</strong></td>
+            <td>Cocoon — Glow Up Your Skin</td>
+            <td>15/09/2026</td>
+            <td><span class="status-chip status-warn">Review (Chờ duyệt)</span></td>
+            <td>Hôm nay</td>
+          </tr>
+          <tr>
+            <td><strong>Sữa hạt Dinh Dưỡng Mỗi Ngày</strong></td>
+            <td>Vinamilk — Tết Sum Vầy 2027</td>
+            <td>30/12/2026</td>
+            <td><span class="status-chip status-bad">Need Revision (Cần sửa)</span></td>
+            <td>Hôm qua</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Nhân viên Ý tưởng — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const scriptCtx = document.getElementById('scriptsHistoryChart');
+new Chart(scriptCtx, {
+  type: 'bar',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [{
+      label: 'Kịch bản nộp (bản)',
+      data: [8, 12, 10, 15, 14, 16],
+      backgroundColor: '#2F80ED',
+      borderRadius: 4,
+      barPercentage: 0.5
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } }
+  }
+});
+</script>
+</body>
+</html>

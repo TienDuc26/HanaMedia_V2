@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Báo cáo thống kê (Giám đốc)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item active"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Báo cáo &amp; Phân tích dữ liệu</div>
+        <div class="page-sub">Xem báo cáo thống kê định kỳ về tài chính booking, biến động nhân sự và năng suất phòng ban</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="period-tabs">
+          <div class="period-tab">Ngày</div>
+          <div class="period-tab active">Tháng</div>
+          <div class="period-tab">Quý</div>
+        </div>
+        <button class="icon-btn" onclick="alert('Đang xuất báo cáo PDF...')"><i class="ti ti-file-text"></i></button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tăng trưởng Doanh thu &amp; Chi phí Booking</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#2F80ED"></i>Doanh thu</span>
+          <span><i style="background:#B7D3FA"></i>Chi phí</span>
+        </div>
+        <div style="position:relative; height:240px;">
+          <canvas id="revenueReportChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Biến động nhân sự qua các tháng</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#1CA36B"></i>Vào mới</span>
+          <span><i style="background:#DC4E4E"></i>Nghỉ việc</span>
+        </div>
+        <div style="position:relative; height:240px;">
+          <canvas id="hrReportChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-head">
+        <div class="card-title">Số liệu chi tiết thống kê tháng 8/2026</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Chỉ số đo lường</th>
+            <th>Kỳ trước</th>
+            <th>Kỳ này (Tháng 8)</th>
+            <th>Biến động</th>
+            <th>Đánh giá</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Tổng doanh thu Booking</strong></td>
+            <td>2.14 tỷ đ</td>
+            <td>2.40 tỷ đ</td>
+            <td style="color:var(--green); font-weight:600;">+12.1%</td>
+            <td><span class="status-chip status-good">Đạt mục tiêu</span></td>
+          </tr>
+          <tr>
+            <td><strong>Chi phí Booking</strong></td>
+            <td>900 triệu đ</td>
+            <td>980 triệu đ</td>
+            <td style="color:var(--red); font-weight:600;">+8.8%</td>
+            <td><span class="status-chip status-warn">Cần tối ưu chi phí</span></td>
+          </tr>
+          <tr>
+            <td><strong>Nhân sự tăng ròng</strong></td>
+            <td>+4 nhân sự</td>
+            <td>+4 nhân sự</td>
+            <td>Giữ nguyên</td>
+            <td><span class="status-chip status-good">Ổn định</span></td>
+          </tr>
+          <tr>
+            <td><strong>Tỉ lệ công việc quá hạn</strong></td>
+            <td>5.2%</td>
+            <td>3.8%</td>
+            <td style="color:var(--green); font-weight:600;">-1.4%</td>
+            <td><span class="status-chip status-good">Cải thiện</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const revCtx = document.getElementById('revenueReportChart');
+new Chart(revCtx, {
+  type: 'bar',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [
+      { label:'Doanh thu', data:[1650,1820,1900,2050,2150,2400], backgroundColor:'#2F80ED', borderRadius:4 },
+      { label:'Chi phí', data:[720,780,810,860,900,980], backgroundColor:'#B7D3FA', borderRadius:4 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ color:'#8494AC', font:{ size:11 } } },
+      y:{ grid:{ color:'#EEF2FA' }, ticks:{ color:'#8494AC', font:{ size:11 }, callback:v=>v+'tr' } }
+    }
+  }
+});
+
+const hrCtx = document.getElementById('hrReportChart');
+new Chart(hrCtx, {
+  type: 'line',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [
+      { label:'Vào mới', data:[8,10,12,6,7,6], borderColor:'#1CA36B', backgroundColor:'#1CA36B', tension:0.3, borderWidth:2, pointRadius:3 },
+      { label:'Nghỉ việc', data:[2,4,3,1,2,2], borderColor:'#DC4E4E', backgroundColor:'#DC4E4E', tension:0.3, borderWidth:2, pointRadius:3 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ color:'#8494AC', font:{ size:11 } } },
+      y:{ grid:{ color:'#EEF2FA' }, ticks:{ color:'#8494AC', font:{ size:11 } } }
+    }
+  }
+});
+</script>
+</body>
+</html>

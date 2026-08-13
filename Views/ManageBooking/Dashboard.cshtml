@@ -1,0 +1,228 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Dashboard Quản lý Booking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="nav-item active"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/ManageBooking/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="/ManageBooking/StaffHuman" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Nguyễn Anh Tuấn</div>
+          <div class="role-title">Quản lý Booking</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard Booking</div>
+        <div class="page-sub">Chi tiết chiến dịch quảng cáo, doanh số phòng ban và năng suất hoàn thành của nhân sự Booking</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="period-tabs">
+          <div class="period-tab">Ngày</div>
+          <div class="period-tab active">Tháng</div>
+          <div class="period-tab">Quý</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI GRID (5 CARD / ROW ON DESKTOP) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Booking đang chờ</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-clock"></i></div>
+        </div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-note">Chờ deal và chốt thông tin</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Đang thương lượng</div>
+          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-message-dots"></i></div>
+        </div>
+        <div class="kpi-value">8</div>
+        <div class="kpi-note">Đang liên hệ thương lượng giá</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Booking đã chốt</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-circle-check"></i></div>
+        </div>
+        <div class="kpi-value">15</div>
+        <div class="kpi-note">Đã ký kết hợp đồng</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Đang triển khai</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-player-play"></i></div>
+        </div>
+        <div class="kpi-value">22</div>
+        <div class="kpi-note">KOL đang sản xuất/chờ đăng bài</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Booking hoàn thành</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-checkbox"></i></div>
+        </div>
+        <div class="kpi-value">64</div>
+        <div class="kpi-note">Đã nghiệm thu bài đăng</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Booking hủy</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-circle-x"></i></div>
+        </div>
+        <div class="kpi-value">5</div>
+        <div class="kpi-note">Hủy do KOL hoặc Client đổi kế hoạch</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Doanh thu Booking</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-cash"></i></div>
+        </div>
+        <div class="kpi-value">2.4 tỷ</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+12% so với tháng trước</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Chi phí Booking</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-receipt"></i></div>
+        </div>
+        <div class="kpi-value">980 tr</div>
+        <div class="kpi-note">Bao gồm phí deal KOL &amp; dịch vụ</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Lợi nhuận Booking</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-chart-line"></i></div>
+        </div>
+        <div class="kpi-value">1.42 tỷ</div>
+        <div class="kpi-note">Biên lợi nhuận đạt ~59.1%</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Công việc quá hạn</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-alert-triangle"></i></div>
+        </div>
+        <div class="kpi-value">7</div>
+        <div class="kpi-delta down"><i class="ti ti-arrow-down-right"></i>Cần đôn đốc nhân sự</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Hiệu suất làm việc &amp; KPI nhân viên Booking</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nhân viên</th>
+              <th>Số lượng Booking</th>
+              <th>Hoàn thành đúng hạn</th>
+              <th>Hiệu suất KPI (T8)</th>
+              <th>Đánh giá</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Phạm Thu Hà</strong></td>
+              <td>12 booking</td>
+              <td>11/12</td>
+              <td><span class="bar-mini"><span class="bar-mini-fill" style="width:92%"></span></span>92%</td>
+              <td><span class="status-chip status-good">Tốt</span></td>
+            </tr>
+            <tr>
+              <td><strong>Nguyễn Văn B</strong></td>
+              <td>8 booking</td>
+              <td>6/8</td>
+              <td><span class="bar-mini"><span class="bar-mini-fill" style="width:75%"></span></span>75%</td>
+              <td><span class="status-chip status-warn">Cần cố gắng</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Trạng thái phân bổ thù lao Booking</div>
+        </div>
+        <div style="position:relative; height:200px; margin-bottom:12px;">
+          <canvas id="bookingStatusChart"></canvas>
+        </div>
+        <div class="legend" style="justify-content:space-between; gap:10px 16px; font-size:12px;">
+          <span><i style="background:#8AB8F2"></i>Chờ (12)</span>
+          <span><i style="background:#2F80ED"></i>Đã chốt (15)</span>
+          <span><i style="background:#1CA36B"></i>Hoàn thành (64)</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Booking — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const bookingCtx = document.getElementById('bookingStatusChart');
+new Chart(bookingCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Đang chờ','Đã chốt','Hoàn thành'],
+    datasets: [{
+      data: [12, 15, 64],
+      backgroundColor: ['#8AB8F2','#2F80ED','#1CA36B'],
+      borderColor:'#fff', borderWidth:2
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'68%',
+    plugins:{ legend:{ display:false } }
+  }
+});
+</script>
+</body>
+</html>

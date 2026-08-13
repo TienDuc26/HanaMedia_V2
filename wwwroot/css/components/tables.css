@@ -1,0 +1,73 @@
+/* TABLES, CHIPS & STATUS BADGES */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  text-align: left;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.dept-chip {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--blue-100);
+  color: var(--blue-700);
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-chip::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.status-good::before { background: var(--green); }
+.status-warn::before { background: var(--amber); }
+.status-bad::before { background: var(--red); }
+
+.bar-mini {
+  width: 70px;
+  height: 6px;
+  background: var(--blue-50);
+  border-radius: 4px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.bar-mini-fill {
+  height: 100%;
+  background: var(--blue-500);
+  border-radius: 4px;
+}

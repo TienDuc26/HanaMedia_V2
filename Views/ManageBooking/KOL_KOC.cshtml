@@ -1,0 +1,340 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Database KOL/KOC (Quản lý Booking)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .filter-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-item {
+      flex: 1;
+      min-width: 150px;
+    }
+    .search-input {
+      min-width: 250px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/ManageBooking/KOL_KOC" class="nav-item active"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="/ManageBooking/StaffHuman" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Nguyễn Anh Tuấn</div>
+          <div class="role-title">Quản lý Booking</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Cơ sở dữ liệu KOL/KOC</div>
+        <div class="page-sub">Lưu trữ thông tin liên hệ, lượt theo dõi, báo giá và quản lý vòng đời trạng thái tiếp cận KOL</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-row">
+        <div class="filter-item search-input">
+          <input type="text" class="form-control" placeholder="Tìm tên KOL, chủ đề/niche...">
+        </div>
+        <div class="filter-item">
+          <select class="form-control">
+            <option value="">Tất cả nền tảng</option>
+            <option value="TikTok">TikTok</option>
+            <option value="Instagram">Instagram</option>
+            <option value="YouTube">YouTube</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <select class="form-control">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Tiềm năng">Tiềm năng</option>
+            <option value="Đã liên hệ">Đã liên hệ</option>
+            <option value="Đang deal">Đang deal</option>
+            <option value="Đã chốt">Đã chốt</option>
+            <option value="Đang chạy">Đang chạy</option>
+            <option value="Hoàn thành">Hoàn thành</option>
+          </select>
+        </div>
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addKOLModal')"><i class="ti ti-plus"></i> Thêm KOL mới</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>KOL/KOC</th>
+            <th>Nền tảng &amp; Link</th>
+            <th>Followers / Engagement</th>
+            <th>Chủ đề/Niche</th>
+            <th>Giá Booking</th>
+            <th>Người phụ trách</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Nguyễn Thị H</strong></td>
+            <td>TikTok <a href="#" target="_blank" style="color:var(--blue-600); text-decoration:none;"><i class="ti ti-link"></i> @@nguyenthih</a></td>
+            <td>500k · 8.5% tương tác</td>
+            <td>Đời sống / Vlogs</td>
+            <td>10,000,000 đ</td>
+            <td>Phạm Thu Hà</td>
+            <td><span class="status-chip status-good">Đang chạy</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openKOLDetails('Nguyễn Thị H', 'TikTok', '@@nguyenthih', '500k', '8.5%', 'Đời sống / Vlogs', '10,000,000 đ', 'Hà Nội', '0912.xxx.xxx / h@gmail.com', 'Phạm Thu Hà', 'Chiến dịch Vinamilk Tết 2027: Tốt', 'Đang chạy')">Chi tiết</button>
+              <button class="btn-mini approve" onclick="openEditStatusModal('Nguyễn Thị H', 'Đang chạy')">Trạng thái</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Trần Văn K</strong></td>
+            <td>Instagram <a href="#" target="_blank" style="color:var(--blue-600); text-decoration:none;"><i class="ti ti-link"></i> @@tranvank</a></td>
+            <td>1.2M · 5.2% tương tác</td>
+            <td>Du lịch / Trải nghiệm</td>
+            <td>25,000,000 đ</td>
+            <td>Nguyễn Anh Tuấn</td>
+            <td><span class="status-chip status-good">Hoàn thành</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openKOLDetails('Trần Văn K', 'Instagram', '@@tranvank', '1.2M', '5.2%', 'Du lịch / Trải nghiệm', '25,000,000 đ', 'TP.HCM', '0988.xxx.xxx / k@gmail.com', 'Nguyễn Anh Tuấn', 'Chiến dịch Traveloka Mùa Hè: Xuất sắc', 'Hoàn thành')">Chi tiết</button>
+              <button class="btn-mini approve" onclick="openEditStatusModal('Trần Văn K', 'Hoàn thành')">Trạng thái</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Booking — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL THÊM KOL MỚI -->
+<div class="modal-backdrop" id="addKOLModal">
+  <div class="modal-card" style="width:650px;">
+    <div class="modal-header">
+      <div class="modal-title">Thêm KOL/KOC vào Database</div>
+      <button class="modal-close" onclick="closeModal('addKOLModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="form-group">
+          <label>Tên KOL/KOC</label>
+          <input type="text" class="form-control" placeholder="Nhập tên nghệ danh/họ tên...">
+        </div>
+        <div class="form-group">
+          <label>Nền tảng chính</label>
+          <select class="form-control">
+            <option>TikTok</option>
+            <option>Instagram</option>
+            <option>YouTube</option>
+            <option>Facebook</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Link tài khoản</label>
+          <input type="text" class="form-control" placeholder="Link trang cá nhân...">
+        </div>
+        <div class="form-group">
+          <label>Chủ đề / Niche</label>
+          <input type="text" class="form-control" placeholder="Ví dụ: Beauty, Công nghệ...">
+        </div>
+        <div class="form-group">
+          <label>Số người theo dõi (Followers)</label>
+          <input type="text" class="form-control" placeholder="Ví dụ: 350k, 1.5M...">
+        </div>
+        <div class="form-group">
+          <label>Tỉ lệ tương tác (Engagement %)</label>
+          <input type="text" class="form-control" placeholder="Ví dụ: 6.2%...">
+        </div>
+        <div class="form-group">
+          <label>Giá Booking công khai</label>
+          <input type="text" class="form-control" placeholder="Mức giá tham khảo...">
+        </div>
+        <div class="form-group">
+          <label>Địa bàn (Khu vực)</label>
+          <input type="text" class="form-control" placeholder="Ví dụ: Hà Nội, Đà Nẵng...">
+        </div>
+        <div class="form-group">
+          <label>Thông tin liên hệ (Phone/Email)</label>
+          <input type="text" class="form-control" placeholder="SĐT, Zalo hoặc Email...">
+        </div>
+        <div class="form-group">
+          <label>Người phụ trách</label>
+          <select class="form-control">
+            <option>Phạm Thu Hà</option>
+            <option>Nguyễn Văn B</option>
+            <option>Nguyễn Anh Tuấn</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Trạng thái tiếp cận ban đầu</label>
+        <select class="form-control">
+          <option value="Tiềm năng">Tiềm năng</option>
+          <option value="Đã liên hệ">Đã liên hệ</option>
+          <option value="Đang deal">Đang deal</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('addKOLModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã lưu KOL mới vào database!'); closeModal('addKOLModal');">Thêm KOL</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CẬP NHẬT TRẠNG THÁI -->
+<div class="modal-backdrop" id="statusModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Cập nhật trạng thái KOL</div>
+      <button class="modal-close" onclick="closeModal('statusModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>KOL / KOC</label>
+        <input type="text" id="statusKOLName" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Vòng đời trạng thái</label>
+        <select class="form-control" id="statusSelect">
+          <option value="Tiềm năng">Tiềm năng</option>
+          <option value="Đã liên hệ">Đã liên hệ</option>
+          <option value="Đang deal">Đang deal</option>
+          <option value="Đã chốt">Đã chốt</option>
+          <option value="Đang chạy">Đang chạy</option>
+          <option value="Hoàn thành">Hoàn thành</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('statusModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã cập nhật trạng thái KOL thành công!'); closeModal('statusModal');">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHI TIẾT KOL/KOC -->
+<div class="modal-backdrop" id="detailKOLModal">
+  <div class="modal-card" style="width:650px;">
+    <div class="modal-header">
+      <div class="modal-title">Hồ sơ chi tiết KOL/KOC</div>
+      <button class="modal-close" onclick="closeModal('detailKOLModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div>
+          <div class="info-label">Họ tên</div>
+          <div class="info-val" id="detName">Nguyễn Thị H</div>
+        </div>
+        <div>
+          <div class="info-label">Nền tảng</div>
+          <div class="info-val" id="detPlatform">TikTok (@@nguyenthih)</div>
+        </div>
+        <div>
+          <div class="info-label">Tương tác</div>
+          <div class="info-val" id="detFollowers">500k · 8.5% tương tác</div>
+        </div>
+        <div>
+          <div class="info-label">Chủ đề (Niche)</div>
+          <div class="info-val" id="detNiche">Đời sống / Vlogs</div>
+        </div>
+        <div>
+          <div class="info-label">Giá booking</div>
+          <div class="info-val" id="detPrice">10,000,000 đ</div>
+        </div>
+        <div>
+          <div class="info-label">Địa bàn</div>
+          <div class="info-val" id="detLoc">Hà Nội</div>
+        </div>
+        <div>
+          <div class="info-label">Thông tin liên hệ</div>
+          <div class="info-val" id="detContact">0912.xxx.xxx</div>
+        </div>
+        <div>
+          <div class="info-label">Người phụ trách</div>
+          <div class="info-val" id="detStaff">Phạm Thu Hà</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--line); padding-top:16px;">
+        <div class="info-label">Đánh giá &amp; Lịch sử booking</div>
+        <div class="info-val" id="detHistory" style="margin-top:6px; color:var(--ink-2); line-height:1.5;">-</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini approve" onclick="closeModal('detailKOLModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openEditStatusModal(name, status) {
+    document.getElementById('statusKOLName').value = name;
+    document.getElementById('statusSelect').value = status;
+    openModal('statusModal');
+  }
+
+  function openKOLDetails(name, platform, link, followers, engagement, niche, price, loc, contact, staff, history, status) {
+    document.getElementById('detName').innerText = name;
+    document.getElementById('detPlatform').innerText = `${platform} (${link})`;
+    document.getElementById('detFollowers').innerText = `${followers} followers · ${engagement} tương tác`;
+    document.getElementById('detNiche').innerText = niche;
+    document.getElementById('detPrice').innerText = price;
+    document.getElementById('detLoc').innerText = loc;
+    document.getElementById('detContact').innerText = contact;
+    document.getElementById('detStaff').innerText = staff;
+    document.getElementById('detHistory').innerText = history;
+
+    openModal('detailKOLModal');
+  }
+</script>
+</body>
+</html>

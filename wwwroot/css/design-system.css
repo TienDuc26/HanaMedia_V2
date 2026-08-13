@@ -1,0 +1,41 @@
+:root {
+  --navy: #0B2545;
+  --navy-2: #123465;
+  --blue-900: #0C447C;
+  --blue-700: #185FA5;
+  --blue-600: #1D6FD6;
+  --blue-500: #2F80ED;
+  --blue-400: #5B9BF0;
+  --blue-100: #E4EEFD;
+  --blue-50: #F2F7FE;
+  --white: #FFFFFF;
+  --ink: #0B2545;
+  --ink-2: #40506B;
+  --muted: #8494AC;
+  --line: #E4EAF3;
+  --green: #1CA36B;
+  --green-bg: #E4F7EE;
+  --amber: #DA8A1B;
+  --amber-bg: #FCF0DC;
+  --red: #DC4E4E;
+  --red-bg: #FDEAEA;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(11,37,69,.04), 0 8px 24px rgba(11,37,69,.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #F5F8FD;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .brand {
+  font-family: 'Manrope', sans-serif;
+}

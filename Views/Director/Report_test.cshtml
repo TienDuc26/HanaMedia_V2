@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia â€” BÃ¡o cÃ¡o thá»‘ng kÃª (GiÃ¡m Ä‘á»‘c)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="../../css/design-system.css">
+  <link rel="stylesheet" href="../../css/layout.css">
+  <link rel="stylesheet" href="../../css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Há»‡ thá»‘ng Quáº£n lÃ½ NhÃ¢n sá»±</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tá»•ng quan</div>
+    <a href="dashboard.html" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="bao-cao.html" class="nav-item active"><i class="ti ti-report-analytics"></i>BÃ¡o cÃ¡o</a>
+
+    <div class="nav-section">Nghiá»‡p vá»¥</div>
+    <a href="nhan-su.html" class="nav-item"><i class="ti ti-users"></i>NhÃ¢n sá»±</a>
+    <a href="phong-ban.html" class="nav-item"><i class="ti ti-building-skyscraper"></i>PhÃ²ng ban</a>
+    <a href="booking-chiendich.html" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="y-tuong.html" class="nav-item"><i class="ti ti-bulb"></i>Ã tÆ°á»Ÿng &amp; Chiáº¿n dá»‹ch</a>
+    <a href="phe-duyet.html" class="nav-item"><i class="ti ti-checklist"></i>PhÃª duyá»‡t</a>
+
+    <div class="nav-section">Quáº£n trá»‹</div>
+    <a href="cau-hinh.html" class="nav-item"><i class="ti ti-settings"></i>Cáº¥u hÃ¬nh nghiá»‡p vá»¥</a>
+    <a href="giam-sat-he-thong.html" class="nav-item"><i class="ti ti-shield-check"></i>GiÃ¡m sÃ¡t há»‡ thá»‘ng</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyá»…n VÄƒn A</div>
+          <div class="role-title">GiÃ¡m Ä‘á»‘c</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">BÃ¡o cÃ¡o &amp; PhÃ¢n tÃ­ch dá»¯ liá»‡u</div>
+        <div class="page-sub">Xem bÃ¡o cÃ¡o thá»‘ng kÃª Ä‘á»‹nh ká»³ vá» tÃ i chÃ­nh booking, biáº¿n Ä‘á»™ng nhÃ¢n sá»± vÃ  nÄƒng suáº¥t phÃ²ng ban</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="period-tabs">
+          <div class="period-tab">NgÃ y</div>
+          <div class="period-tab active">ThÃ¡ng</div>
+          <div class="period-tab">QuÃ½</div>
+        </div>
+        <button class="icon-btn" onclick="alert('Äang xuáº¥t bÃ¡o cÃ¡o PDF...')"><i class="ti ti-file-text"></i></button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">TÄƒng trÆ°á»Ÿng Doanh thu &amp; Chi phÃ­ Booking</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#2F80ED"></i>Doanh thu</span>
+          <span><i style="background:#B7D3FA"></i>Chi phÃ­</span>
+        </div>
+        <div style="position:relative; height:240px;">
+          <canvas id="revenueReportChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Biáº¿n Ä‘á»™ng nhÃ¢n sá»± qua cÃ¡c thÃ¡ng</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#1CA36B"></i>VÃ o má»›i</span>
+          <span><i style="background:#DC4E4E"></i>Nghá»‰ viá»‡c</span>
+        </div>
+        <div style="position:relative; height:240px;">
+          <canvas id="hrReportChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-head">
+        <div class="card-title">Sá»‘ liá»‡u chi tiáº¿t thá»‘ng kÃª thÃ¡ng 8/2026</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Chá»‰ sá»‘ Ä‘o lÆ°á»ng</th>
+            <th>Ká»³ trÆ°á»›c</th>
+            <th>Ká»³ nÃ y (ThÃ¡ng 8)</th>
+            <th>Biáº¿n Ä‘á»™ng</th>
+            <th>ÄÃ¡nh giÃ¡</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Tá»•ng doanh thu Booking</strong></td>
+            <td>2.14 tá»· Ä‘</td>
+            <td>2.40 tá»· Ä‘</td>
+            <td style="color:var(--green); font-weight:600;">+12.1%</td>
+            <td><span class="status-chip status-good">Äáº¡t má»¥c tiÃªu</span></td>
+          </tr>
+          <tr>
+            <td><strong>Chi phÃ­ Booking</strong></td>
+            <td>900 triá»‡u Ä‘</td>
+            <td>980 triá»‡u Ä‘</td>
+            <td style="color:var(--red); font-weight:600;">+8.8%</td>
+            <td><span class="status-chip status-warn">Cáº§n tá»‘i Æ°u chi phÃ­</span></td>
+          </tr>
+          <tr>
+            <td><strong>NhÃ¢n sá»± tÄƒng rÃ²ng</strong></td>
+            <td>+4 nhÃ¢n sá»±</td>
+            <td>+4 nhÃ¢n sá»±</td>
+            <td>Giá»¯ nguyÃªn</td>
+            <td><span class="status-chip status-good">á»”n Ä‘á»‹nh</span></td>
+          </tr>
+          <tr>
+            <td><strong>Tá»‰ lá»‡ cÃ´ng viá»‡c quÃ¡ háº¡n</strong></td>
+            <td>5.2%</td>
+            <td>3.8%</td>
+            <td style="color:var(--green); font-weight:600;">-1.4%</td>
+            <td><span class="status-chip status-good">Cáº£i thiá»‡n</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia Â· Dashboard GiÃ¡m Ä‘á»‘c â€” dá»¯ liá»‡u minh há»a cho má»¥c Ä‘Ã­ch thiáº¿t káº¿ giao diá»‡n</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const revCtx = document.getElementById('revenueReportChart');
+new Chart(revCtx, {
+  type: 'bar',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [
+      { label:'Doanh thu', data:[1650,1820,1900,2050,2150,2400], backgroundColor:'#2F80ED', borderRadius:4 },
+      { label:'Chi phÃ­', data:[720,780,810,860,900,980], backgroundColor:'#B7D3FA', borderRadius:4 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ color:'#8494AC', font:{ size:11 } } },
+      y:{ grid:{ color:'#EEF2FA' }, ticks:{ color:'#8494AC', font:{ size:11 }, callback:v=>v+'tr' } }
+    }
+  }
+});
+
+const hrCtx = document.getElementById('hrReportChart');
+new Chart(hrCtx, {
+  type: 'line',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [
+      { label:'VÃ o má»›i', data:[8,10,12,6,7,6], borderColor:'#1CA36B', backgroundColor:'#1CA36B', tension:0.3, borderWidth:2, pointRadius:3 },
+      { label:'Nghá»‰ viá»‡c', data:[2,4,3,1,2,2], borderColor:'#DC4E4E', backgroundColor:'#DC4E4E', tension:0.3, borderWidth:2, pointRadius:3 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ color:'#8494AC', font:{ size:11 } } },
+      y:{ grid:{ color:'#EEF2FA' }, ticks:{ color:'#8494AC', font:{ size:11 } } }
+    }
+  }
+});
+</script>
+</body>
+</html>

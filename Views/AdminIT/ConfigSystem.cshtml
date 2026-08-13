@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Cấu hình Kỹ thuật (AdminIT)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/AdminIT/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Quản trị hệ thống</div>
+    <a href="/AdminIT/Account" class="nav-item"><i class="ti ti-users"></i>Quản lý tài khoản</a>
+    <a href="/AdminIT/AuditLog" class="nav-item"><i class="ti ti-shield-check"></i>Nhật ký hệ thống</a>
+    <a href="/AdminIT/ConfigSystem" class="nav-item active"><i class="ti ti-settings"></i>Cấu hình kỹ thuật</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">IT</div>
+        <div>
+          <div class="role-name">Lê Minh Hoàng</div>
+          <div class="role-title">AdminIT</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Cấu hình kỹ thuật hệ thống</div>
+        <div class="page-sub">Quản lý tham số kỹ thuật hạ tầng, thời hạn đăng nhập và tường lửa bảo mật IP nội bộ</div>
+      </div>
+    </div>
+
+    <div class="card" style="max-width: 650px;">
+      <div class="card-head">
+        <div class="card-title">Tham số kỹ thuật</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Giới hạn dung lượng upload file tối đa (MB)</label>
+        <input type="number" class="form-control" value="50">
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Áp dụng cho việc upload hợp đồng booking, báo giá, phụ lục và tài liệu đính kèm.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Thời gian hết hạn phiên làm việc (Session Timeout - Phút)</label>
+        <input type="number" class="form-control" value="30">
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Tự động đăng xuất và hủy session làm việc nếu người dùng không thao tác sau số phút này.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Whitelist dải IP mạng nội bộ công ty (LAN/Wifi)</label>
+        <textarea class="form-control" rows="4">192.168.1.0/24
+113.161.45.88
+14.226.24.0/24</textarea>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Danh sách IP tĩnh hoặc dải IP được phép truy cập vào ứng dụng. Các IP nằm ngoài whitelist sẽ bị tường lửa từ chối đăng nhập.</div>
+      </div>
+
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end;">
+        <button class="btn-mini approve" onclick="alert('Đã lưu cấu hình tham số kỹ thuật thành công!')" style="padding: 8px 20px; font-size: 13px;">Lưu thiết lập</button>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+</body>
+</html>

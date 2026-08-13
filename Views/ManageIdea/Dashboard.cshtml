@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Dashboard Quản lý Ý tưởng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageIdea/Dashboard" class="nav-item active"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/ManageIdea/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
+    <a href="/ManageIdea/HumanStaff" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageIdea/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Trần Thanh Hải</div>
+          <div class="role-title">Quản lý Ý tưởng</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard Phòng Sáng tạo / Ý tưởng</div>
+        <div class="page-sub">Chi tiết vòng đời phát triển ý tưởng, kịch bản chiến dịch và tiến độ công việc của các Copywriter</div>
+      </div>
+    </div>
+
+    <!-- KPI GRID (5 CARD / ROW ON DESKTOP) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Ý tưởng mới nhận</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-bulb"></i></div>
+        </div>
+        <div class="kpi-value">20</div>
+        <div class="kpi-note">Copywriter vừa nộp lên</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Ý tưởng đang review</div>
+          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-eye"></i></div>
+        </div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-note">Đang xem xét kịch bản/concept</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Cần chỉnh sửa</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-edit"></i></div>
+        </div>
+        <div class="kpi-value">5</div>
+        <div class="kpi-note">Đã gửi phản hồi yêu cầu sửa</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Ý tưởng đã duyệt</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-circle-check"></i></div>
+        </div>
+        <div class="kpi-value">18</div>
+        <div class="kpi-note">Đã được phê duyệt concept</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Đang triển khai</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-rocket"></i></div>
+        </div>
+        <div class="kpi-value">9</div>
+        <div class="kpi-note">Chuyển giao cho team sản xuất</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Tổng ý tưởng đạt</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-award"></i></div>
+        </div>
+        <div class="kpi-value">45</div>
+        <div class="kpi-note">Tích lũy trong thư viện</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Công việc quá hạn</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-alert-triangle"></i></div>
+        </div>
+        <div class="kpi-value">4</div>
+        <div class="kpi-delta down"><i class="ti ti-arrow-down-right"></i>Cần nhắc deadline</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Hiệu suất phòng ban</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-chart-bar"></i></div>
+        </div>
+        <div class="kpi-value">87%</div>
+        <div class="kpi-note">Hoàn thành mục tiêu tháng 8</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Chiến dịch đang chạy</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-rocket"></i></div>
+        </div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-note">Client Vinamilk, Cocoon, Traveloka</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Chờ duyệt quan trọng</div>
+          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-checklist"></i></div>
+        </div>
+        <div class="kpi-value">2</div>
+        <div class="kpi-note">Chiến dịch lớn chờ sếp duyệt</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tiến độ công việc nhân sự phòng Ý tưởng</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nhân viên</th>
+              <th>Task đang chạy</th>
+              <th>Đã hoàn thành</th>
+              <th>Hiệu suất KPI</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Đỗ Minh Khôi</strong></td>
+              <td>4 tasks</td>
+              <td>12 tasks</td>
+              <td><span class="bar-mini"><span class="bar-mini-fill" style="width:87%"></span></span>87%</td>
+              <td><span class="status-chip status-good">Đang làm việc</span></td>
+            </tr>
+            <tr>
+              <td><strong>Lê Văn C</strong></td>
+              <td>1 task</td>
+              <td>5 tasks</td>
+              <td><span class="bar-mini"><span class="bar-mini-fill" style="width:60%"></span></span>60%</td>
+              <td><span class="status-chip status-bad">Chờ duyệt nghỉ</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tỉ lệ trạng thái ý tưởng</div>
+        </div>
+        <div style="position:relative; height:200px; margin-bottom:12px;">
+          <canvas id="ideaStatusChart"></canvas>
+        </div>
+        <div class="legend" style="justify-content:space-between; gap:10px 16px; font-size:12px;">
+          <span><i style="background:#8AB8F2"></i>Review (12)</span>
+          <span><i style="background:#2F80ED"></i>Đã duyệt (18)</span>
+          <span><i style="background:#1CA36B"></i>Đang chạy (9)</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Ý tưởng — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const ideaCtx = document.getElementById('ideaStatusChart');
+new Chart(ideaCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Review','Đã duyệt','Đang chạy'],
+    datasets: [{
+      data: [12, 18, 9],
+      backgroundColor: ['#8AB8F2','#2F80ED','#1CA36B'],
+      borderColor:'#fff', borderWidth:2
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'68%',
+    plugins:{ legend:{ display:false } }
+  }
+});
+</script>
+</body>
+</html>

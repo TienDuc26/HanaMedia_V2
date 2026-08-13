@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Trung tâm Phê duyệt (Giám đốc)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .tab-headers {
+      display: flex;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+    }
+    .tab-header {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px 12px;
+      position: relative;
+    }
+    .tab-header.active {
+      color: var(--blue-500);
+    }
+    .tab-header.active::after {
+      content: '';
+      position: absolute;
+      bottom: -9px;
+      left: 0; right: 0;
+      height: 3px;
+      background: var(--blue-500);
+      border-radius: 2px 2px 0 0;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item active"><i class="ti ti-checklist"></i>Phê duyệt</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Yêu cầu phê duyệt</div>
+        <div class="page-sub">Xem xét và phê duyệt các đề xuất lương, đơn xin nghỉ việc, các chiến dịch &amp; ý tưởng quảng cáo lớn</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tab-headers">
+        <div class="tab-header active" onclick="switchFilter(event, 'all')">Tất cả (4)</div>
+        <div class="tab-header" onclick="switchFilter(event, 'salary')">Đề xuất lương (1)</div>
+        <div class="tab-header" onclick="switchFilter(event, 'offboard')">Nghỉ việc (1)</div>
+        <div class="tab-header" onclick="switchFilter(event, 'booking')">Booking &amp; Campaign (1)</div>
+        <div class="tab-header" onclick="switchFilter(event, 'idea')">Ý tưởng (1)</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Phân loại</th>
+            <th>Nội dung yêu cầu</th>
+            <th>Người gửi đề xuất</th>
+            <th>Thời gian</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="approvalTableBody">
+          <tr data-type="salary">
+            <td><span class="approval-tag tag-salary">Lương</span></td>
+            <td><strong>Đề xuất tăng lương — Trần Thị B (Booking)</strong><br><span style="color:var(--muted); font-size:12px;">Đề xuất mức lương mới: 15,000,000đ (Tăng 2,000,000đ)</span></td>
+            <td>QL Booking (Nguyễn Anh Tuấn)</td>
+            <td>2 giờ trước</td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đề xuất lương của Trần Thị B')">Duyệt</button>
+              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đề xuất lương của Trần Thị B')">Từ chối</button>
+            </td>
+          </tr>
+          <tr data-type="offboard">
+            <td><span class="approval-tag tag-offboard">Nghỉ việc</span></td>
+            <td><strong>Đơn nghỉ việc — Lê Văn C (Ý tưởng)</strong><br><span style="color:var(--muted); font-size:12px;">Lý do cá nhân, xin nghỉ từ ngày 01/09/2026. Đang bàn giao việc.</span></td>
+            <td>QL Ý tưởng (Trần Thanh Hải)</td>
+            <td>Hôm qua</td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đơn nghỉ việc của Lê Văn C')">Duyệt</button>
+              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đơn nghỉ việc của Lê Văn C')">Từ chối</button>
+            </td>
+          </tr>
+          <tr data-type="booking">
+            <td><span class="approval-tag tag-booking">Booking</span></td>
+            <td><strong>Booking KOL lớn — Client Vinamilk, 480 triệu</strong><br><span style="color:var(--muted); font-size:12px;">KOL Đặng Ngọc L, chi phí 220,000,000đ, doanh thu dự kiến 480,000,000đ.</span></td>
+            <td>QL Booking (Nguyễn Anh Tuấn)</td>
+            <td>Hôm qua</td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt booking Vinamilk 480 triệu')">Duyệt</button>
+              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối booking Vinamilk 480 triệu')">Từ chối</button>
+            </td>
+          </tr>
+          <tr data-type="idea">
+            <td><span class="approval-tag tag-idea">Ý tưởng</span></td>
+            <td><strong>Campaign "Tết Sum Vầy" — chờ duyệt triển khai</strong><br><span style="color:var(--muted); font-size:12px;">Concept quảng cáo truyền thông cho chiến dịch Tết Vinamilk.</span></td>
+            <td>QL Ý tưởng (Trần Thanh Hải)</td>
+            <td>2 ngày trước</td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt ý tưởng Tết Sum Vầy')">Duyệt</button>
+              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối ý tưởng Tết Sum Vầy')">Từ chối</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script>
+  function switchFilter(e, type) {
+    const headers = e.target.parentElement.children;
+    for(let h of headers) {
+      h.classList.remove('active');
+    }
+    e.target.classList.add('active');
+
+    const rows = document.getElementById('approvalTableBody').getElementsByTagName('tr');
+    for(let r of rows) {
+      if(type === 'all' || r.getAttribute('data-type') === type) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    }
+  }
+
+  function handleAction(btn, text) {
+    if(confirm(`Bạn có chắc chắn muốn ${text}?`)) {
+      alert(`Đã thực hiện: ${text}`);
+      const row = btn.closest('tr');
+      row.style.transition = 'opacity 0.3s';
+      row.style.opacity = 0;
+      setTimeout(() => {
+        row.remove();
+      }, 300);
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Báo cáo thống kê (Quản lý HCNS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Vận hành nhân sự</div>
+    <a href="/ManageHuman/HumanResources" class="nav-item"><i class="ti ti-users"></i>Hồ sơ nhân sự</a>
+    <a href="/ManageHuman/AssignTasks" class="nav-item"><i class="ti ti-checklist"></i>Giao việc &amp; Phân công</a>
+    <a href="/ManageHuman/Repoted" class="nav-item active"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">HR</div>
+        <div>
+          <div class="role-name">Vũ Ngọc Lan</div>
+          <div class="role-title">Quản lý HCNS</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Báo cáo &amp; Phân tích Nhân sự</div>
+        <div class="page-sub">Xem báo cáo thống kê tình hình nhân lực, biến động lao động và hiệu suất làm việc toàn công ty</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="alert('Đã tải xuống báo cáo nhân sự!')"><i class="ti ti-download"></i></button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Biến động nhân sự tháng này (T8/2026)</div>
+        </div>
+        <div style="position:relative; height:220px;">
+          <canvas id="hrReportChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Hiệu suất trung bình các phòng ban (%)</div>
+        </div>
+        <div style="position:relative; height:220px;">
+          <canvas id="performanceReportChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-head">
+        <div class="card-title">Số liệu chi tiết tình hình nhân sự phòng ban</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Phòng ban</th>
+            <th>Trưởng phòng</th>
+            <th>Tổng số nhân sự</th>
+            <th>Tỷ lệ biến động tháng này</th>
+            <th>Hiệu suất KPI trung bình</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hành chính - Nhân sự</strong></td>
+            <td>Vũ Ngọc Lan</td>
+            <td>14 nhân sự</td>
+            <td style="color:var(--green); font-weight:600;">+2 vào mới (Ổn định)</td>
+            <td>95%</td>
+          </tr>
+          <tr>
+            <td><strong>Booking (KOL/KOC)</strong></td>
+            <td>Nguyễn Anh Tuấn</td>
+            <td>46 nhân sự</td>
+            <td style="color:var(--green); font-weight:600;">+4 vào mới (Phát triển)</td>
+            <td>92%</td>
+          </tr>
+          <tr>
+            <td><strong>Ý tưởng &amp; Sáng tạo</strong></td>
+            <td>Trần Thanh Hải</td>
+            <td>38 nhân sự</td>
+            <td style="color:var(--red); font-weight:600;">-1 nghỉ việc (Biến động nhẹ)</td>
+            <td>87%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý HCNS — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const hrCtx = document.getElementById('hrReportChart');
+new Chart(hrCtx, {
+  type: 'bar',
+  data: {
+    labels: ['HCNS','Booking','Ý tưởng'],
+    datasets: [
+      { label:'Vào mới', data:[2, 4, 0], backgroundColor:'#1CA36B', borderRadius:4 },
+      { label:'Nghỉ việc', data:[0, 0, 1], backgroundColor:'#DC4E4E', borderRadius:4 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      y:{ grid:{ color:'#EEF2FA' }, ticks:{ stepSize: 1 } }
+    }
+  }
+});
+
+const perfCtx = document.getElementById('performanceReportChart');
+new Chart(perfCtx, {
+  type: 'bar',
+  data: {
+    labels: ['HCNS','Booking','Ý tưởng'],
+    datasets: [{
+      data: [95, 92, 87],
+      backgroundColor: '#2F80ED',
+      borderRadius:4,
+      barPercentage:0.5
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      y:{ min: 0, max: 100, ticks:{ callback:v=>v+'%' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

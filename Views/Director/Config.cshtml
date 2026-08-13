@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Cấu hình nghiệp vụ (Giám đốc)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item active"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Cấu hình tham số nghiệp vụ</div>
+        <div class="page-sub">Thiết lập hạn mức phê duyệt, quy chế phân bổ thù lao và chính sách vận hành công ty</div>
+      </div>
+    </div>
+
+    <div class="card" style="max-width: 650px;">
+      <div class="card-head">
+        <div class="card-title">Tham số vận hành nghiệp vụ</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Giá trị Booking cần Giám đốc phê duyệt trực tiếp</label>
+        <input type="text" class="form-control" value="100,000,000 đ">
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Các booking có giá trị từ ngưỡng này trở lên sẽ gửi yêu cầu phê duyệt về bàn làm việc của Giám đốc.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Ngưỡng ngân sách chiến dịch cần Giám đốc duyệt Ý tưởng/Campaign</label>
+        <input type="text" class="form-control" value="500,000,000 đ">
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Các ý tưởng thuộc chiến dịch có ngân sách lớn hơn ngưỡng này cần sự xác nhận duyệt của Giám đốc trước khi chạy.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Cảnh báo phân bổ thù lao vượt định mức (%)</label>
+        <input type="number" class="form-control" value="100">
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Cảnh báo hệ thống hiển thị khi quản lý booking phân bổ tổng thù lao nhân viên vượt quá tỉ lệ phần trăm so với giá trị booking.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Số ngày bàn giao hồ sơ công việc tiêu chuẩn khi nghỉ việc</label>
+        <input type="number" class="form-control" value="30">
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Thời hạn quy định kể từ khi Giám đốc phê duyệt đơn nghỉ việc của nhân sự đến ngày dừng hoạt động chính thức.</div>
+      </div>
+
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end;">
+        <button class="btn-mini approve" onclick="alert('Đã lưu cấu hình tham số nghiệp vụ thành công!')" style="padding: 8px 20px; font-size: 13px;">Lưu thiết lập</button>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+</body>
+</html>

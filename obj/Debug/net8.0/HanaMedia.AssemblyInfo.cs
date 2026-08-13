@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HanaMedia")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fb6ecbf60891b121b637e2a63498723d3138f7d1")]
 [assembly: System.Reflection.AssemblyProductAttribute("HanaMedia")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HanaMedia")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Nhật ký Hệ thống (AdminIT)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 20px;
+      align-items: end;
+    }
+    @@media (max-width: 991px) {
+      .filter-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/AdminIT/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Quản trị hệ thống</div>
+    <a href="/AdminIT/Account" class="nav-item"><i class="ti ti-users"></i>Quản lý tài khoản</a>
+    <a href="/AdminIT/AuditLog" class="nav-item active"><i class="ti ti-shield-check"></i>Nhật ký hệ thống</a>
+    <a href="/AdminIT/ConfigSystem" class="nav-item"><i class="ti ti-settings"></i>Cấu hình kỹ thuật</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">IT</div>
+        <div>
+          <div class="role-name">Lê Minh Hoàng</div>
+          <div class="role-title">AdminIT</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Nhật ký vận hành hệ thống (Audit Log)</div>
+        <div class="page-sub">Ghi nhận toàn bộ thao tác thay đổi dữ liệu của tất cả tài khoản phục vụ mục đích bảo mật và đối soát</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="alert('Đã xuất báo cáo Audit Log dạng Excel!')"><i class="ti ti-file-text"></i> Xuất báo cáo log</button>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--amber); margin-bottom: 20px;">
+      <div class="card-head">
+        <div class="card-title" style="color:#8A5A0B;"><i class="ti ti-alert-triangle"></i> Cảnh báo hành vi bất thường từ hệ thống</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="alert-box" style="margin-top:0;">
+          <i class="ti ti-lock"></i>
+          <div>
+            <div class="alert-title">Đăng nhập thất bại quá số lần quy định</div>
+            <div class="alert-desc">Tài khoản 'nguyenvanb' nhập sai mật khẩu 5 lần liên tiếp từ IP mạng nội bộ 192.168.1.15 lúc 08:05 hôm nay. Tài khoản đã bị tạm khóa.</div>
+          </div>
+        </div>
+        <div class="alert-box" style="background:#FDEAEA; border-color:#F5C6CB;">
+          <i class="ti ti-trash" style="color:var(--red);"></i>
+          <div>
+            <div class="alert-title" style="color:#721C24;">Cảnh báo xóa hàng loạt dữ liệu (Giả lập)</div>
+            <div class="alert-desc" style="color:#721C24;">Hệ thống phát hiện tài khoản 'admin' thực hiện xóa hàng loạt dữ liệu thử nghiệm (Hệ thống ghi nhận để đề phòng rủi ro bảo mật).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-grid">
+        <div>
+          <label class="info-label" style="margin-bottom:6px; display:block;">Người dùng</label>
+          <input type="text" class="form-control" placeholder="Tên user...">
+        </div>
+        <div>
+          <label class="info-label" style="margin-bottom:6px; display:block;">Loại hành động</label>
+          <select class="form-control">
+            <option value="">Tất cả hành động</option>
+            <option value="Tạo">Tạo mới</option>
+            <option value="Sửa">Chỉnh sửa</option>
+            <option value="Xóa">Xóa dữ liệu</option>
+            <option value="Duyệt">Phê duyệt</option>
+            <option value="Đăng nhập">Đăng nhập/Đăng xuất</option>
+          </select>
+        </div>
+        <div>
+          <label class="info-label" style="margin-bottom:6px; display:block;">Phân hệ (Module)</label>
+          <select class="form-control">
+            <option value="">Tất cả phân hệ</option>
+            <option value="Nhân sự">Nhân sự</option>
+            <option value="Booking">Booking</option>
+            <option value="Ý tưởng">Ý tưởng</option>
+            <option value="Tài khoản">Tài khoản</option>
+          </select>
+        </div>
+        <div>
+          <label class="info-label" style="margin-bottom:6px; display:block;">Từ ngày</label>
+          <input type="date" class="form-control">
+        </div>
+        <div>
+          <label class="info-label" style="margin-bottom:6px; display:block;">Đến ngày</label>
+          <input type="date" class="form-control">
+        </div>
+        <button class="btn-mini approve" style="padding: 10px 16px;">Lọc log</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Người thực hiện</th>
+            <th>Hành động</th>
+            <th>Phân hệ</th>
+            <th>Nội dung tác động chi tiết</th>
+            <th>IP nguồn</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>12/08/2026 08:35</td>
+            <td><strong>Lê Minh Hoàng (AdminIT)</strong></td>
+            <td><span class="badge badge-info">Cấu hình</span></td>
+            <td>Hệ thống</td>
+            <td>Thay đổi giới hạn dung lượng upload lên 50MB</td>
+            <td>192.168.1.100</td>
+          </tr>
+          <tr>
+            <td>12/08/2026 08:15</td>
+            <td><strong>Nguyễn Văn A (Giám đốc)</strong></td>
+            <td><span class="badge badge-success">Đăng nhập</span></td>
+            <td>Tài khoản</td>
+            <td>Đăng nhập hệ thống thành công (LAN)</td>
+            <td>192.168.1.2</td>
+          </tr>
+          <tr>
+            <td>12/08/2026 08:05</td>
+            <td><strong>nguyenvanb</strong></td>
+            <td><span class="badge badge-danger">Thất bại</span></td>
+            <td>Tài khoản</td>
+            <td>Đăng nhập thất bại liên tiếp 5 lần (Sai mật khẩu)</td>
+            <td>192.168.1.15</td>
+          </tr>
+          <tr>
+            <td>11/08/2026 15:40</td>
+            <td><strong>Nguyễn Anh Tuấn (QL Booking)</strong></td>
+            <td><span class="badge badge-warning">Cập nhật thù lao</span></td>
+            <td>Booking</td>
+            <td>Phân bổ thù lao booking Vinamilk (Trần Thị B: 3tr, Đỗ Minh Khôi: 3tr, Lê Văn C: 4tr)</td>
+            <td>192.168.1.10</td>
+          </tr>
+          <tr>
+            <td>11/08/2026 10:20</td>
+            <td><strong>Vũ Ngọc Lan (QL HCNS)</strong></td>
+            <td><span class="badge badge-success">Tạo mới</span></td>
+            <td>Nhân sự</td>
+            <td>Thêm hồ sơ nhân viên mới: Phạm Thu Hà (Phòng Booking)</td>
+            <td>192.168.1.5</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+</body>
+</html>

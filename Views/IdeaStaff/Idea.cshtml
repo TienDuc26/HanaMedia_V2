@@ -1,0 +1,281 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Kịch bản &amp; Ý tưởng (Nhân viên Ý tưởng)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .flex-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/IdeaStaff/Idea" class="nav-item active"><i class="ti ti-bulb"></i>Kịch bản &amp; Ý tưởng</a>
+    <a href="/IdeaStaff/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Đỗ Minh Khôi</div>
+          <div class="role-title">Nhân viên Ý tưởng</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Ý tưởng &amp; Kịch bản của tôi</div>
+        <div class="page-sub">Sáng tạo nội dung tiếp thị, soạn thảo kịch bản chi tiết và gửi yêu cầu phê duyệt cho Quản lý</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-bar">
+        <div style="width: 300px;">
+          <input type="text" class="form-control" placeholder="Tìm ý tưởng, chiến dịch...">
+        </div>
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addIdeaModal')"><i class="ti ti-plus"></i> Sáng tạo ý tưởng mới</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tên ý tưởng</th>
+            <th>Client &amp; Chiến dịch</th>
+            <th>Hạn chót (Deadline)</th>
+            <th>Người review</th>
+            <th>Trạng thái kịch bản</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hành trình Xanh cùng Cocoon</strong></td>
+            <td>Cocoon — Glow Up Your Skin</td>
+            <td>15/09/2026</td>
+            <td>Trần Thanh Hải (QL)</td>
+            <td><span class="status-chip status-warn">Review (Chờ duyệt)</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openEditModal('Hành trình Xanh cùng Cocoon', 'Cocoon', 'Glow Up Your Skin', 'Người dùng thích thuần chay', 'Tái chế vỏ chai mỹ phẩm', 'Video hướng dẫn unbox và đổi vỏ chai lấy quà', 'http://ref.cocoon.com', 'Tông màu xanh lá bảo vệ môi trường', 'Kịch bản video ngắn TikTok 60s', 'Review')">Chỉnh sửa &amp; Nộp</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Sữa hạt Dinh Dưỡng Mỗi Ngày</strong></td>
+            <td>Vinamilk — Tết Sum Vầy 2027</td>
+            <td>30/12/2026</td>
+            <td>Trần Thanh Hải (QL)</td>
+            <td><span class="status-chip status-bad">Need Revision (Sửa lại)</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openEditModal('Sữa hạt Dinh Dưỡng Mỗi Ngày', 'Vinamilk', 'Tết Sum Vầy 2027', 'Gia đình quan tâm sức khỏe', 'Sữa hạt dinh dưỡng cho người già', 'Ý tưởng tặng quà tết ý nghĩa cho ông bà', 'http://ref.vinamilk.com', 'Màu xanh lục ấm cúng', 'Kịch bản clip ngắn 30s cho Facebook Reels', 'Need Revision', 'Phản hồi từ Trần Thanh Hải: Cần viết chi tiết hơn phần hội thoại của ông bà ở giây thứ 15.')">Chỉnh sửa &amp; Nộp</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Nhân viên Ý tưởng — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL SÁNG TẠO Ý TƯỞNG MỚI -->
+<div class="modal-backdrop" id="addIdeaModal">
+  <div class="modal-card" style="width:650px;">
+    <div class="modal-header">
+      <div class="modal-title">Sáng tạo ý tưởng &amp; Kịch bản mới</div>
+      <button class="modal-close" onclick="closeModal('addIdeaModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right:8px;">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tên ý tưởng</label>
+          <input type="text" class="form-control" placeholder="Tên ý tưởng sáng tạo...">
+        </div>
+        <div class="form-group">
+          <label>Khách hàng (Client)</label>
+          <input type="text" class="form-control" placeholder="Tên nhãn hàng...">
+        </div>
+        <div class="form-group">
+          <label>Chiến dịch (Campaign)</label>
+          <input type="text" class="form-control" placeholder="Chiến dịch truyền thông...">
+        </div>
+        <div class="form-group">
+          <label>Hạn chót hoàn thành (Deadline)</label>
+          <input type="date" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Insight khách hàng</label>
+        <input type="text" class="form-control" placeholder="Insight cốt lõi của khách hàng mục tiêu...">
+      </div>
+      <div class="form-group">
+        <label>Concept sáng tạo</label>
+        <input type="text" class="form-control" placeholder="Concept chủ đạo...">
+      </div>
+      <div class="form-group">
+        <label>Nội dung chi tiết</label>
+        <textarea class="form-control" rows="2" placeholder="Tóm tắt nội dung ý tưởng truyền tải..."></textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Reference Link (Liên kết tham khảo)</label>
+          <input type="text" class="form-control" placeholder="http://...">
+        </div>
+        <div class="form-group">
+          <label>Moodboard (Phong cách hình ảnh)</label>
+          <input type="text" class="form-control" placeholder="Mô tả phong cách moodboard...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Script (Kịch bản phân cảnh chi tiết)</label>
+        <textarea class="form-control" rows="4" placeholder="Viết kịch bản lời thoại, hành động phân cảnh chi tiết tại đây..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('addIdeaModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã gửi ý tưởng mới lên hàng chờ Review của Quản lý!'); closeModal('addIdeaModal');">Gửi duyệt (Review)</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHỈNH SỬA VÀ NỘP DUYỆT -->
+<div class="modal-backdrop" id="editIdeaModal">
+  <div class="modal-card" style="width:650px;">
+    <div class="modal-header">
+      <div class="modal-title">Chỉnh sửa ý tưởng &amp; Kịch bản</div>
+      <button class="modal-close" onclick="closeModal('editIdeaModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right:8px;">
+      
+      <!-- FEEDBACK ALERTS FROM MANAGER -->
+      <div id="feedbackBox" class="alert-box" style="display:none; background:var(--amber-bg); border-color:#F3D9A6; margin-bottom:16px;">
+        <i class="ti ti-message-dots"></i>
+        <div>
+          <div class="alert-title">Phản hồi yêu cầu sửa từ Quản lý</div>
+          <div id="feedbackText" class="alert-desc">Nhận xét của sếp ở đây.</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tên ý tưởng</label>
+          <input type="text" id="editName" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Khách hàng (Client)</label>
+          <input type="text" id="editClient" class="form-control" readonly style="background:var(--blue-50);">
+        </div>
+        <div class="form-group">
+          <label>Chiến dịch (Campaign)</label>
+          <input type="text" id="editCampaign" class="form-control" readonly style="background:var(--blue-50);">
+        </div>
+        <div class="form-group">
+          <label>Trạng thái kịch bản (Không được tự ý duyệt Approved)</label>
+          <select class="form-control" id="editStatus">
+            <option value="To do">To do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Review">Review (Gửi duyệt)</option>
+            <option value="Need Revision" disabled>Need Revision (Yêu cầu sửa - Quản lý đổi)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Insight khách hàng</label>
+        <input type="text" id="editInsight" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Concept</label>
+        <input type="text" id="editConcept" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Nội dung chi tiết</label>
+        <textarea id="editContent" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Reference Link</label>
+          <input type="text" id="editRef" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Moodboard</label>
+          <input type="text" id="editMoodboard" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Script (Kịch bản phân cảnh chi tiết)</label>
+        <textarea id="editScript" class="form-control" rows="4"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('editIdeaModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã cập nhật thay đổi và gửi lên hàng chờ Review của Quản lý!'); closeModal('editIdeaModal');">Cập nhật &amp; Gửi duyệt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openEditModal(name, client, campaign, insight, concept, content, ref, moodboard, script, status, feedback) {
+    document.getElementById('editName').value = name;
+    document.getElementById('editClient').value = client;
+    document.getElementById('editCampaign').value = campaign;
+    document.getElementById('editInsight').value = insight;
+    document.getElementById('editConcept').value = concept;
+    document.getElementById('editContent').value = content;
+    document.getElementById('editRef').value = ref;
+    document.getElementById('editMoodboard').value = moodboard;
+    document.getElementById('editScript').value = script;
+    document.getElementById('editStatus').value = status === 'Need Revision' ? 'In Progress' : status;
+
+    const feedBox = document.getElementById('feedbackBox');
+    if(feedback) {
+      document.getElementById('feedbackText').innerText = feedback;
+      feedBox.style.display = 'flex';
+    } else {
+      feedBox.style.display = 'none';
+    }
+
+    openModal('editIdeaModal');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Báo cáo Ý tưởng (Quản lý Ý tưởng)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageIdea/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/ManageIdea/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
+    <a href="/ManageIdea/HumanStaff" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageIdea/Reported" class="nav-item active"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Trần Thanh Hải</div>
+          <div class="role-title">Quản lý Ý tưởng</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Báo cáo hiệu suất kịch bản &amp; Ý tưởng</div>
+        <div class="page-sub">Xem phân tích tỷ lệ phê duyệt kịch bản sáng tạo, tiến trình hoàn thành task và xếp loại KPI của Copywriters</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="alert('Đã tải xuống báo cáo phòng sáng tạo!')"><i class="ti ti-download"></i></button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Số lượng kịch bản hoàn thành theo tháng (Bản)</div>
+        </div>
+        <div style="position:relative; height:220px;">
+          <canvas id="scriptsTrendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tỷ lệ duyệt kịch bản (Approved vs Need Revision)</div>
+        </div>
+        <div style="position:relative; height:220px;">
+          <canvas id="scriptsRatioChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-head">
+        <div class="card-title">Báo cáo hiệu suất sáng tạo theo nhân sự</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nhân viên</th>
+            <th>Ý tưởng đã nộp</th>
+            <th>Đã phê duyệt</th>
+            <th>Yêu cầu sửa lại</th>
+            <th>Tỷ lệ phê duyệt thành công (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Đỗ Minh Khôi</strong></td>
+            <td>16 kịch bản</td>
+            <td>14 kịch bản</td>
+            <td>2 kịch bản</td>
+            <td style="color:var(--green); font-weight:600;">87.5%</td>
+          </tr>
+          <tr>
+            <td><strong>Lê Văn C</strong></td>
+            <td>6 kịch bản</td>
+            <td>4 kịch bản</td>
+            <td>2 kịch bản</td>
+            <td style="color:var(--amber); font-weight:600;">66.7%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Ý tưởng — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const trendCtx = document.getElementById('scriptsTrendChart');
+new Chart(trendCtx, {
+  type: 'line',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [{
+      label: 'Kịch bản nộp',
+      data: [15, 22, 20, 25, 28, 32],
+      borderColor: '#2F80ED', tension: 0.3
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false
+  }
+});
+
+const ratioCtx = document.getElementById('scriptsRatioChart');
+new Chart(ratioCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Đã duyệt','Yêu cầu sửa','Đang đợi duyệt'],
+    datasets: [{
+      data: [18, 4, 10],
+      backgroundColor: ['#1CA36B','#DC4E4E','#F2C94C']
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'68%'
+  }
+});
+</script>
+</body>
+</html>

@@ -23,12 +23,148 @@ build_property._RazorSourceGeneratorDebug =
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
+[E:/Ocean/hanamedia/HanaMedia/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/AdminIT/Account.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5JVFxBY2NvdW50LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/AdminIT/AuditLog.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5JVFxBdWRpdExvZy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/AdminIT/ConfigSystem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5JVFxDb25maWdTeXN0ZW0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/AdminIT/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5JVFxEYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/BookingStaff/Booking.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9va2luZ1N0YWZmXEJvb2tpbmcuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/BookingStaff/KOL_KOC.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9va2luZ1N0YWZmXEtPTF9LT0MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/BookingStaff/Reported.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9va2luZ1N0YWZmXFJlcG9ydGVkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Approve.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcQXBwcm92ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/BookingCampaign.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcQm9va2luZ0NhbXBhaWduLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Config.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcQ29uZmlnLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcRGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Department.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcRGVwYXJ0bWVudC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/HumanResources.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcSHVtYW5SZXNvdXJjZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Idea.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcSWRlYS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/MonitoringSystem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcTW9uaXRvcmluZ1N5c3RlbS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Report.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcUmVwb3J0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/Director/Report_test.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlyZWN0b3JcUmVwb3J0X3Rlc3QuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/Ocean/hanamedia/HanaMedia/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/Ocean/hanamedia/HanaMedia/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/HumanResourcesStaff/HumanResources.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSHVtYW5SZXNvdXJjZXNTdGFmZlxIdW1hblJlc291cmNlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/HumanResourcesStaff/Reported.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSHVtYW5SZXNvdXJjZXNTdGFmZlxSZXBvcnRlZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/IdeaStaff/Idea.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSWRlYVN0YWZmXElkZWEuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/IdeaStaff/Reported.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSWRlYVN0YWZmXFJlcG9ydGVkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageBooking/Booking.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlQm9va2luZ1xCb29raW5nLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageBooking/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlQm9va2luZ1xEYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageBooking/KOL_KOC.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlQm9va2luZ1xLT0xfS09DLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageBooking/Reported.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlQm9va2luZ1xSZXBvcnRlZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageBooking/StaffHuman.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlQm9va2luZ1xTdGFmZkh1bWFuLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageHuman/AssignTasks.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSHVtYW5cQXNzaWduVGFza3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageHuman/HumanResources.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSHVtYW5cSHVtYW5SZXNvdXJjZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageHuman/Repoted.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSHVtYW5cUmVwb3RlZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageIdea/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSWRlYVxEYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageIdea/HumanStaff.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSWRlYVxIdW1hblN0YWZmLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageIdea/Idea.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSWRlYVxJZGVhLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Ocean/hanamedia/HanaMedia/Views/ManageIdea/Reported.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuYWdlSWRlYVxSZXBvcnRlZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/Ocean/hanamedia/HanaMedia/Views/Shared/Error.cshtml]

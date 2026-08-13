@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Thư viện Ý tưởng (Quản lý Ý tưởng)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .filter-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-item {
+      flex: 1;
+      min-width: 130px;
+    }
+    .idea-grid-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageIdea/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/ManageIdea/Idea" class="nav-item active"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
+    <a href="/ManageIdea/HumanStaff" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageIdea/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Trần Thanh Hải</div>
+          <div class="role-title">Quản lý Ý tưởng</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Kho Thư viện Ý tưởng (Idea Library)</div>
+        <div class="page-sub">Lưu trữ và phân loại các ý tưởng viral, ngành hàng, chiến dịch quảng cáo và phê duyệt kịch bản sáng tạo</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-row">
+        <div class="filter-item">
+          <input type="text" class="form-control" placeholder="Tìm ý tưởng, kịch bản...">
+        </div>
+        <div class="filter-item">
+          <select class="form-control">
+            <option value="">Tất cả ngành hàng</option>
+            <option value="F&B">F&B / Sữa</option>
+            <option value="Du lịch">Du lịch / Lữ hành</option>
+            <option value="Mỹ phẩm">Mỹ phẩm / Làm đẹp</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <select class="form-control">
+            <option value="">Phân loại thư viện</option>
+            <option value="Trend">Theo Trend</option>
+            <option value="Viral">Viral</option>
+            <option value="Đã triển khai">Đã triển khai</option>
+            <option value="Chưa sử dụng">Chưa sử dụng</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <select class="form-control">
+            <option value="">Trạng thái duyệt</option>
+            <option value="Ý tưởng">Ý tưởng</option>
+            <option value="Review">Review (Đang xem)</option>
+            <option value="Need Revision">Need Revision (Sửa)</option>
+            <option value="Approved">Approved (Đã duyệt)</option>
+          </select>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tên ý tưởng</th>
+            <th>Người tạo</th>
+            <th>Client &amp; Chiến dịch</th>
+            <th>Ngành hàng / Thư viện</th>
+            <th>Người phụ trách</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Chiến dịch Tết Sum Vầy 2027</strong></td>
+            <td>Trần Thanh Hải</td>
+            <td>Vinamilk — Tết Sum Vầy 2027</td>
+            <td>F&B · Đã triển khai</td>
+            <td>Phạm Thu Hà</td>
+            <td><span class="status-chip status-good">Đang triển khai</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openReviewModal('Chiến dịch Tết Sum Vầy 2027', 'Trần Thanh Hải', 'Vinamilk — Tết Sum Vầy 2027', 'Quảng cáo tết truyền thống gia đình', 'Unbox quà và sum vầy gia đình', 'Kịch bản chi tiết 3 bài đăng', 'http://ref.example.com', 'Tông màu đỏ tết ấm cúng', 'Phạm Thu Hà', 'Đang triển khai', 'Kịch bản video TVC 30s và Reels')">Xem &amp; Duyệt</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Hành trình Xanh cùng Cocoon</strong></td>
+            <td>Đỗ Minh Khôi</td>
+            <td>Cocoon — Glow Up Your Skin</td>
+            <td>Mỹ phẩm · Chưa sử dụng</td>
+            <td>Đỗ Minh Khôi</td>
+            <td><span class="status-chip status-warn">Review</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openReviewModal('Hành trình Xanh cùng Cocoon', 'Đỗ Minh Khôi', 'Cocoon — Glow Up Your Skin', 'Bảo vệ thiên nhiên cùng sản phẩm thuần chay', 'Tạo thói quen tái chế vỏ chai sản phẩm', 'Unbox và hướng dẫn gom vỏ chai', 'http://ref.cocoon.com', 'Màu xanh lá nhẹ dịu', 'Đỗ Minh Khôi', 'Review', 'Kịch bản video ngắn TikTok 60s')">Xem &amp; Duyệt</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Ý tưởng — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL XEM CHI TIẾT & PHÊ DUYỆT Ý TƯỞNG -->
+<div class="modal-backdrop" id="reviewModal">
+  <div class="modal-card" style="width:750px; max-width:95%;">
+    <div class="modal-header">
+      <div class="modal-title">Xem xét &amp; Phê duyệt Ý tưởng</div>
+      <button class="modal-close" onclick="closeModal('reviewModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right:8px;">
+      
+      <div class="idea-grid-detail" style="margin-bottom:12px;">
+        <div>
+          <span class="info-label">Ý tưởng</span>
+          <h3 id="detName" style="color:var(--navy); margin-top:2px;">Tên ý tưởng</h3>
+        </div>
+        <div>
+          <span class="info-label">Trạng thái hiện tại</span>
+          <div style="margin-top:4px;"><span id="detStatus" class="status-chip status-good">Đang chạy</span></div>
+        </div>
+      </div>
+
+      <div class="idea-grid-detail" style="background:var(--blue-50); border:1px solid var(--blue-100); padding:14px; border-radius:10px; margin-bottom:16px;">
+        <div>
+          <div class="info-label">Người tạo ý tưởng</div>
+          <div id="detCreator" class="info-val">Lê Văn C</div>
+        </div>
+        <div>
+          <div class="info-label">Client &amp; Campaign</div>
+          <div id="detClientCampaign" class="info-val">Client — Campaign</div>
+        </div>
+        <div>
+          <div class="info-label">Người phụ trách chính</div>
+          <div id="detStaff" class="info-val">Lê Văn C</div>
+        </div>
+        <div>
+          <div class="info-label">Người Review</div>
+          <div class="info-val">Trần Thanh Hải (QL Ý tưởng)</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div class="info-label">Insight khách hàng</div>
+        <div id="detInsight" class="info-val" style="margin-top:2px; font-weight:500;">-</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="info-label">Concept cốt lõi</div>
+        <div id="detConcept" class="info-val" style="margin-top:2px; font-weight:500;">-</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="info-label">Nội dung chi tiết</div>
+        <div id="detContent" class="info-val" style="margin-top:2px; font-weight:500;">-</div>
+      </div>
+      <div class="idea-grid-detail" style="margin-bottom:12px;">
+        <div>
+          <div class="info-label">Reference Link</div>
+          <div id="detRef" class="info-val" style="margin-top:2px;">-</div>
+        </div>
+        <div>
+          <div class="info-label">Moodboard hình ảnh</div>
+          <div id="detMoodboard" class="info-val" style="margin-top:2px;">-</div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div class="info-label">Script (Kịch bản chi tiết)</div>
+        <div id="detScript" style="font-family:monospace; padding:10px; background:#FAFBFD; border:1px solid var(--line); border-radius:8px; margin-top:4px; font-size:12.5px;">-</div>
+      </div>
+
+      <!-- REVIEW FEEDBACK SECTION -->
+      <div style="border-top:1px solid var(--line); padding-top:16px;">
+        <div class="form-group">
+          <label>Ý kiến nhận xét của Manager (Comment)</label>
+          <textarea class="form-control" rows="2" placeholder="Ghi chú phản hồi cho Copywriter chỉnh sửa..."></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('reviewModal')">Hủy</button>
+      <button class="btn-mini reject" onclick="alert('Đã yêu cầu chỉnh sửa kịch bản (Need Revision)!'); closeModal('reviewModal');">Yêu cầu sửa</button>
+      <button class="btn-mini approve" onclick="alert('Đã phê duyệt ý tưởng kịch bản sáng tạo thành công!'); closeModal('reviewModal');">Phê duyệt (Approve)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openReviewModal(name, creator, clientCampaign, insight, concept, content, ref, moodboard, staff, status, script) {
+    document.getElementById('detName').innerText = name;
+    document.getElementById('detCreator').innerText = creator;
+    document.getElementById('detClientCampaign').innerText = clientCampaign;
+    document.getElementById('detInsight').innerText = insight;
+    document.getElementById('detConcept').innerText = concept;
+    document.getElementById('detContent').innerText = content;
+    document.getElementById('detRef').innerHTML = `<a href="${ref}" target="_blank" style="color:var(--blue-600); text-decoration:none;">${ref}</a>`;
+    document.getElementById('detMoodboard').innerText = moodboard;
+    document.getElementById('detStaff').innerText = staff;
+    document.getElementById('detStatus').innerText = status;
+    document.getElementById('detScript').innerText = script;
+
+    const statusChip = document.getElementById('detStatus');
+    if(status === 'Review') {
+      statusChip.className = 'status-chip status-warn';
+    } else {
+      statusChip.className = 'status-chip status-good';
+    }
+
+    openModal('reviewModal');
+  }
+</script>
+</body>
+</html>

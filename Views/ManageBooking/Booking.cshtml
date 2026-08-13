@@ -1,0 +1,394 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý Booking &amp; Thù lao (Quản lý Booking)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .flex-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .salary-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/ManageBooking/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="nav-item active"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="/ManageBooking/StaffHuman" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Nguyễn Anh Tuấn</div>
+          <div class="role-title">Quản lý Booking</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Quản lý Campaign Booking &amp; Phân chia thù lao</div>
+        <div class="page-sub">Giao việc cho nhiều nhân viên trên một booking, điều phối chi phí và phân bổ thu nhập thù lao chi tiết</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-header">
+        <div style="width: 300px;">
+          <input type="text" class="form-control" placeholder="Tìm kiếm chiến dịch, khách hàng...">
+        </div>
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addBookingModal')"><i class="ti ti-plus"></i> Tạo Booking mới</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Client &amp; Campaign</th>
+            <th>KOL/KOC</th>
+            <th>Giá Booking</th>
+            <th>Chi phí thực tế</th>
+            <th>Hợp đồng / Báo giá</th>
+            <th>Nhân viên tham gia</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Vinamilk</strong><br><span style="color:var(--muted); font-size:12px;">Tết Sum Vầy 2027</span></td>
+            <td>Nguyễn Thị H</td>
+            <td>10,000,000 đ</td>
+            <td>4,000,000 đ</td>
+            <td><a href="#" style="color:var(--blue-600);"><i class="ti ti-file-text"></i> hop_dong.pdf</a></td>
+            <td>Phạm Thu Hà, Đỗ Minh Khôi, Lê Văn C</td>
+            <td><span class="status-chip status-good">Đang triển khai</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openSalaryModal('Vinamilk — Tết Sum Vầy 2027', 'Nguyễn Thị H', 10000000, [{'name':'Phạm Thu Hà','val':3000000}, {'name':'Đỗ Minh Khôi','val':3000000}, {'name':'Lê Văn C','val':4000000}], ['11/08/2026 15:40: Khởi tạo phân chia thù lao bởi QL Booking Nguyễn Anh Tuấn.'])">Chia thù lao</button>
+              <button class="btn-mini approve" onclick="openEditBookingModal('Vinamilk', 'Tết Sum Vầy 2027', 'Nguyễn Thị H', 'Quảng cáo sản phẩm sữa Tết', '2027-01-15', '2027-01-20', 10000000, 4000000, 'Phạm Thu Hà', 'Đang triển khai', 'http://link.tiktok.com/123', 'Không có')">Cập nhật</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Traveloka</strong><br><span style="color:var(--muted); font-size:12px;">Mùa Hè Rực Rỡ</span></td>
+            <td>Trần Văn K</td>
+            <td>25,000,000 đ</td>
+            <td>11,000,000 đ</td>
+            <td><a href="#" style="color:var(--blue-600);"><i class="ti ti-file-text"></i> contract_traveloka.pdf</a></td>
+            <td>Phạm Thu Hà, Nguyễn Anh Tuấn</td>
+            <td><span class="status-chip status-good">Hoàn thành</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openSalaryModal('Traveloka — Mùa Hè Rực Rỡ', 'Trần Văn K', 25000000, [{'name':'Phạm Thu Hà','val':10000000}, {'name':'Nguyễn Anh Tuấn','val':15000000}], ['10/08/2026 10:10: Chốt phân chia thù lao (Hà: 10tr, Tuấn: 15tr).'])">Chia thù lao</button>
+              <button class="btn-mini approve" onclick="openEditBookingModal('Traveloka', 'Mùa Hè Rực Rỡ', 'Trần Văn K', 'Unbox và Review voucher du lịch', '2026-08-01', '2026-08-05', 25000000, 11000000, 'Nguyễn Anh Tuấn', 'Hoàn thành', 'http://insta.com/p/456', 'Hoàn thành tốt')">Cập nhật</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Booking — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL TẠO BOOKING MỚI -->
+<div class="modal-backdrop" id="addBookingModal">
+  <div class="modal-card" style="width:650px;">
+    <div class="modal-header">
+      <div class="modal-title">Tạo chiến dịch Booking mới</div>
+      <button class="modal-close" onclick="closeModal('addBookingModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 20px;">
+        <div class="form-group">
+          <label>Khách hàng (Client)</label>
+          <input type="text" class="form-control" placeholder="Tên khách hàng/nhãn hàng...">
+        </div>
+        <div class="form-group">
+          <label>Chiến dịch (Campaign)</label>
+          <input type="text" class="form-control" placeholder="Tên chiến dịch tiếp thị...">
+        </div>
+        <div class="form-group">
+          <label>KOL / KOC</label>
+          <select class="form-control">
+            <option>Nguyễn Thị H (TikTok)</option>
+            <option>Trần Văn K (Instagram)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Giá trị Booking (VND)</label>
+          <input type="number" class="form-control" placeholder="Giá nhận từ Client...">
+        </div>
+        <div class="form-group">
+          <label>Chi phí ước tính (VND)</label>
+          <input type="number" class="form-control" placeholder="Chi phí deal với KOL...">
+        </div>
+        <div class="form-group">
+          <label>Thời hạn hoàn thành (Deadline)</label>
+          <input type="date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Người phụ trách chính</label>
+          <select class="form-control">
+            <option>Phạm Thu Hà</option>
+            <option>Nguyễn Anh Tuấn</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>File Báo giá đính kèm</label>
+          <input type="file" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nội dung công việc</label>
+        <textarea class="form-control" rows="2" placeholder="Chi tiết yêu cầu bài đăng..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('addBookingModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã tạo thành công Booking mới!'); closeModal('addBookingModal');">Tạo Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CẬP NHẬT CHI TIẾT BOOKING -->
+<div class="modal-backdrop" id="editBookingModal">
+  <div class="modal-card" style="width:650px;">
+    <div class="modal-header">
+      <div class="modal-title">Cập nhật chi tiết Booking</div>
+      <button class="modal-close" onclick="closeModal('editBookingModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 20px;">
+        <div class="form-group">
+          <label>Client</label>
+          <input type="text" id="editClient" class="form-control" readonly style="background:var(--blue-50);">
+        </div>
+        <div class="form-group">
+          <label>Campaign</label>
+          <input type="text" id="editCampaign" class="form-control" readonly style="background:var(--blue-50);">
+        </div>
+        <div class="form-group">
+          <label>Giá trị Booking</label>
+          <input type="number" id="editValue" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Chi phí Booking</label>
+          <input type="number" id="editCost" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Link bài đăng bài</label>
+          <input type="text" id="editLink" class="form-control" placeholder="Link bài đăng TikTok/Instagram...">
+        </div>
+        <div class="form-group">
+          <label>Trạng thái</label>
+          <select class="form-control" id="editStatus">
+            <option>Đang chờ</option>
+            <option>Thương lượng</option>
+            <option>Đã chốt</option>
+            <option>Đang triển khai</option>
+            <option>Hoàn thành</option>
+            <option>Hủy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hợp đồng đã ký (.pdf)</label>
+          <input type="file" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Báo giá đã duyệt (.pdf)</label>
+          <input type="file" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Ghi chú</label>
+        <textarea id="editNotes" class="form-control" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('editBookingModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã cập nhật booking!'); closeModal('editBookingModal');">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHIA THÙ LAO CHI TIẾT -->
+<div class="modal-backdrop" id="salaryModal">
+  <div class="modal-card" style="width:600px;">
+    <div class="modal-header">
+      <div class="modal-title">Phân bổ thù lao trên Booking</div>
+      <button class="modal-close" onclick="closeModal('salaryModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--blue-50); border:1px solid var(--blue-100); padding:12px; border-radius:10px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-size:13px; font-weight:600; color:var(--ink-2);">Chiến dịch:</span>
+          <span id="salCampaign" style="font-size:13px; font-weight:700; color:var(--navy);">Campaign Name</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-size:13px; font-weight:600; color:var(--ink-2);">KOL:</span>
+          <span id="salKOL" style="font-size:13px; font-weight:700; color:var(--navy);">KOL Name</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="font-size:13px; font-weight:600; color:var(--ink-2);">Giá trị Booking:</span>
+          <span id="salValueLabel" style="font-size:13px; font-weight:700; color:var(--blue-700);">10,000,000 đ</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px; font-weight:700; font-size:12px; color:var(--muted); text-transform:uppercase;">Phân bổ thu nhập nhân sự tham gia</div>
+      <div id="salaryRowsContainer">
+        <!-- Dynamic salary input fields -->
+      </div>
+      
+      <button class="btn-mini" style="margin-bottom:16px;" onclick="addSalaryRow('', 0)"><i class="ti ti-plus"></i> Gán thêm nhân viên</button>
+
+      <div style="display:flex; justify-content:space-between; font-weight:700; font-size:14px; border-top:1px solid var(--line); padding-top:12px; margin-bottom:16px;">
+        <span>Tổng phân bổ thù lao:</span>
+        <span id="totalAllocatedLabel">0 đ</span>
+      </div>
+
+      <!-- WARNING BOX -->
+      <div id="salWarningBox" class="alert-box" style="display:none; background:var(--red-bg); border-color:#F8D7DA; margin-bottom:16px;">
+        <i class="ti ti-alert-triangle" style="color:var(--red);"></i>
+        <div>
+          <div class="alert-title" style="color:#721C24;">Cảnh báo phân bổ vượt định mức</div>
+          <div class="alert-desc" style="color:#721C24;">Tổng số tiền thù lao phân bổ cho nhân viên vượt quá giá trị hợp đồng booking hiện tại!</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line); padding-top:12px;">
+        <div class="info-label">Lịch sử thay đổi thù lao (Audit logs)</div>
+        <div id="salLogs" style="font-size:12px; color:var(--muted); max-height:80px; overflow-y:auto; margin-top:6px; line-height:1.5;">
+          <!-- Log logs -->
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('salaryModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="saveSalaryAllocation()">Lưu phân bổ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentBookingValue = 0;
+  
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openEditBookingModal(client, campaign, kol, notes, deadline, date_published, value, cost, staff, status, link, notes_field) {
+    document.getElementById('editClient').value = client;
+    document.getElementById('editCampaign').value = campaign;
+    document.getElementById('editValue').value = value;
+    document.getElementById('editCost').value = cost;
+    document.getElementById('editLink').value = link;
+    document.getElementById('editStatus').value = status;
+    document.getElementById('editNotes').value = notes_field;
+    openModal('editBookingModal');
+  }
+
+  function openSalaryModal(campaign, kolName, totalVal, currentAllocations, historyLogs) {
+    document.getElementById('salCampaign').innerText = campaign;
+    document.getElementById('salKOL').innerText = kolName;
+    currentBookingValue = totalVal;
+    document.getElementById('salValueLabel').innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalVal);
+    
+    // Clear container
+    const container = document.getElementById('salaryRowsContainer');
+    container.innerHTML = '';
+
+    currentAllocations.forEach(item => {
+      addSalaryRow(item.name, item.val);
+    });
+
+    // Populate history logs
+    const logBox = document.getElementById('salLogs');
+    logBox.innerHTML = '';
+    historyLogs.forEach(log => {
+      logBox.innerHTML += `<div>• ${log}</div>`;
+    });
+
+    calculateTotalAllocated();
+    openModal('salaryModal');
+  }
+
+  function addSalaryRow(name, value) {
+    const container = document.getElementById('salaryRowsContainer');
+    const row = document.createElement('div');
+    row.className = 'salary-row';
+    
+    row.innerHTML = `
+      <select class="form-control staff-select" style="flex:1;">
+        <option value="Phạm Thu Hà" ${name === 'Phạm Thu Hà' ? 'selected' : ''}>Phạm Thu Hà</option>
+        <option value="Đỗ Minh Khôi" ${name === 'Đỗ Minh Khôi' ? 'selected' : ''}>Đỗ Minh Khôi</option>
+        <option value="Lê Văn C" ${name === 'Lê Văn C' ? 'selected' : ''}>Lê Văn C</option>
+        <option value="Nguyễn Văn B" ${name === 'Nguyễn Văn B' ? 'selected' : ''}>Nguyễn Văn B</option>
+        <option value="Nguyễn Anh Tuấn" ${name === 'Nguyễn Anh Tuấn' ? 'selected' : ''}>Nguyễn Anh Tuấn</option>
+      </select>
+      <input type="number" class="form-control val-input" value="${value}" style="width:150px;" oninput="calculateTotalAllocated()">
+      <button class="btn-mini reject" onclick="this.parentElement.remove(); calculateTotalAllocated();" style="padding: 10px;">Xóa</button>
+    `;
+    
+    container.appendChild(row);
+  }
+
+  function calculateTotalAllocated() {
+    const inputs = document.getElementsByClassName('val-input');
+    let total = 0;
+    for(let input of inputs) {
+      total += parseFloat(input.value || 0);
+    }
+    
+    document.getElementById('totalAllocatedLabel').innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+
+    const warnBox = document.getElementById('salWarningBox');
+    if (total > currentBookingValue) {
+      warnBox.style.display = 'flex';
+    } else {
+      warnBox.style.display = 'none';
+    }
+  }
+
+  function saveSalaryAllocation() {
+    alert('Lưu phân chia thù lao thành công! Đã tự động ghi nhận vào Audit Log.');
+    closeModal('salaryModal');
+  }
+</script>
+</body>
+</html>

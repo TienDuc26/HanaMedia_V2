@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý Nhân sự phòng Booking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/ManageBooking/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="/ManageBooking/StaffHuman" class="nav-item active"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">QL</div>
+        <div>
+          <div class="role-name">Nguyễn Anh Tuấn</div>
+          <div class="role-title">Quản lý Booking</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Quản lý Nhân sự &amp; Phân công công việc</div>
+        <div class="page-sub">Giao booking, thiết lập hạn chót, điều phối workload và theo dõi hiệu suất hoàn thành của phòng Booking</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Nhân sự phòng Booking (KOL/KOC)</div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Nhân viên</th>
+            <th>Số lượng Booking phụ trách</th>
+            <th>Trực thuộc quản lý</th>
+            <th>Hiệu suất hoàn thành (T8)</th>
+            <th>Đánh giá năng lực</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Phạm Thu Hà</strong></td>
+            <td>12 booking đang chạy</td>
+            <td>Nguyễn Anh Tuấn</td>
+            <td><span class="bar-mini"><span class="bar-mini-fill" style="width:92%"></span></span>92%</td>
+            <td><span class="status-chip status-good">Tốt</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openTaskModal('Phạm Thu Hà')">Giao việc</button>
+              <button class="btn-mini" onclick="openKPIModal('Phạm Thu Hà', 92, 'Tốt')">Đánh giá KPI</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Nguyễn Văn B</strong></td>
+            <td>8 booking đang chạy</td>
+            <td>Nguyễn Anh Tuấn</td>
+            <td><span class="bar-mini"><span class="bar-mini-fill" style="width:75%"></span></span>75%</td>
+            <td><span class="status-chip status-warn">Theo dõi sát sao</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini approve" onclick="openTaskModal('Nguyễn Văn B')">Giao việc</button>
+              <button class="btn-mini" onclick="openKPIModal('Nguyễn Văn B', 75, 'Theo dõi')">Đánh giá KPI</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý Booking — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL GIAO VIỆC -->
+<div class="modal-backdrop" id="taskModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Phân công Booking &amp; Task công việc</div>
+      <button class="modal-close" onclick="closeModal('taskModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nhân sự đảm nhận</label>
+        <input type="text" id="taskStaff" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Chiến dịch / Booking cần giao</label>
+        <select class="form-control">
+          <option>Vinamilk — Tết Sum Vầy 2027</option>
+          <option>Traveloka — Mùa Hè Rực Rỡ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tiêu đề công việc</label>
+        <input type="text" class="form-control" placeholder="Ví dụ: Liên hệ báo giá với KOL...">
+      </div>
+      <div class="form-group">
+        <label>Chi tiết yêu cầu &amp; nội dung</label>
+        <textarea class="form-control" rows="3" placeholder="Nhập chi tiết hướng dẫn công việc..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Hạn chót hoàn thành (Deadline)</label>
+        <input type="date" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('taskModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã giao công việc thành công!'); closeModal('taskModal');">Giao việc</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ĐÁNH GIÁ KPI -->
+<div class="modal-backdrop" id="kpiModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Đánh giá Hiệu suất (KPI) nhân viên</div>
+      <button class="modal-close" onclick="closeModal('kpiModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nhân sự đánh giá</label>
+        <input type="text" id="kpiStaff" class="form-control" readonly style="background:var(--blue-50);">
+      </div>
+      <div class="form-group">
+        <label>Hiệu suất mục tiêu tháng này (%)</label>
+        <input type="number" id="kpiValueInput" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Phân loại đánh giá</label>
+        <select class="form-control" id="kpiEvaluationSelect">
+          <option value="Tốt">Tốt (Hoàn thành mục tiêu)</option>
+          <option value="Theo dõi">Theo dõi (Chưa đạt kế hoạch)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('kpiModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã cập nhật đánh giá KPI thành công!'); closeModal('kpiModal');">Lưu kết quả</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function openTaskModal(name) {
+    document.getElementById('taskStaff').value = name;
+    openModal('taskModal');
+  }
+
+  function openKPIModal(name, score, evalStatus) {
+    document.getElementById('kpiStaff').value = name;
+    document.getElementById('kpiValueInput').value = score;
+    document.getElementById('kpiEvaluationSelect').value = evalStatus;
+    openModal('kpiModal');
+  }
+</script>
+</body>
+</html>

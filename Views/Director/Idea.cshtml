@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Thư viện Ý tưởng (Giám đốc)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .idea-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item active"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Kho thư viện Ý tưởng &amp; Sáng tạo</div>
+        <div class="page-sub">Kho lưu trữ ý tưởng tiếp thị, kịch bản, concept sáng tạo của toàn công ty</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Ý tưởng sáng tạo gần đây</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tên ý tưởng</th>
+            <th>Người tạo</th>
+            <th>Client &amp; Chiến dịch</th>
+            <th>Người review</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Chiến dịch Tết Sum Vầy 2027</strong></td>
+            <td>Trần Thanh Hải</td>
+            <td>Vinamilk — Tết Sum Vầy 2027</td>
+            <td>Trần Thanh Hải (QL)</td>
+            <td><span class="status-chip status-good">Đang triển khai</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openIdeaModal('Chiến dịch Tết Sum Vầy 2027', 'Trần Thanh Hải', 'Vinamilk', 'Tết Sum Vầy 2027', 'Trải nghiệm sự sum vầy gia đình ngày tết', 'Quảng cáo gia đình xúc động', 'Kịch bản chi tiết truyền tải tình yêu gia đình', 'http://ref.example.com', 'Hình ảnh gia đình đầm ấm', 'Kịch bản truyền hình 30s', '20/12/2026', 'Phạm Thu Hà', 'Trần Thanh Hải', 'Đang triển khai')">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Hành trình Xanh cùng Cocoon</strong></td>
+            <td>Đỗ Minh Khôi</td>
+            <td>Cocoon — Glow Up Your Skin</td>
+            <td>Trần Thanh Hải (QL)</td>
+            <td><span class="status-chip status-warn">Review</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openIdeaModal('Hành trình Xanh cùng Cocoon', 'Đỗ Minh Khôi', 'Cocoon', 'Glow Up Your Skin', 'Người dùng quan tâm đến sản phẩm thuần chay', 'Chiến dịch xanh bảo vệ môi trường', 'KOL quay video unbox sản phẩm xanh', 'http://ref.cocoon.com', 'Tông màu xanh lá bảo vệ thiên nhiên', 'Kịch bản TikTok/Reels 60s', '15/09/2026', 'Đỗ Minh Khôi', 'Trần Thanh Hải', 'Review')">Chi tiết</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL CHI TIẾT Ý TƯỞNG -->
+<div class="modal-backdrop" id="ideaModal">
+  <div class="modal-card" style="width: 700px; max-width: 95%;">
+    <div class="modal-header">
+      <div class="modal-title">Chi tiết ý tưởng sáng tạo</div>
+      <button class="modal-close" onclick="closeModal('ideaModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="idea-grid" style="margin-bottom: 16px;">
+        <div>
+          <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Ý TƯỞNG</span>
+          <h3 id="ideaName" style="color: var(--navy); margin-top: 2px;">Chiến dịch Tết Sum Vầy 2027</h3>
+        </div>
+        <div>
+          <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">TRẠNG THÁI</span>
+          <div style="margin-top: 4px;"><span id="ideaStatus" class="status-chip status-good">Đang triển khai</span></div>
+        </div>
+      </div>
+
+      <div class="idea-grid" style="background: var(--blue-50); padding: 14px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--blue-100);">
+        <div>
+          <div class="info-label">Người tạo</div>
+          <div class="info-val" id="ideaCreator">Trần Thanh Hải</div>
+        </div>
+        <div>
+          <div class="info-label">Khách hàng &amp; Campaign</div>
+          <div class="info-val" id="ideaClientCampaign">Vinamilk — Tết Sum Vầy 2027</div>
+        </div>
+        <div>
+          <div class="info-label">Người phụ trách</div>
+          <div class="info-val" id="ideaStaff">Phạm Thu Hà</div>
+        </div>
+        <div>
+          <div class="info-label">Người Review</div>
+          <div class="info-val" id="ideaReviewer">Trần Thanh Hải</div>
+        </div>
+        <div>
+          <div class="info-label">Hạn chót (Deadline)</div>
+          <div class="info-val" id="ideaDeadline">20/12/2026</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <div class="info-label">Insight</div>
+        <div class="info-val" id="ideaInsight" style="margin-top: 4px;">-</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <div class="info-label">Concept</div>
+        <div class="info-val" id="ideaConcept" style="margin-top: 4px;">-</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <div class="info-label">Nội dung chi tiết</div>
+        <div class="info-val" id="ideaContent" style="margin-top: 4px;">-</div>
+      </div>
+      <div class="idea-grid" style="margin-bottom: 12px;">
+        <div>
+          <div class="info-label">Reference Link</div>
+          <div class="info-val" id="ideaRef" style="margin-top: 4px;"><a href="#" target="_blank" style="color: var(--blue-600); text-decoration: none;">Xem liên kết</a></div>
+        </div>
+        <div>
+          <div class="info-label">Moodboard</div>
+          <div class="info-val" id="ideaMoodboard" style="margin-top: 4px;">-</div>
+        </div>
+      </div>
+      <div>
+        <div class="info-label">Script (Kịch bản)</div>
+        <div class="info-val" id="ideaScript" style="margin-top: 4px; padding: 10px; background: #FAFBFD; border-radius: 8px; border: 1px solid var(--line); font-family: monospace;">-</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini approve" onclick="closeModal('ideaModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openIdeaModal(name, creator, client, campaign, insight, concept, content, ref, moodboard, script, deadline, staff, reviewer, status) {
+    document.getElementById('ideaName').innerText = name;
+    document.getElementById('ideaCreator').innerText = creator;
+    document.getElementById('ideaClientCampaign').innerText = `${client} — ${campaign}`;
+    document.getElementById('ideaInsight').innerText = insight;
+    document.getElementById('ideaConcept').innerText = concept;
+    document.getElementById('ideaContent').innerText = content;
+    document.getElementById('ideaRef').innerHTML = `<a href="${ref}" target="_blank" style="color: var(--blue-600); text-decoration: none;">${ref}</a>`;
+    document.getElementById('ideaMoodboard').innerText = moodboard;
+    document.getElementById('ideaScript').innerText = script;
+    document.getElementById('ideaDeadline').innerText = deadline;
+    document.getElementById('ideaStaff').innerText = staff;
+    document.getElementById('ideaReviewer').innerText = reviewer;
+    document.getElementById('ideaStatus').innerText = status;
+
+    const statusChip = document.getElementById('ideaStatus');
+    if (status === 'Review') {
+      statusChip.className = 'status-chip status-warn';
+    } else {
+      statusChip.className = 'status-chip status-good';
+    }
+
+    document.getElementById('ideaModal').classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+</script>
+</body>
+</html>

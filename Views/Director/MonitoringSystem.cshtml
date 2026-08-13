@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Giám sát hệ thống (Giám đốc)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item active"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Báo cáo hoạt động &amp; Giám sát hệ thống</div>
+        <div class="page-sub">Theo dõi tổng lượng truy cập, bảo mật mạng nội bộ và các cảnh báo bất thường do AdminIT cung cấp</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Chỉ số vận hành hệ thống</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-login-2"></i>Lượt đăng nhập thành công hôm nay</div>
+          <div class="monitor-value">47 lượt</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-users-group"></i>Người dùng đang online</div>
+          <div class="monitor-value">31 người</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-wifi-off"></i>Nỗ lực truy cập ngoài mạng LAN/Wifi bị chặn</div>
+          <div class="monitor-value">3 lần</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-alert-triangle"></i>Cảnh báo bảo mật</div>
+          <div class="monitor-value" style="color:var(--amber);">2 cảnh báo</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Cảnh báo bất thường hiện tại</div>
+        </div>
+        <div class="alert-box" style="margin-top:0;">
+          <i class="ti ti-alert-triangle"></i>
+          <div>
+            <div class="alert-title">Đăng nhập thất bại liên tiếp (1 tài khoản)</div>
+            <div class="alert-desc">Nhân viên Booking (Nguyễn Văn B) nhập sai mật khẩu 5 lần liên tiếp từ IP mạng nội bộ. Đã tự động tạm khóa.</div>
+          </div>
+        </div>
+        <div class="alert-box">
+          <i class="ti ti-shield-lock"></i>
+          <div>
+            <div class="alert-title">Cố gắng truy cập ngoài mạng LAN (3 lần, cùng 1 IP)</div>
+            <div class="alert-desc">Yêu cầu đăng nhập từ ngoài IP whitelist văn phòng bị tường lửa từ chối. IP nguồn: 14.226.x.x (Mạng 4G Viettel).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-head">
+        <div class="card-title">Tổng quan nhật ký vận hành (Audit Log tổng quan)</div>
+      </div>
+      <div class="alert-box" style="background: var(--blue-50); border-color: var(--blue-100); color: var(--blue-700); margin-top: 0; margin-bottom: 16px;">
+        <i class="ti ti-info-circle" style="color: var(--blue-700);"></i>
+        <div>
+          <div class="alert-title" style="color: var(--blue-900);">Thông báo phân quyền truy cập</div>
+          <div class="alert-desc" style="color: var(--blue-900);">Giám đốc chỉ xem thống kê hoạt động tổng quan. Để truy cập nhật ký chi tiết hoặc quản trị tài khoản, vui lòng liên hệ AdminIT.</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Module tác động</th>
+            <th>Số lượng thao tác</th>
+            <th>Hành vi phổ biến</th>
+            <th>Lần cuối cập nhật</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Nhân sự</strong></td>
+            <td>12 thao tác</td>
+            <td>Tạo hồ sơ nhân viên mới, thay đổi trạng thái</td>
+            <td>10 phút trước</td>
+          </tr>
+          <tr>
+            <td><strong>Booking / KOL</strong></td>
+            <td>45 thao tác</td>
+            <td>Gán thù lao nhân viên, đổi trạng thái booking</td>
+            <td>2 giờ trước</td>
+          </tr>
+          <tr>
+            <td><strong>Ý tưởng sáng tạo</strong></td>
+            <td>18 thao tác</td>
+            <td>Nộp ý tưởng cho Manager duyệt, comment feedback</td>
+            <td>Hôm qua</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+</body>
+</html>

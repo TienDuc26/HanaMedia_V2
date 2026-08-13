@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Giao việc &amp; Phân công (Quản lý HCNS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .flex-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Vận hành nhân sự</div>
+    <a href="/ManageHuman/HumanResources" class="nav-item"><i class="ti ti-users"></i>Hồ sơ nhân sự</a>
+    <a href="/ManageHuman/AssignTasks" class="nav-item active"><i class="ti ti-checklist"></i>Giao việc &amp; Phân công</a>
+    <a href="/ManageHuman/Repoted" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">HR</div>
+        <div>
+          <div class="role-name">Vũ Ngọc Lan</div>
+          <div class="role-title">Quản lý HCNS</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Giao việc &amp; Phân công nhiệm vụ</div>
+        <div class="page-sub">Giao nhiệm vụ làm hợp đồng thử việc, rà soát hồ sơ năng lực và cập nhật giấy tờ cho nhân viên dưới quyền</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-header">
+        <div style="width: 300px;">
+          <input type="text" class="form-control" placeholder="Tìm kiếm công việc...">
+        </div>
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addTaskModal')"><i class="ti ti-plus"></i> Giao việc mới</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tiêu đề công việc</th>
+            <th>Nhân sự thực hiện</th>
+            <th>Mô tả yêu cầu</th>
+            <th>Thời hạn (Deadline)</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Soạn hợp đồng thử việc cho Phạm Thu Hà</strong></td>
+            <td>Nguyễn Văn C (NV HCNS)</td>
+            <td>Làm hợp đồng chính thức, thời hạn 1 năm.</td>
+            <td>15/08/2026</td>
+            <td><span class="status-chip status-good">Hoàn thành</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="alert('Đã đôn đốc deadline!')">Đôn đốc</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Rà soát hồ sơ bảo hiểm nhân sự mới</strong></td>
+            <td>Trần Thị D (NV HCNS)</td>
+            <td>Thu thập số sổ BHXH của các nhân sự vào làm tháng 8.</td>
+            <td>25/08/2026</td>
+            <td><span class="status-chip status-warn">Đang chạy</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="alert('Đã gửi thông báo nhắc nhở!')">Nhắc nhở</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>HanaMedia · Dashboard Quản lý HCNS — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<!-- MODAL GIAO VIỆC MỚI -->
+<div class="modal-backdrop" id="addTaskModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Giao công việc hành chính nhân sự</div>
+      <button class="modal-close" onclick="closeModal('addTaskModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nhân viên thực hiện (Phòng HCNS)</label>
+        <select class="form-control">
+          <option>Nguyễn Văn C (NV HCNS)</option>
+          <option>Trần Thị D (NV HCNS)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tiêu đề công việc</label>
+        <input type="text" class="form-control" placeholder="Ví dụ: Soạn thảo hợp đồng, Thu hồ sơ...">
+      </div>
+      <div class="form-group">
+        <label>Yêu cầu chi tiết</label>
+        <textarea class="form-control" rows="3" placeholder="Nhập chi tiết hướng dẫn thực hiện..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Thời hạn (Deadline)</label>
+        <input type="date" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('addTaskModal')">Hủy</button>
+      <button class="btn-mini approve" onclick="alert('Đã giao việc thành công!'); closeModal('addTaskModal');">Giao việc</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+</script>
+</body>
+</html>
