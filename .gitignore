@@ -1,0 +1,59 @@
+## Ignore Visual Studio temporary files, build results, and user settings
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Mono auto-generated files
+mono_crash.*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Re]leases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Log]/
+
+# Visual Studio 2015/2017 cache directory
+.vs/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Cc]omputer/
+
+# Diagnostic Action Results
+*.diagsession
+
+# NUnit
+/*.xml
+/*.log
+
+# OpenCover
+pdf/
+
+# Rider
+.idea/
+
+# DotCover
+*.cov
+
+# AxoCover
+.axoCover/
+
+# Visual Studio Code
+.vscode/
+
+# appsettings.Development.json (Optional: some teams ignore it to avoid local connection strings leaking)
+# appsettings.Development.json
