@@ -1,146 +1,209 @@
+using System.Globalization;
+using System.Security.Claims;
+using HanaMedia.Constants;
+using HanaMedia.Models;
+using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using HanaMedia.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace HanaMedia.Controllers
-{
-    [AllowAnonymous]
-    public class AccountController : Controller
-    {
-        private readonly ApplicationDbContext _context;
+namespace HanaMedia.Controllers;
 
-        public AccountController(ApplicationDbContext context)
+public sealed class AccountController : Controller
+{
+    private const string InvalidCredentialsMessage = "Tên đăng nhập hoặc mật khẩu không chính xác.";
+
+    private readonly ApplicationDbContext _context;
+    private readonly IAccountPasswordService _passwordService;
+    private readonly ISystemAuditService _auditService;
+    private readonly ILogger<AccountController> _logger;
+
+    public AccountController(
+        ApplicationDbContext context,
+        IAccountPasswordService passwordService,
+        ISystemAuditService auditService,
+        ILogger<AccountController> logger)
+    {
+        _context = context;
+        _passwordService = passwordService;
+        _auditService = auditService;
+        _logger = logger;
+    }
+
+    [AllowAnonymous]
+    [Route("")]
+    [Route("Login")]
+    [HttpGet]
+    public IActionResult Login()
+    {
+        if (User.Identity?.IsAuthenticated == true)
         {
-            _context = context;
+            return RedirectToDashboard(User.FindFirstValue(ClaimTypes.Role));
         }
 
-        [Route("")]
-        [Route("Login")]
-        [HttpGet]
-        public IActionResult Login()
+        return View();
+    }
+
+    [AllowAnonymous]
+    [Route("Login")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(
+        string username,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        username = username?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                var role = User.FindFirst(ClaimTypes.Role)?.Value;
-                return RedirectToDashboard(role);
-            }
+            ViewBag.Error = "Tên đăng nhập và mật khẩu không được để trống.";
             return View();
         }
 
-        [Route("Login")]
-        [HttpPost]
-        public async Task<IActionResult> Login(string username, string password)
+        User? user;
+        try
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            {
-                ViewBag.Error = "Tên đăng nhập và mật khẩu không được để trống.";
-                return View();
-            }
-
-            User? user = null;
-
-            try
-            {
-                user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Username == username || u.Email == username);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Lỗi kết nối cơ sở dữ liệu: {ex.Message}";
-                return View();
-            }
-
-            if (user == null)
-            {
-                ViewBag.Error = "Tài khoản không tồn tại.";
-                return View();
-            }
-
-            if (user.Status != "active")
-            {
-                ViewBag.Error = "Tài khoản đang bị khóa.";
-                return View();
-            }
-
-            // Verify password (plain text or SHA256)
-            bool isPasswordMatch = password == user.PasswordHash || ComputeSha256Hash(password) == user.PasswordHash;
-
-            if (!isPasswordMatch)
-            {
-                ViewBag.Error = "Mật khẩu không chính xác.";
-                return View();
-            }
-
-            // Sign in
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
-            };
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
-            return RedirectToDashboard(user.Role);
+            user = await _context.Users.FirstOrDefaultAsync(
+                account => account.Username == username || account.Email == username,
+                cancellationToken);
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            ViewBag.Error = "Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.";
+            return View();
         }
 
-        [Route("Logout")]
-        [HttpGet]
-        public async Task<IActionResult> Logout()
+        if (user is null)
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login");
+            await TryWriteAuditAsync(
+                null,
+                "login_failed",
+                $"Đăng nhập thất bại với định danh không tồn tại: {Truncate(username, 100)}.",
+                cancellationToken);
+            ViewBag.Error = InvalidCredentialsMessage;
+            return View();
         }
 
-        private IActionResult RedirectToDashboard(string? role)
+        if (!string.Equals(user.Status, AccountStatuses.Active, StringComparison.Ordinal))
         {
-            switch (role)
-            {
-                case "giam_doc":
-                    return RedirectToAction("Dashboard", "Director");
-                case "admin_it":
-                    return RedirectToAction("Dashboard", "AdminIT");
-                case "ql_hcns":
-                    return RedirectToAction("HumanResources", "ManageHuman");
-                case "nv_hcns":
-                    return RedirectToAction("HumanResources", "HumanResourcesStaff");
-                case "ql_booking":
-                    return RedirectToAction("Dashboard", "ManageBooking");
-                case "nv_booking":
-                    return RedirectToAction("Booking", "BookingStaff");
-                case "ql_y_tuong":
-                    return RedirectToAction("Dashboard", "ManageIdea");
-                case "nv_y_tuong":
-                    return RedirectToAction("Idea", "IdeaStaff");
-                default:
-                    return RedirectToAction("Index", "Home");
-            }
+            await TryWriteAuditAsync(
+                user.Id,
+                "login_failed",
+                $"Tài khoản {user.Username} đang bị khóa.",
+                cancellationToken);
+            ViewBag.Error = "Tài khoản đang bị khóa.";
+            return View();
         }
 
-        private string ComputeSha256Hash(string rawData)
+        if (_passwordService.VerifyPassword(user, password) == PasswordVerificationStatus.Failed)
         {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
-            }
+            await TryWriteAuditAsync(
+                user.Id,
+                "login_failed",
+                $"Sai mật khẩu tài khoản {user.Username}.",
+                cancellationToken);
+            ViewBag.Error = InvalidCredentialsMessage;
+            return View();
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role),
+            new(SecurityClaimTypes.SecurityStamp, user.SecurityStamp.ToString("D"))
+        };
+
+        var claimsIdentity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2),
+            AllowRefresh = true
+        };
+
+        await TryWriteAuditAsync(
+            user.Id,
+            "login_succeeded",
+            $"Tài khoản {user.Username} đăng nhập thành công.",
+            cancellationToken);
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties);
+
+        return RedirectToDashboard(user.Role);
+    }
+
+    [Authorize]
+    [Route("Logout")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var identifier = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (int.TryParse(identifier, NumberStyles.None, CultureInfo.InvariantCulture, out var userId))
+        {
+            await TryWriteAuditAsync(
+                userId,
+                "logout",
+                $"Tài khoản {User.Identity?.Name} đăng xuất.",
+                cancellationToken);
+        }
+
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction(nameof(Login));
+    }
+
+    [AllowAnonymous]
+    [Route("AccessDenied")]
+    [HttpGet]
+    public IActionResult AccessDenied() => View();
+
+    private IActionResult RedirectToDashboard(string? role)
+        => role switch
+        {
+            AppRoles.Director => RedirectToAction("Dashboard", "Director"),
+            AppRoles.AdminIT => RedirectToAction("Dashboard", "AdminIT"),
+            AppRoles.HumanResourcesManager => RedirectToAction("HumanResources", "ManageHuman"),
+            AppRoles.HumanResourcesStaff => RedirectToAction("HumanResources", "HumanResourcesStaff"),
+            AppRoles.BookingManager => RedirectToAction("Dashboard", "ManageBooking"),
+            AppRoles.BookingStaff => RedirectToAction("Booking", "BookingStaff"),
+            AppRoles.IdeaManager => RedirectToAction("Dashboard", "ManageIdea"),
+            AppRoles.IdeaStaff => RedirectToAction("Idea", "IdeaStaff"),
+            _ => RedirectToAction("Index", "Home")
+        };
+
+    private async Task TryWriteAuditAsync(
+        int? userId,
+        string actionType,
+        string detail,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _auditService.AddAccountEvent(userId, actionType, detail);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Authentication must remain available even when audit persistence is temporarily unavailable.
+            _logger.LogWarning(
+                exception,
+                "Không thể ghi audit xác thực {ActionType} cho user {UserId}.",
+                actionType,
+                userId);
         }
     }
+
+    private static string Truncate(string value, int maxLength)
+        => value.Length <= maxLength ? value : value[..maxLength];
 }

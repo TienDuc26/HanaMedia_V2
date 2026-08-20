@@ -1,9 +1,10 @@
+using HanaMedia.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HanaMedia.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = AppRoles.BookingStaff)]
     public class BookingStaffController : Controller
     {
         public IActionResult Booking()

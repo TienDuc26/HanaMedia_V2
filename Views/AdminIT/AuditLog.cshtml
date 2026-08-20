@@ -1,4 +1,12 @@
-﻿<!DOCTYPE html>
+@using HanaMedia.ViewModels
+@model AuditLogPageViewModel
+@{
+  var fromValue = Model.Filter.From?.ToString("yyyy-MM-dd");
+  var toValue = Model.Filter.To?.ToString("yyyy-MM-dd");
+  var firstVisiblePage = Math.Max(1, Model.CurrentPage - 2);
+  var lastVisiblePage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+}
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -64,7 +72,15 @@
         <div class="page-sub">Ghi nhận toàn bộ thao tác thay đổi dữ liệu của tất cả tài khoản phục vụ mục đích bảo mật và đối soát</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="alert('Đã xuất báo cáo Audit Log dạng Excel!')"><i class="ti ti-file-text"></i> Xuất báo cáo log</button>
+        <a asp-controller="AdminIT"
+           asp-action="ExportAuditLog"
+           asp-route-user="@Model.Filter.User"
+           asp-route-actionType="@Model.Filter.ActionType"
+           asp-route-module="@Model.Filter.Module"
+           asp-route-from="@fromValue"
+           asp-route-to="@toValue"
+           class="btn-mini approve"
+           style="padding: 10px 18px;"><i class="ti ti-file-text"></i> Xuất báo cáo log</a>
       </div>
     </div>
 
@@ -73,60 +89,89 @@
         <div class="card-title" style="color:#8A5A0B;"><i class="ti ti-alert-triangle"></i> Cảnh báo hành vi bất thường từ hệ thống</div>
       </div>
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <div class="alert-box" style="margin-top:0;">
-          <i class="ti ti-lock"></i>
-          <div>
-            <div class="alert-title">Đăng nhập thất bại quá số lần quy định</div>
-            <div class="alert-desc">Tài khoản 'nguyenvanb' nhập sai mật khẩu 5 lần liên tiếp từ IP mạng nội bộ 192.168.1.15 lúc 08:05 hôm nay. Tài khoản đã bị tạm khóa.</div>
+        @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
+        {
+          <div class="alert-box" style="margin-top:0;">
+            <i class="ti ti-alert-circle"></i>
+            <div>
+              <div class="alert-title">Bộ lọc không hợp lệ</div>
+              <div class="alert-desc">@Model.ValidationMessage</div>
+            </div>
           </div>
-        </div>
-        <div class="alert-box" style="background:#FDEAEA; border-color:#F5C6CB;">
-          <i class="ti ti-trash" style="color:var(--red);"></i>
-          <div>
-            <div class="alert-title" style="color:#721C24;">Cảnh báo xóa hàng loạt dữ liệu (Giả lập)</div>
-            <div class="alert-desc" style="color:#721C24;">Hệ thống phát hiện tài khoản 'admin' thực hiện xóa hàng loạt dữ liệu thử nghiệm (Hệ thống ghi nhận để đề phòng rủi ro bảo mật).</div>
+        }
+        else if (Model.FailureCount > 0)
+        {
+          <div class="alert-box" style="margin-top:0;">
+            <i class="ti ti-lock"></i>
+            <div>
+              <div class="alert-title">Đăng nhập thất bại quá số lần quy định</div>
+              <div class="alert-desc">Có @Model.FailureCount thao tác thất bại trong kết quả nhật ký phù hợp với bộ lọc hiện tại.</div>
+            </div>
           </div>
-        </div>
+        }
+        else
+        {
+          <div class="alert-box" style="margin-top:0;">
+            <i class="ti ti-shield-check"></i>
+            <div>
+              <div class="alert-title">Không phát hiện thao tác thất bại</div>
+              <div class="alert-desc">Không có thao tác thất bại nào trong kết quả nhật ký phù hợp với bộ lọc hiện tại.</div>
+            </div>
+          </div>
+        }
       </div>
     </div>
 
     <div class="card">
-      <div class="filter-grid">
+      <form asp-controller="AdminIT" asp-action="AuditLog" method="get" class="filter-grid">
         <div>
           <label class="info-label" style="margin-bottom:6px; display:block;">Người dùng</label>
-          <input type="text" class="form-control" placeholder="Tên user...">
+          <input type="text" name="user" value="@Model.Filter.User" class="form-control" placeholder="Tên user...">
         </div>
         <div>
           <label class="info-label" style="margin-bottom:6px; display:block;">Loại hành động</label>
-          <select class="form-control">
+          <select name="actionType" class="form-control">
             <option value="">Tất cả hành động</option>
-            <option value="Tạo">Tạo mới</option>
-            <option value="Sửa">Chỉnh sửa</option>
-            <option value="Xóa">Xóa dữ liệu</option>
-            <option value="Duyệt">Phê duyệt</option>
-            <option value="Đăng nhập">Đăng nhập/Đăng xuất</option>
+            @foreach (var option in Model.ActionOptions)
+            {
+              if (string.Equals(option.Code, Model.Filter.ActionType, StringComparison.OrdinalIgnoreCase))
+              {
+                <option value="@option.Code" selected>@option.Label</option>
+              }
+              else
+              {
+                <option value="@option.Code">@option.Label</option>
+              }
+            }
           </select>
         </div>
         <div>
           <label class="info-label" style="margin-bottom:6px; display:block;">Phân hệ (Module)</label>
-          <select class="form-control">
+          <select name="module" class="form-control">
             <option value="">Tất cả phân hệ</option>
-            <option value="Nhân sự">Nhân sự</option>
-            <option value="Booking">Booking</option>
-            <option value="Ý tưởng">Ý tưởng</option>
-            <option value="Tài khoản">Tài khoản</option>
+            @foreach (var option in Model.ModuleOptions)
+            {
+              if (string.Equals(option.Code, Model.Filter.Module, StringComparison.OrdinalIgnoreCase))
+              {
+                <option value="@option.Code" selected>@option.Label</option>
+              }
+              else
+              {
+                <option value="@option.Code">@option.Label</option>
+              }
+            }
           </select>
         </div>
         <div>
           <label class="info-label" style="margin-bottom:6px; display:block;">Từ ngày</label>
-          <input type="date" class="form-control">
+          <input type="date" name="from" value="@fromValue" class="form-control">
         </div>
         <div>
           <label class="info-label" style="margin-bottom:6px; display:block;">Đến ngày</label>
-          <input type="date" class="form-control">
+          <input type="date" name="to" value="@toValue" class="form-control">
         </div>
-        <button class="btn-mini approve" style="padding: 10px 16px;">Lọc log</button>
-      </div>
+        <button type="submit" class="btn-mini approve" style="padding: 10px 16px;">Lọc log</button>
+      </form>
 
       <table>
         <thead>
@@ -140,51 +185,88 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>12/08/2026 08:35</td>
-            <td><strong>Lê Minh Hoàng (AdminIT)</strong></td>
-            <td><span class="badge badge-info">Cấu hình</span></td>
-            <td>Hệ thống</td>
-            <td>Thay đổi giới hạn dung lượng upload lên 50MB</td>
-            <td>192.168.1.100</td>
-          </tr>
-          <tr>
-            <td>12/08/2026 08:15</td>
-            <td><strong>Nguyễn Văn A (Giám đốc)</strong></td>
-            <td><span class="badge badge-success">Đăng nhập</span></td>
-            <td>Tài khoản</td>
-            <td>Đăng nhập hệ thống thành công (LAN)</td>
-            <td>192.168.1.2</td>
-          </tr>
-          <tr>
-            <td>12/08/2026 08:05</td>
-            <td><strong>nguyenvanb</strong></td>
-            <td><span class="badge badge-danger">Thất bại</span></td>
-            <td>Tài khoản</td>
-            <td>Đăng nhập thất bại liên tiếp 5 lần (Sai mật khẩu)</td>
-            <td>192.168.1.15</td>
-          </tr>
-          <tr>
-            <td>11/08/2026 15:40</td>
-            <td><strong>Nguyễn Anh Tuấn (QL Booking)</strong></td>
-            <td><span class="badge badge-warning">Cập nhật thù lao</span></td>
-            <td>Booking</td>
-            <td>Phân bổ thù lao booking Vinamilk (Trần Thị B: 3tr, Đỗ Minh Khôi: 3tr, Lê Văn C: 4tr)</td>
-            <td>192.168.1.10</td>
-          </tr>
-          <tr>
-            <td>11/08/2026 10:20</td>
-            <td><strong>Vũ Ngọc Lan (QL HCNS)</strong></td>
-            <td><span class="badge badge-success">Tạo mới</span></td>
-            <td>Nhân sự</td>
-            <td>Thêm hồ sơ nhân viên mới: Phạm Thu Hà (Phòng Booking)</td>
-            <td>192.168.1.5</td>
-          </tr>
+          @if (Model.Items.Count == 0)
+          {
+            <tr>
+              <td colspan="6">Không có nhật ký nào phù hợp với bộ lọc.</td>
+            </tr>
+          }
+          else
+          {
+            @foreach (var item in Model.Items)
+            {
+              <tr>
+                <td>@(item.OccurredAt.HasValue ? item.OccurredAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                <td>
+                  <strong>
+                    @item.ActorDisplayName
+                    @if (!string.IsNullOrWhiteSpace(item.RoleName))
+                    {
+                      <text> (@item.RoleName)</text>
+                    }
+                  </strong>
+                </td>
+                <td><span class="badge @item.BadgeClass">@item.ActionLabel</span></td>
+                <td>@item.ModuleLabel</td>
+                <td>@item.Detail</td>
+                <td>@item.IpAddress</td>
+              </tr>
+            }
+          }
         </tbody>
       </table>
+
+      @if (Model.TotalPages > 1)
+      {
+        <div class="topbar-actions">
+          @if (Model.CurrentPage > 1)
+          {
+            <a asp-controller="AdminIT" asp-action="AuditLog"
+               asp-route-user="@Model.Filter.User" asp-route-actionType="@Model.Filter.ActionType"
+               asp-route-module="@Model.Filter.Module" asp-route-from="@fromValue" asp-route-to="@toValue"
+               asp-route-page="@(Model.CurrentPage - 1)" class="btn-mini">Trước</a>
+          }
+
+          @if (firstVisiblePage > 1)
+          {
+            <a asp-controller="AdminIT" asp-action="AuditLog"
+               asp-route-user="@Model.Filter.User" asp-route-actionType="@Model.Filter.ActionType"
+               asp-route-module="@Model.Filter.Module" asp-route-from="@fromValue" asp-route-to="@toValue"
+               asp-route-page="1" class="btn-mini">1</a>
+          }
+
+          @for (var pageNumber = firstVisiblePage; pageNumber <= lastVisiblePage; pageNumber++)
+          {
+            <a asp-controller="AdminIT" asp-action="AuditLog"
+               asp-route-user="@Model.Filter.User" asp-route-actionType="@Model.Filter.ActionType"
+               asp-route-module="@Model.Filter.Module" asp-route-from="@fromValue" asp-route-to="@toValue"
+               asp-route-page="@pageNumber"
+               class="btn-mini @(pageNumber == Model.CurrentPage ? "approve" : null)"
+               aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">@pageNumber</a>
+          }
+
+          @if (lastVisiblePage < Model.TotalPages)
+          {
+            <a asp-controller="AdminIT" asp-action="AuditLog"
+               asp-route-user="@Model.Filter.User" asp-route-actionType="@Model.Filter.ActionType"
+               asp-route-module="@Model.Filter.Module" asp-route-from="@fromValue" asp-route-to="@toValue"
+               asp-route-page="@Model.TotalPages" class="btn-mini">@Model.TotalPages</a>
+          }
+
+          @if (Model.CurrentPage < Model.TotalPages)
+          {
+            <a asp-controller="AdminIT" asp-action="AuditLog"
+               asp-route-user="@Model.Filter.User" asp-route-actionType="@Model.Filter.ActionType"
+               asp-route-module="@Model.Filter.Module" asp-route-from="@fromValue" asp-route-to="@toValue"
+               asp-route-page="@(Model.CurrentPage + 1)" class="btn-mini">Sau</a>
+          }
+
+          <span>Trang @Model.CurrentPage/@Model.TotalPages · @Model.PageSize bản ghi mỗi trang</span>
+        </div>
+      }
     </div>
 
-    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <footer>HanaMedia · Dashboard AdminIT — dữ liệu nhật ký từ hệ thống</footer>
   </main>
 </div>
 </body>
