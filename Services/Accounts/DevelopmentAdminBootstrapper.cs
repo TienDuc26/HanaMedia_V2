@@ -78,7 +78,7 @@ public sealed class DevelopmentAdminBootstrapper
             Email = credentials.Email,
             Role = AppRoles.AdminIT,
             Status = AccountStatuses.Active,
-            SecurityStamp = Guid.NewGuid(),
+            SecurityStamp = Guid.NewGuid().ToString(),
             CreatedAt = now,
             UpdatedAt = now
         };

@@ -122,7 +122,7 @@
           {
             var isActive = string.Equals(account.Status, "active", StringComparison.OrdinalIgnoreCase);
             var nextStatus = isActive ? "locked" : "active";
-            var securityStamp = account.SecurityStamp.ToString("D");
+            var securityStamp = account.SecurityStamp;
             <tr>
               <td><strong>@account.Username</strong></td>
               <td>@account.DisplayName</td>

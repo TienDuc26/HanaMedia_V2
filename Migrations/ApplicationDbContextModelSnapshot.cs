@@ -741,12 +741,10 @@ namespace HanaMedia.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("locked_until");
 
-                    b.Property<Guid>("SecurityStamp")
+                    b.Property<string>("SecurityStamp")
                         .IsConcurrencyToken()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("security_stamp")
-                        .HasDefaultValueSql("(newid())");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("security_stamp");
 
                     b.Property<string>("Status")
                         .IsRequired()

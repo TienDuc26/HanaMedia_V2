@@ -17,7 +17,7 @@ public partial class User
 
     public string Status { get; set; } = "active";
 
-    public Guid SecurityStamp { get; set; }
+    public string SecurityStamp { get; set; } = string.Empty;
 
     public DateTime? CreatedAt { get; set; }
 
