@@ -51,18 +51,25 @@ namespace HanaMedia.Controllers
 
             // Kiểm tra IP trước khi kiểm tra tài khoản
             var clientIp = GetClientIpAddress();
-            var allowedCidr = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
+            var allowedCidr = _configuration["AllowedNetworkCidr"] ?? "192.168.110.213/32";
 
-            _logger.LogInformation("[NetworkCheck] Client IP: {ClientIp}, Allowed CIDR: {AllowedCidr}", clientIp, allowedCidr);
+            // Luôn chặn loopback/localhost
+            if (clientIp == "127.0.0.1" || clientIp == "::1" || clientIp == "localhost")
+            {
+                _logger.LogWarning("[NetworkCheck] BLOCKED - Loopback IP {ClientIp}", clientIp);
+                ViewBag.NetworkError = "Không thể đăng nhập từ địa chỉ localhost.";
+                return View();
+            }
 
+            // Chỉ cho phép IP trong danh sách whitelist
             if (!IsIpInRange(clientIp, allowedCidr))
             {
-                _logger.LogWarning("[NetworkCheck] BLOCKED - IP {ClientIp} not in range {AllowedCidr}", clientIp, allowedCidr);
+                _logger.LogWarning("[NetworkCheck] BLOCKED - IP {ClientIp} not in whitelist {AllowedCidr}", clientIp, allowedCidr);
                 ViewBag.NetworkError = "Vui lòng kết nối mạng nội bộ công ty để sử dụng hệ thống.";
                 return View();
             }
 
-            _logger.LogInformation("[NetworkCheck] PASSED - IP {ClientIp} is in range {AllowedCidr}", clientIp, allowedCidr);
+            _logger.LogInformation("[NetworkCheck] PASSED - IP {ClientIp} is in whitelist {AllowedCidr}", clientIp, allowedCidr);
 
             // Gọi AccountService để xác thực (đã bao gồm logic lockout)
             var (result, user, message) = await _accountService.AuthenticateAsync(username, password);
@@ -134,7 +141,6 @@ namespace HanaMedia.Controllers
 
         private string NormalizeIpAddress(string ip)
         {
-            // Xử lý IPv4-mapped IPv6 (VD: ::ffff:192.168.1.1 → 192.168.1.1)
             if (ip.StartsWith("::ffff:"))
             {
                 return ip.Substring(7);
@@ -146,13 +152,6 @@ namespace HanaMedia.Controllers
         {
             try
             {
-                // Loopback luôn được cho phép (COMMENT TẠM ĐỂ TEST)
-                // if (ipAddress == "127.0.0.1" || ipAddress == "::1" || ipAddress == "localhost")
-                // {
-                //     _logger.LogInformation("[IpCheck] Loopback IP allowed");
-                //     return true;
-                // }
-
                 // Xử lý format CIDR
                 if (!cidr.Contains('/'))
                 {
