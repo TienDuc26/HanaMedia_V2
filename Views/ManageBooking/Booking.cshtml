@@ -71,12 +71,20 @@
         <div style="width: 300px;">
           <input type="text" class="form-control" placeholder="Tìm kiếm chiến dịch, khách hàng...">
         </div>
-        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addBookingModal')"><i class="ti ti-plus"></i> Tạo Booking mới</button>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-mini" style="padding: 10px 18px;" onclick="openModal('addBookingModal')">
+            <i class="ti ti-plus"></i> Tạo Booking mới
+          </button>
+          <button class="btn-mini approve" style="padding: 10px 18px;" onclick="submitForApproval()">
+            <i class="ti ti-send"></i> Gửi đơn phê duyệt
+          </button>
+        </div>
       </div>
 
       <table>
         <thead>
           <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
             <th>Client &amp; Campaign</th>
             <th>KOL/KOC</th>
             <th>Giá Booking</th>
@@ -89,6 +97,7 @@
         </thead>
         <tbody>
           <tr>
+            <td><input type="checkbox" class="booking-checkbox" data-id="1"></td>
             <td><strong>Vinamilk</strong><br><span style="color:var(--muted); font-size:12px;">Tết Sum Vầy 2027</span></td>
             <td>Nguyễn Thị H</td>
             <td>10,000,000 đ</td>
@@ -98,10 +107,11 @@
             <td><span class="status-chip status-good">Đang triển khai</span></td>
             <td style="text-align: right;">
               <button class="btn-mini" onclick="openSalaryModal('Vinamilk — Tết Sum Vầy 2027', 'Nguyễn Thị H', 10000000, [{'name':'Phạm Thu Hà','val':3000000}, {'name':'Đỗ Minh Khôi','val':3000000}, {'name':'Lê Văn C','val':4000000}], ['11/08/2026 15:40: Khởi tạo phân chia thù lao bởi QL Booking Nguyễn Anh Tuấn.'])">Chia thù lao</button>
-              <button class="btn-mini approve" onclick="openEditBookingModal('Vinamilk', 'Tết Sum Vầy 2027', 'Nguyễn Thị H', 'Quảng cáo sản phẩm sữa Tết', '2027-01-15', '2027-01-20', 10000000, 4000000, 'Phạm Thu Hà', 'Đang triển khai', 'http://link.tiktok.com/123', 'Không có')">Cập nhật</button>
+              <button class="btn-mini" onclick="openEditBookingModal('Vinamilk', 'Tết Sum Vầy 2027', 'Nguyễn Thị H', 'Quảng cáo sản phẩm sữa Tết', '2027-01-15', '2027-01-20', 10000000, 4000000, 'Phạm Thu Hà', 'Đang triển khai', 'http://link.tiktok.com/123', 'Không có')">Cập nhật</button>
             </td>
           </tr>
           <tr>
+            <td><input type="checkbox" class="booking-checkbox" data-id="2"></td>
             <td><strong>Traveloka</strong><br><span style="color:var(--muted); font-size:12px;">Mùa Hè Rực Rỡ</span></td>
             <td>Trần Văn K</td>
             <td>25,000,000 đ</td>
@@ -111,7 +121,35 @@
             <td><span class="status-chip status-good">Hoàn thành</span></td>
             <td style="text-align: right;">
               <button class="btn-mini" onclick="openSalaryModal('Traveloka — Mùa Hè Rực Rỡ', 'Trần Văn K', 25000000, [{'name':'Phạm Thu Hà','val':10000000}, {'name':'Nguyễn Anh Tuấn','val':15000000}], ['10/08/2026 10:10: Chốt phân chia thù lao (Hà: 10tr, Tuấn: 15tr).'])">Chia thù lao</button>
-              <button class="btn-mini approve" onclick="openEditBookingModal('Traveloka', 'Mùa Hè Rực Rỡ', 'Trần Văn K', 'Unbox và Review voucher du lịch', '2026-08-01', '2026-08-05', 25000000, 11000000, 'Nguyễn Anh Tuấn', 'Hoàn thành', 'http://insta.com/p/456', 'Hoàn thành tốt')">Cập nhật</button>
+              <button class="btn-mini" onclick="openEditBookingModal('Traveloka', 'Mùa Hè Rực Rỡ', 'Trần Văn K', 'Unbox và Review voucher du lịch', '2026-08-01', '2026-08-05', 25000000, 11000000, 'Nguyễn Anh Tuấn', 'Hoàn thành', 'http://insta.com/p/456', 'Hoàn thành tốt')">Cập nhật</button>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="booking-checkbox" data-id="3"></td>
+            <td><strong>Vinamilk</strong><br><span style="color:var(--muted); font-size:12px;">Tết Sum Vầy 2027</span></td>
+            <td>Đặng Ngọc L</td>
+            <td>480,000,000 đ</td>
+            <td>220,000,000 đ</td>
+            <td><span style="color:var(--muted); font-size:12px;"><i class="ti ti-hourglass"></i> Chưa có</span></td>
+            <td>Nguyễn Anh Tuấn</td>
+            <td><span class="status-chip status-warn">Chờ duyệt booking</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" disabled title="Đang chờ Giám đốc duyệt">Chia thù lao</button>
+              <button class="btn-mini" disabled title="Đang chờ Giám đốc duyệt">Cập nhật</button>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="booking-checkbox" data-id="4"></td>
+            <td><strong>Cocoon</strong><br><span style="color:var(--muted); font-size:12px;">Glow Up Your Skin</span></td>
+            <td>Lê Thị M</td>
+            <td>150,000,000 đ</td>
+            <td>85,000,000 đ</td>
+            <td><a href="#" style="color:var(--blue-600);"><i class="ti ti-file-text"></i> draft_contract_cocoon.pdf</a></td>
+            <td>Phạm Thu Hà</td>
+            <td><span class="status-chip status-info">Chờ Giám đốc ký</span></td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openSalaryModal('Cocoon — Glow Up Your Skin', 'Lê Thị M', 150000000, [{'name':'Phạm Thu Hà','val':45000000}, {'name':'Đỗ Minh Khôi','val':30000000}], ['15/08/2026 09:00: Phân bổ thù lao bởi QL Booking Nguyễn Anh Tuấn.'])">Chia thù lao</button>
+              <button class="btn-mini approve" onclick="openContractModal('Cocoon — Glow Up Your Skin')">Xem/Sửa HĐ</button>
             </td>
           </tr>
         </tbody>
@@ -217,6 +255,10 @@
             <option>Đang chờ</option>
             <option>Thương lượng</option>
             <option>Đã chốt</option>
+            <option>Chờ duyệt booking</option>
+            <option>Đã duyệt (chờ soạn HĐ)</option>
+            <option>Chờ Giám đốc ký</option>
+            <option>Đã ký (hiệu lực)</option>
             <option>Đang triển khai</option>
             <option>Hoàn thành</option>
             <option>Hủy</option>
@@ -388,6 +430,29 @@
   function saveSalaryAllocation() {
     alert('Lưu phân chia thù lao thành công! Đã tự động ghi nhận vào Audit Log.');
     closeModal('salaryModal');
+  }
+
+  function submitForApproval() {
+    const selected = document.querySelectorAll('.booking-checkbox:checked');
+    if (selected.length === 0) {
+      alert('Vui lòng chọn ít nhất một booking để gửi phê duyệt.');
+      return;
+    }
+    const count = selected.length;
+    if (confirm(`Bạn có chắc chắn muốn gửi ${count} booking để Giám đốc phê duyệt?`)) {
+      alert(`Đã gửi ${count} booking lên Giám đốc phê duyệt. Trạng thái chuyển thành "Chờ duyệt booking".`);
+      selected.forEach(cb => cb.checked = false);
+    }
+  }
+
+  function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.booking-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+  }
+
+  function openContractModal(campaign) {
+    alert(`Mở form soạn/xem hợp đồng cho: ${campaign}`);
   }
 </script>
 </body>

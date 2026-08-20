@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Ký Hợp Đồng (Giám đốc)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .tab-headers {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0;
+      margin-bottom: 18px;
+    }
+    .tab-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 8px 16px;
+      position: relative;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s;
+    }
+    .tab-header:hover {
+      color: var(--blue-600);
+      background: var(--blue-50);
+    }
+    .tab-header.active {
+      color: var(--blue-600);
+      background: var(--blue-50);
+      font-weight: 700;
+    }
+    .tab-header .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--red);
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .contract-status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .contract-status-tag.pending { background: var(--amber-bg); color: var(--amber); }
+    .contract-status-tag.sent { background: var(--blue-100); color: var(--blue-700); }
+    .contract-status-tag.signed { background: var(--green-bg); color: var(--green); }
+    .contract-status-tag.rejected { background: var(--red-bg); color: var(--red); }
+
+    /* Signature animation */
+    .sign-btn-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .signature-preview {
+      display: none;
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--green-bg);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--green);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+    <a href="/Director/SignContract" class="nav-item active"><i class="ti ti-pen"></i><strong>Ký Hợp Đồng</strong></a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Ký Hợp Đồng</div>
+        <div class="page-sub">Xem xét và ký các hợp đồng booking đã được soạn thảo</div>
+      </div>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <div class="card" style="padding: 16px 20px 0 20px; margin-bottom: 0;">
+      <div class="tab-headers">
+        <div class="tab-header active" onclick="switchTab(event, 'pending')">
+          <i class="ti ti-clock"></i> Chờ ký
+          <span class="badge">1</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'signed')">
+          <i class="ti ti-check"></i> Đã ký
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'rejected')">
+          <i class="ti ti-x"></i> Từ chối
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CHỜ KÝ -->
+    <div id="tab-pending" class="tab-content active">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-file-text" style="color: var(--amber);"></i> Hợp đồng chờ ký
+          </div>
+          <div style="font-size: 13px; color: var(--muted);">
+            Nhân viên đã soạn hợp đồng dựa trên booking được duyệt. Bạn ký để xác nhận hợp đồng có hiệu lực.
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Client &amp; Chiến dịch</th>
+              <th>KOL/KOC</th>
+              <th>Giá trị HĐ</th>
+              <th>Người soạn</th>
+              <th>Ngày gửi</th>
+              <th>Trạng thái</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-id="1">
+              <td><strong>Cocoon — Glow Up Your Skin</strong></td>
+              <td>Lê Thị M</td>
+              <td style="color: var(--blue-700); font-weight: 700;">150,000,000 đ</td>
+              <td>Phạm Thu Hà</td>
+              <td>20/08/2026</td>
+              <td>
+                <span class="contract-status-tag pending">
+                  <i class="ti ti-clock"></i> Chờ ký
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <button class="btn-mini" onclick="openContractPreview('Cocoon — Glow Up Your Skin', 'Lê Thị M', '150,000,000 đ', 'Phạm Thu Hà', '20/08/2026', 'Hợp đồng dịch vụ KOL', 'Hợp đồng được soạn theo mẫu chuẩn của công ty. Thời hạn thực hiện: 30 ngày kể từ ngày ký.')">
+                  <i class="ti ti-eye"></i> Xem trước
+                </button>
+                <button class="btn-mini approve" onclick="signContract(this, 'Cocoon — Glow Up Your Skin')">
+                  <i class="ti ti-pen"></i> Ký HĐ
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Luồng quy trình -->
+      <div class="card" style="margin-top: 20px;">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-git-branch" style="color: var(--blue-500);"></i> Luồng quy trình Ký Hợp Đồng
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px 0; flex-wrap: wrap;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--green-bg); color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 20px;"><i class="ti ti-check"></i></div>
+            <div style="font-size: 11px; font-weight: 600; text-align: center; max-width: 80px;">Booking<br>đã duyệt</div>
+          </div>
+          <div style="color: var(--muted); font-size: 20px;"><i class="ti ti-arrow-right"></i></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--blue-100); color: var(--blue-700); display: flex; align-items: center; justify-content: center; font-size: 20px;"><i class="ti ti-edit"></i></div>
+            <div style="font-size: 11px; font-weight: 600; text-align: center; max-width: 80px;">NV soạn<br>HĐ</div>
+          </div>
+          <div style="color: var(--muted); font-size: 20px;"><i class="ti ti-arrow-right"></i></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--amber-bg); color: var(--amber); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid var(--amber);"><i class="ti ti-pen"></i></div>
+            <div style="font-size: 11px; font-weight: 700; text-align: center; max-width: 80px; color: var(--amber);">GĐ ký<br>(Bạn đang ở đây)</div>
+          </div>
+          <div style="color: var(--muted); font-size: 20px;"><i class="ti ti-arrow-right"></i></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 20px;"><i class="ti ti-file-check"></i></div>
+            <div style="font-size: 11px; font-weight: 600; text-align: center; max-width: 80px;">HĐ có<br>hiệu lực</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ĐÃ KÝ -->
+    <div id="tab-signed" class="tab-content">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-file-check" style="color: var(--green);"></i> Lịch sử hợp đồng đã ký
+          </div>
+          <div style="font-size: 13px; color: var(--muted);">
+            Các hợp đồng đã được ký và có hiệu lực
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Client &amp; Chiến dịch</th>
+              <th>KOL/KOC</th>
+              <th>Giá trị HĐ</th>
+              <th>Người ký</th>
+              <th>Ngày ký</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
+              <td>Nguyễn Thị H</td>
+              <td style="color: var(--blue-700); font-weight: 700;">10,000,000 đ</td>
+              <td>Nguyễn Văn A (Giám đốc)</td>
+              <td>18/08/2026</td>
+              <td>
+                <span class="contract-status-tag signed">
+                  <i class="ti ti-check"></i> Đã ký
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Traveloka — Mùa Hè Rực Rỡ</strong></td>
+              <td>Trần Văn K</td>
+              <td style="color: var(--blue-700); font-weight: 700;">25,000,000 đ</td>
+              <td>Nguyễn Văn A (Giám đốc)</td>
+              <td>05/08/2026</td>
+              <td>
+                <span class="contract-status-tag signed">
+                  <i class="ti ti-check"></i> Đã ký
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: TỪ CHỐI -->
+    <div id="tab-rejected" class="tab-content">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-file-x" style="color: var(--red);"></i> Hợp đồng bị từ chối
+          </div>
+          <div style="font-size: 13px; color: var(--muted);">
+            Các hợp đồng đã bị từ chối ký (có thể gửi lại chỉnh sửa)
+          </div>
+        </div>
+        <div class="alert-box" style="background: var(--amber-bg); border-color: var(--amber);">
+          <i class="ti ti-info-circle" style="color: var(--amber);"></i>
+          <div>
+            <div class="alert-title">Không có hợp đồng nào bị từ chối</div>
+            <div class="alert-desc">Khi hợp đồng bị từ chối, nhân viên sẽ nhận được thông báo và có thể chỉnh sửa gửi lại.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Ký Hợp Đồng — Giám đốc</footer>
+  </main>
+</div>
+
+<!-- MODAL XEM TRƯỚC HỢP ĐỒNG -->
+<div class="modal-backdrop" id="contractPreviewModal">
+  <div class="modal-card" style="width: 700px; max-width: 98%;">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="ti ti-file-text" style="color: var(--blue-500);"></i> Xem trước Hợp đồng
+      </div>
+      <button class="modal-close" onclick="closeModal('contractPreviewModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right: 8px;">
+      <div style="background: var(--blue-50); border: 1px solid var(--blue-100); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Client &amp; Chiến dịch</div>
+            <div id="previewClient" style="font-weight: 600; color: var(--navy); margin-top: 2px;">-</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">KOL/KOC</div>
+            <div id="previewKOL" style="font-weight: 600; color: var(--navy); margin-top: 2px;">-</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Giá trị HĐ</div>
+            <div id="previewValue" style="font-weight: 700; color: var(--blue-700); margin-top: 2px;">-</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Người soạn</div>
+            <div id="previewCreatedBy" style="font-weight: 600; color: var(--navy); margin-top: 2px;">-</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Ngày gửi</div>
+            <div id="previewDate" style="font-weight: 600; color: var(--navy); margin-top: 2px;">-</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Loại HĐ</div>
+            <div id="previewType" style="font-weight: 600; color: var(--navy); margin-top: 2px;">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;">Nội dung hợp đồng</div>
+        <div id="previewContent" style="padding: 14px; background: #FAFBFD; border: 1px solid var(--line); border-radius: 8px; line-height: 1.7; font-size: 13px;">
+          -
+        </div>
+      </div>
+
+      <!-- Preview signature area -->
+      <div style="border: 2px dashed var(--line); border-radius: 8px; padding: 20px; text-align: center; margin-top: 20px;">
+        <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Chữ ký sẽ xuất hiện ở đây khi bạn ký</div>
+        <div style="font-family: 'Times New Roman', serif; font-size: 24px; font-style: italic; color: var(--navy); opacity: 0.6;">
+          ___________________________
+        </div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 8px;">Nguyễn Văn A - Giám đốc</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('contractPreviewModal')">Đóng</button>
+      <button class="btn-mini reject" onclick="rejectContract()">
+        <i class="ti ti-x"></i> Từ chối
+      </button>
+      <button class="btn-mini approve" onclick="signContractFromModal()">
+        <i class="ti ti-pen"></i> Ký Hợp Đồng
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XÁC NHẬN KÝ THÀNH CÔNG -->
+<div class="modal-backdrop" id="signSuccessModal">
+  <div class="modal-card" style="width: 450px; max-width: 98%;">
+    <div class="modal-header">
+      <div class="modal-title" style="color: var(--green);">
+        <i class="ti ti-circle-check" style="color: var(--green);"></i> Ký hợp đồng thành công
+      </div>
+    </div>
+    <div class="modal-body" style="text-align: center; padding: 24px;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--green-bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <i class="ti ti-check" style="font-size: 32px; color: var(--green);"></i>
+      </div>
+      <p style="color: var(--ink-2); margin-bottom: 8px;">Hợp đồng đã được ký thành công.</p>
+      <p style="color: var(--muted); font-size: 13px;">Trạng thái hợp đồng: <strong style="color: var(--green);">Đã ký (có hiệu lực)</strong></p>
+    </div>
+    <div class="modal-footer" style="justify-content: center;">
+      <button class="btn-mini approve" onclick="closeModal('signSuccessModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentContractName = '';
+
+  function switchTab(event, tabId) {
+    // Update tab headers
+    const headers = document.querySelectorAll('.tab-header');
+    headers.forEach(h => h.classList.remove('active'));
+    event.target.closest('.tab-header').classList.add('active');
+
+    // Update tab contents
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  function openContractPreview(name, kol, value, createdBy, date, type, content) {
+    currentContractName = name;
+
+    document.getElementById('previewClient').innerText = name;
+    document.getElementById('previewKOL').innerText = kol;
+    document.getElementById('previewValue').innerText = value;
+    document.getElementById('previewCreatedBy').innerText = createdBy;
+    document.getElementById('previewDate').innerText = date;
+    document.getElementById('previewType').innerText = type;
+    document.getElementById('previewContent').innerText = content;
+
+    document.getElementById('contractPreviewModal').classList.add('active');
+  }
+
+  function signContract(btn, contractName) {
+    currentContractName = contractName;
+
+    if (confirm(`Bạn có chắc chắn muốn KÝ hợp đồng "${contractName}"?\n\nHợp đồng sau khi ký sẽ có hiệu lực pháp lý.\n\nHành động này sẽ được ghi vào Audit log.`)) {
+      // Simulate signing - in real app, this would call API
+      const row = btn.closest('tr');
+      row.style.transition = 'opacity 0.3s';
+      row.style.opacity = 0;
+      setTimeout(() => {
+        row.remove();
+        // Update badge count
+        const badge = document.querySelector('.tab-header.active .badge');
+        if (badge) {
+          const currentCount = parseInt(badge.innerText);
+          if (currentCount > 1) {
+            badge.innerText = currentCount - 1;
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      }, 300);
+
+      // Show success modal
+      setTimeout(() => {
+        document.getElementById('signSuccessModal').classList.add('active');
+      }, 400);
+
+      console.log(`[AUDIT LOG] Giám đốc ký hợp đồng: ${contractName} - Thời gian: ${new Date().toISOString()}`);
+    }
+  }
+
+  function signContractFromModal() {
+    closeModal('contractPreviewModal');
+
+    if (confirm(`Bạn có chắc chắn muốn KÝ hợp đồng "${currentContractName}"?\n\nHợp đồng sau khi ký sẽ có hiệu lực pháp lý.\n\nHành động này sẽ được ghi vào Audit log.`)) {
+      // Find and remove the row
+      const rows = document.querySelectorAll('#tab-pending tbody tr');
+      rows.forEach(row => {
+        if (row.querySelector('td strong').innerText === currentContractName) {
+          row.style.transition = 'opacity 0.3s';
+          row.style.opacity = 0;
+          setTimeout(() => row.remove(), 300);
+        }
+      });
+
+      // Update badge
+      const badge = document.querySelector('.tab-header.active .badge');
+      if (badge) {
+        const currentCount = parseInt(badge.innerText);
+        if (currentCount > 1) {
+          badge.innerText = currentCount - 1;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      // Show success
+      setTimeout(() => {
+        document.getElementById('signSuccessModal').classList.add('active');
+      }, 400);
+
+      console.log(`[AUDIT LOG] Giám đốc ký hợp đồng: ${currentContractName} - Thời gian: ${new Date().toISOString()}`);
+    }
+  }
+
+  function rejectContract() {
+    const reason = prompt(`Lý do từ chối hợp đồng "${currentContractName}":`);
+    if (reason && reason.trim()) {
+      closeModal('contractPreviewModal');
+
+      // Remove row
+      const rows = document.querySelectorAll('#tab-pending tbody tr');
+      rows.forEach(row => {
+        if (row.querySelector('td strong').innerText === currentContractName) {
+          row.style.transition = 'opacity 0.3s';
+          row.style.opacity = 0;
+          setTimeout(() => row.remove(), 300);
+        }
+      });
+
+      alert(`Đã từ chối hợp đồng "${currentContractName}".\n\nLý do: ${reason}\n\nNV Booking sẽ nhận được thông báo và có thể chỉnh sửa gửi lại.\n\nHành động đã được ghi vào Audit log.`);
+
+      console.log(`[AUDIT LOG] Giám đốc từ chối hợp đồng: ${currentContractName} - Lý do: ${reason} - Thời gian: ${new Date().toISOString()}`);
+    }
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+</script>
+</body>
+</html>

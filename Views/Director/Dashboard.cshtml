@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
   <link rel="stylesheet" href="~/css/components.css">
@@ -25,19 +25,20 @@
     </div>
 
     <div class="nav-section">Tổng quan</div>
-    <a href="/Director/Dashboard" class="nav-item active"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
-    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+    <a href="/Director/Dashboard" class="nav-item active"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a href="/Director/Report" class="nav-item"><i class="fas fa-chart-line"></i>Báo cáo</a>
 
     <div class="nav-section">Nghiệp vụ</div>
-    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
-    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
-    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
-    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
-    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+    <a href="/Director/HumanResources" class="nav-item"><i class="fas fa-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="fas fa-building"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="fas fa-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="fas fa-lightbulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="fas fa-clipboard-check"></i>Phê duyệt</a>
+    <a href="/Director/SignContract" class="nav-item"><i class="fas fa-pen"></i>Ký Hợp Đồng</a>
 
     <div class="nav-section">Quản trị</div>
-    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
-    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+    <a href="/Director/Config" class="nav-item"><i class="fas fa-cog"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="fas fa-shield-alt"></i>Giám sát hệ thống</a>
 
     <div class="sidebar-footer">
       <div class="role-pill">
@@ -62,8 +63,8 @@
           <div class="period-tab active">Tháng</div>
           <div class="period-tab">Quý</div>
         </div>
-        <div class="icon-btn"><i class="ti ti-bell"></i><span class="dot"></span></div>
-        <div class="icon-btn"><i class="ti ti-download"></i></div>
+        <div class="icon-btn"><i class="fas fa-bell"></i><span class="dot"></span></div>
+        <div class="icon-btn"><i class="fas fa-download"></i></div>
       </div>
     </div>
 
@@ -72,16 +73,16 @@
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Tổng nhân sự</div>
-          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-users"></i></div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="fas fa-users"></i></div>
         </div>
         <div class="kpi-value">128</div>
-        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+6 nhân sự mới tháng này</div>
+        <div class="kpi-delta up"><i class="fas fa-arrow-up"></i>+6 nhân sự mới tháng này</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Biến động nhân sự</div>
-          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-user-plus"></i></div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="fas fa-user-plus"></i></div>
         </div>
         <div class="kpi-value">+6 / -2</div>
         <div class="kpi-note">Vào mới 6 · Nghỉ việc 2 (tháng 8)</div>
@@ -90,34 +91,34 @@
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Booking đang triển khai</div>
-          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-star"></i></div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="fas fa-star"></i></div>
         </div>
         <div class="kpi-value">22</div>
-        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+4 so với tháng trước</div>
+        <div class="kpi-delta up"><i class="fas fa-arrow-up"></i>+4 so với tháng trước</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Doanh thu booking</div>
-          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-cash"></i></div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="fas fa-money-bill-wave"></i></div>
         </div>
         <div class="kpi-value">2.4 tỷ</div>
-        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+12% so với tháng trước</div>
+        <div class="kpi-delta up"><i class="fas fa-arrow-up"></i>+12% so với tháng trước</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Công việc quá hạn</div>
-          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-alert-triangle"></i></div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="fas fa-exclamation-triangle"></i></div>
         </div>
         <div class="kpi-value">7</div>
-        <div class="kpi-delta down"><i class="ti ti-arrow-down-right"></i>Cần xử lý gấp</div>
+        <div class="kpi-delta down"><i class="fas fa-arrow-down"></i>Cần xử lý gấp</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Chiến dịch đang chạy</div>
-          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-rocket"></i></div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="fas fa-rocket"></i></div>
         </div>
         <div class="kpi-value">9</div>
         <div class="kpi-note">3 client lớn, 6 client vừa &amp; nhỏ</div>
@@ -126,7 +127,7 @@
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Ý tưởng chờ duyệt</div>
-          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-bulb"></i></div>
+          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="fas fa-lightbulb"></i></div>
         </div>
         <div class="kpi-value">14</div>
         <div class="kpi-note">5 ý tưởng ưu tiên cao</div>
@@ -135,7 +136,7 @@
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Chi phí booking</div>
-          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-receipt"></i></div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="fas fa-file-invoice-dollar"></i></div>
         </div>
         <div class="kpi-value">980 tr</div>
         <div class="kpi-note">Biên lợi nhuận ước tính 59%</div>
@@ -144,16 +145,16 @@
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Hiệu suất trung bình</div>
-          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-chart-bar"></i></div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="fas fa-chart-bar"></i></div>
         </div>
         <div class="kpi-value">91%</div>
-        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+2 điểm so với quý trước</div>
+        <div class="kpi-delta up"><i class="fas fa-arrow-up"></i>+2 điểm so với quý trước</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-top">
           <div class="kpi-label">Chờ Giám đốc phê duyệt</div>
-          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-checklist"></i></div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="fas fa-clipboard-list"></i></div>
         </div>
         <div class="kpi-value">6</div>
         <div class="kpi-note">2 lương · 1 nghỉ việc · 2 booking · 1 ý tưởng</div>
@@ -168,7 +169,7 @@
             <div class="card-title">Doanh thu &amp; chi phí booking theo tháng</div>
             <div class="card-sub">6 tháng gần nhất, đơn vị: triệu đồng</div>
           </div>
-          <a href="/Director/Report" class="link-btn">Xem báo cáo <i class="ti ti-arrow-right"></i></a>
+          <a href="/Director/Report" class="link-btn">Xem báo cáo <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="legend">
           <span><i style="background:#2F80ED"></i>Doanh thu</span>
@@ -317,23 +318,23 @@
           <a href="/Director/MonitoringSystem" class="link-btn">Xem chi tiết</a>
         </div>
         <div class="monitor-row">
-          <div class="monitor-label"><i class="ti ti-login-2"></i>Lượt đăng nhập hôm nay</div>
+          <div class="monitor-label"><i class="fas fa-sign-in-alt"></i>Lượt đăng nhập hôm nay</div>
           <div class="monitor-value">47</div>
         </div>
         <div class="monitor-row">
-          <div class="monitor-label"><i class="ti ti-users-group"></i>Người dùng đang hoạt động</div>
+          <div class="monitor-label"><i class="fas fa-user-friends"></i>Người dùng đang hoạt động</div>
           <div class="monitor-value">31</div>
         </div>
         <div class="monitor-row">
-          <div class="monitor-label"><i class="ti ti-wifi-off"></i>Truy cập ngoài mạng nội bộ bị chặn</div>
+          <div class="monitor-label"><i class="fas fa-wifi"></i>Truy cập ngoài mạng nội bộ bị chặn</div>
           <div class="monitor-value">3</div>
         </div>
         <div class="monitor-row">
-          <div class="monitor-label"><i class="ti ti-shield-x"></i>Cảnh báo bất thường</div>
+          <div class="monitor-label"><i class="fas fa-shield-alt"></i>Cảnh báo bất thường</div>
           <div class="monitor-value">2</div>
         </div>
         <div class="alert-box">
-          <i class="ti ti-alert-triangle"></i>
+          <i class="fas fa-exclamation-triangle"></i>
           <div>
             <div class="alert-title">2 cảnh báo cần AdminIT xem xét</div>
             <div class="alert-desc">Đăng nhập thất bại nhiều lần (1 tài khoản) · Truy cập từ ngoài mạng nội bộ bị từ chối (3 lần, cùng 1 IP)</div>

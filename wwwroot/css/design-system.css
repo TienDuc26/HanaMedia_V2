@@ -39,3 +39,83 @@ body {
 h1, h2, h3, .brand {
   font-family: 'Manrope', sans-serif;
 }
+
+/* FIX: Font Awesome Icons display */
+[class*="fa-"]:not(i) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+i[class*="fa-"],
+.icon[class*="fa-"],
+[class*="fa-"].icon {
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: auto !important;
+  -webkit-font-smoothing: antialiased !important;
+  font-family: "Font Awesome 6 Free" !important;
+  speak: never;
+  font-weight: 900;
+  vertical-align: middle !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+/* Ensure icon content is visible */
+.fa:before {
+  display: inline-block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+/* KPI icon containers */
+.kpi-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+.kpi-icon i[class*="fa-"] {
+  font-size: 18px !important;
+}
+
+/* Monitor row icons */
+.monitor-label i[class*="fa-"] {
+  font-size: 16px !important;
+  margin-right: 10px !important;
+  vertical-align: middle !important;
+  width: 24px !important;
+  text-align: center !important;
+}
+
+/* Nav item icons */
+.nav-item i[class*="fa-"] {
+  font-size: 16px !important;
+  width: 22px !important;
+  text-align: center !important;
+}
+
+/* Alert box icon */
+.alert-box i[class*="fa-"] {
+  font-size: 20px !important;
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Link button arrow icons */
+.link-btn i[class*="fa-"] {
+  font-size: 13px !important;
+  margin-left: 4px !important;
+}

@@ -25,6 +25,57 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px 20px;
     }
+    .feedback-box-ql {
+      background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+      border: 1px solid #2196F3;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .feedback-box-director {
+      background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
+      border: 1px solid #F9A825;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .feedback-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .feedback-box-ql .feedback-header {
+      color: #1565C0;
+    }
+    .feedback-box-director .feedback-header {
+      color: #E65100;
+    }
+    .feedback-content {
+      color: var(--ink-2);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    .feedback-time {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .resubmit-note {
+      background: var(--blue-50);
+      border: 1px dashed var(--blue-300);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--blue-700);
+    }
+    .resubmit-note i {
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body>
@@ -78,6 +129,7 @@
             <th>Hạn chót (Deadline)</th>
             <th>Người review</th>
             <th>Trạng thái kịch bản</th>
+            <th>Feedback</th>
             <th style="text-align: right;">Hành động</th>
           </tr>
         </thead>
@@ -88,8 +140,11 @@
             <td>15/09/2026</td>
             <td>Trần Thanh Hải (QL)</td>
             <td><span class="status-chip status-warn">Review (Chờ duyệt)</span></td>
+            <td>
+              <span class="status-chip" style="background: #FFF9C4; color: #E65100;">Chờ Giám đốc duyệt</span>
+            </td>
             <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="openEditModal('Hành trình Xanh cùng Cocoon', 'Cocoon', 'Glow Up Your Skin', 'Người dùng thích thuần chay', 'Tái chế vỏ chai mỹ phẩm', 'Video hướng dẫn unbox và đổi vỏ chai lấy quà', 'http://ref.cocoon.com', 'Tông màu xanh lá bảo vệ môi trường', 'Kịch bản video ngắn TikTok 60s', 'Review')">Chỉnh sửa &amp; Nộp</button>
+              <button class="btn-mini" onclick="openEditModal('Hành trình Xanh cùng Cocoon', 'Cocoon', 'Glow Up Your Skin', 'Người dùng thích thuần chay', 'Tái chế vỏ chai mỹ phẩm', 'Video hướng dẫn unbox và đổi vỏ chai lấy quà', 'http://ref.cocoon.com', 'Tông màu xanh lá bảo vệ môi trường', 'Kịch bản video ngắn TikTok 60s', 'Review', '', '')">Xem chi tiết</button>
             </td>
           </tr>
           <tr>
@@ -97,9 +152,28 @@
             <td>Vinamilk — Tết Sum Vầy 2027</td>
             <td>30/12/2026</td>
             <td>Trần Thanh Hải (QL)</td>
-            <td><span class="status-chip status-bad">Need Revision (Sửa lại)</span></td>
+            <td><span class="status-chip status-bad">Need Revision</span></td>
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 11px; color: #1565C0;"><i class="ti ti-user"></i> QL: Cần viết chi tiết hơn</span>
+                <span style="font-size: 11px; color: #E65100;"><i class="ti ti-user-check"></i> GĐ: Concept chưa viral</span>
+              </div>
+            </td>
             <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="openEditModal('Sữa hạt Dinh Dưỡng Mỗi Ngày', 'Vinamilk', 'Tết Sum Vầy 2027', 'Gia đình quan tâm sức khỏe', 'Sữa hạt dinh dưỡng cho người già', 'Ý tưởng tặng quà tết ý nghĩa cho ông bà', 'http://ref.vinamilk.com', 'Màu xanh lục ấm cúng', 'Kịch bản clip ngắn 30s cho Facebook Reels', 'Need Revision', 'Phản hồi từ Trần Thanh Hải: Cần viết chi tiết hơn phần hội thoại của ông bà ở giây thứ 15.')">Chỉnh sửa &amp; Nộp</button>
+              <button class="btn-mini approve" onclick="openEditModal('Sữa hạt Dinh Dưỡng Mỗi Ngày', 'Vinamilk', 'Tết Sum Vầy 2027', 'Gia đình quan tâm sức khỏe', 'Sữa hạt dinh dưỡng cho người già', 'Ý tưởng tặng quà tết ý nghĩa cho ông bà', 'http://ref.vinamilk.com', 'Màu xanh lục ấm cúng', 'Kịch bản clip ngắn 30s cho Facebook Reels', 'Need Revision', 'Phản hồi từ Trần Thanh Hải: Cần viết chi tiết hơn phần hội thoại của ông bà ở giây thứ 15.', 'Campaign rất tiềm năng, nhưng concept hiện tại chưa đủ viral. Hãy bổ sung thêm yếu tố bất ngờ/hài hước vào kịch bản.')">Chỉnh sửa &amp; Gửi lại</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Review Địa Điểm Du Lịch</strong></td>
+            <td>Traveloka — Summer Vibes 2026</td>
+            <td>01/07/2026</td>
+            <td>Trần Thanh Hải (QL)</td>
+            <td><span class="status-chip status-warn">Đã gửi lại</span></td>
+            <td>
+              <span style="font-size: 11px; color: #1565C0;"><i class="ti ti-user-check"></i> Đã chỉnh sửa theo feedback GĐ</span>
+            </td>
+            <td style="text-align: right;">
+              <button class="btn-mini" onclick="openEditModal('Review Địa Điểm Du Lịch', 'Traveloka', 'Summer Vibes 2026', 'Giới trẻ thích du lịch', 'Review địa điểm du lịch hot', 'Kịch bản review địa điểm du lịch', 'http://ref.traveloka.com', 'Màu sắc tươi sáng', 'Kịch bản YouTube 10 phút', 'Đã gửi lại', '', '')">Xem chi tiết</button>
             </td>
           </tr>
         </tbody>
@@ -172,20 +246,35 @@
 
 <!-- MODAL CHỈNH SỬA VÀ NỘP DUYỆT -->
 <div class="modal-backdrop" id="editIdeaModal">
-  <div class="modal-card" style="width:650px;">
+  <div class="modal-card" style="width: 700px; max-width: 98%;">
     <div class="modal-header">
       <div class="modal-title">Chỉnh sửa ý tưởng &amp; Kịch bản</div>
       <button class="modal-close" onclick="closeModal('editIdeaModal')">&times;</button>
     </div>
-    <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right:8px;">
-      
-      <!-- FEEDBACK ALERTS FROM MANAGER -->
-      <div id="feedbackBox" class="alert-box" style="display:none; background:var(--amber-bg); border-color:#F3D9A6; margin-bottom:16px;">
-        <i class="ti ti-message-dots"></i>
-        <div>
-          <div class="alert-title">Phản hồi yêu cầu sửa từ Quản lý</div>
-          <div id="feedbackText" class="alert-desc">Nhận xét của sếp ở đây.</div>
+    <div class="modal-body" style="max-height: 520px; overflow-y: auto; padding-right: 8px;">
+
+      <!-- FEEDBACK FROM QUAN LY -->
+      <div id="feedbackBoxQL" class="feedback-box-ql" style="display: none;">
+        <div class="feedback-header">
+          <i class="ti ti-user"></i> Phản hồi từ Quản lý Ý tưởng
+          <span id="feedbackTimeQL" class="feedback-time">-</span>
         </div>
+        <div id="feedbackTextQL" class="feedback-content">-</div>
+      </div>
+
+      <!-- FEEDBACK FROM GIAM DOC -->
+      <div id="feedbackBoxDirector" class="feedback-box-director" style="display: none;">
+        <div class="feedback-header">
+          <i class="ti ti-user-check"></i> Phản hồi từ Giám đốc
+          <span id="feedbackTimeDirector" class="feedback-time">-</span>
+        </div>
+        <div id="feedbackTextDirector" class="feedback-content">-</div>
+      </div>
+
+      <!-- RESUBMIT NOTE -->
+      <div id="resubmitNote" class="resubmit-note" style="display: none;">
+        <i class="ti ti-info-circle"></i>
+        <span>Ý tưởng đã được chỉnh sửa theo feedback. Nhấn "Cập nhật &amp; Gửi lại" để gửi lại cho Giám đốc phê duyệt.</span>
       </div>
 
       <div class="form-grid">
@@ -195,19 +284,20 @@
         </div>
         <div class="form-group">
           <label>Khách hàng (Client)</label>
-          <input type="text" id="editClient" class="form-control" readonly style="background:var(--blue-50);">
+          <input type="text" id="editClient" class="form-control" readonly style="background: var(--blue-50);">
         </div>
         <div class="form-group">
           <label>Chiến dịch (Campaign)</label>
-          <input type="text" id="editCampaign" class="form-control" readonly style="background:var(--blue-50);">
+          <input type="text" id="editCampaign" class="form-control" readonly style="background: var(--blue-50);">
         </div>
         <div class="form-group">
-          <label>Trạng thái kịch bản (Không được tự ý duyệt Approved)</label>
+          <label>Trạng thái kịch bản</label>
           <select class="form-control" id="editStatus">
             <option value="To do">To do</option>
             <option value="In Progress">In Progress</option>
             <option value="Review">Review (Gửi duyệt)</option>
-            <option value="Need Revision" disabled>Need Revision (Yêu cầu sửa - Quản lý đổi)</option>
+            <option value="Need Revision" disabled>Need Revision (Yêu cầu sửa - Quản lý/Giám đốc đổi)</option>
+            <option value="Da gui lai">Đã gửi lại (sau feedback Giám đốc)</option>
           </select>
         </div>
       </div>
@@ -240,7 +330,12 @@
     </div>
     <div class="modal-footer">
       <button class="btn-mini" onclick="closeModal('editIdeaModal')">Hủy</button>
-      <button class="btn-mini approve" onclick="alert('Đã cập nhật thay đổi và gửi lên hàng chờ Review của Quản lý!'); closeModal('editIdeaModal');">Cập nhật &amp; Gửi duyệt</button>
+      <button class="btn-mini" id="btnSaveOnly" onclick="saveOnly()">
+        <i class="ti ti-device-floppy"></i> Lưu tạm
+      </button>
+      <button class="btn-mini approve" id="btnResubmit" onclick="submitResubmit()">
+        <i class="ti ti-send"></i> Cập nhật &amp; Gửi lại
+      </button>
     </div>
   </div>
 </div>
@@ -254,7 +349,8 @@
     document.getElementById(id).classList.remove('active');
   }
 
-  function openEditModal(name, client, campaign, insight, concept, content, ref, moodboard, script, status, feedback) {
+  function openEditModal(name, client, campaign, insight, concept, content, ref, moodboard, script, status, feedbackQL, feedbackDirector) {
+    // Fill form fields
     document.getElementById('editName').value = name;
     document.getElementById('editClient').value = client;
     document.getElementById('editCampaign').value = campaign;
@@ -264,17 +360,55 @@
     document.getElementById('editRef').value = ref;
     document.getElementById('editMoodboard').value = moodboard;
     document.getElementById('editScript').value = script;
-    document.getElementById('editStatus').value = status === 'Need Revision' ? 'In Progress' : status;
 
-    const feedBox = document.getElementById('feedbackBox');
-    if(feedback) {
-      document.getElementById('feedbackText').innerText = feedback;
-      feedBox.style.display = 'flex';
+    // Feedback from QL
+    const feedBoxQL = document.getElementById('feedbackBoxQL');
+    if (feedbackQL && feedbackQL.trim()) {
+      feedBoxQL.style.display = 'block';
+      document.getElementById('feedbackTextQL').innerText = feedbackQL;
+      document.getElementById('feedbackTimeQL').innerText = '2 ngày trước';
     } else {
-      feedBox.style.display = 'none';
+      feedBoxQL.style.display = 'none';
+    }
+
+    // Feedback from Director
+    const feedBoxDir = document.getElementById('feedbackBoxDirector');
+    if (feedbackDirector && feedbackDirector.trim()) {
+      feedBoxDir.style.display = 'block';
+      document.getElementById('feedbackTextDirector').innerText = feedbackDirector;
+      document.getElementById('feedbackTimeDirector').innerText = '1 ngày trước';
+    } else {
+      feedBoxDir.style.display = 'none';
+    }
+
+    // Show resubmit note if has director feedback
+    const resubmitNote = document.getElementById('resubmitNote');
+    if (feedbackDirector && feedbackDirector.trim()) {
+      resubmitNote.style.display = 'block';
+    } else {
+      resubmitNote.style.display = 'none';
+    }
+
+    // Status select
+    const statusSelect = document.getElementById('editStatus');
+    if (status === 'Need Revision' || status === 'Da gui lai') {
+      statusSelect.value = 'Da gui lai';
+    } else {
+      statusSelect.value = status;
     }
 
     openModal('editIdeaModal');
+  }
+
+  function saveOnly() {
+    alert('Đã lưu tạm thay đổi. Bạn có thể tiếp tục chỉnh sửa.');
+  }
+
+  function submitResubmit() {
+    if (confirm('Gửi lại ý tưởng đã chỉnh sửa cho Giám đốc phê duyệt?\n\nTrạng thái sẽ chuyển thành "Đã gửi lại" và chờ Giám đốc xem xét.')) {
+      alert('Đã gửi lại ý tưởng. Trạng thái: "Đã gửi lại (chờ Giám đốc duyệt)".');
+      closeModal('editIdeaModal');
+    }
   }
 </script>
 </body>

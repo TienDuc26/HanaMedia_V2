@@ -14,30 +14,49 @@
   <style>
     .tab-headers {
       display: flex;
-      gap: 16px;
+      gap: 4px;
       border-bottom: 1px solid var(--line);
-      padding-bottom: 8px;
+      padding-bottom: 0;
       margin-bottom: 18px;
     }
     .tab-header {
-      font-size: 13.5px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
       color: var(--muted);
       cursor: pointer;
-      padding: 6px 12px;
+      padding: 8px 16px;
       position: relative;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s;
+    }
+    .tab-header:hover {
+      color: var(--blue-600);
+      background: var(--blue-50);
     }
     .tab-header.active {
-      color: var(--blue-500);
+      color: var(--blue-600);
+      background: var(--blue-50);
+      font-weight: 700;
     }
-    .tab-header.active::after {
-      content: '';
-      position: absolute;
-      bottom: -9px;
-      left: 0; right: 0;
-      height: 3px;
-      background: var(--blue-500);
-      border-radius: 2px 2px 0 0;
+    .tab-header .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--red);
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
     }
   </style>
 </head>
@@ -63,6 +82,7 @@
     <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
     <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
     <a href="/Director/Approve" class="nav-item active"><i class="ti ti-checklist"></i>Phê duyệt</a>
+    <a href="/Director/SignContract" class="nav-item"><i class="ti ti-pen"></i>Ký Hợp Đồng</a>
 
     <div class="nav-section">Quản trị</div>
     <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
@@ -83,99 +103,240 @@
     <div class="topbar">
       <div>
         <div class="page-title">Yêu cầu phê duyệt</div>
-        <div class="page-sub">Xem xét và phê duyệt các đề xuất lương, đơn xin nghỉ việc, các chiến dịch &amp; ý tưởng quảng cáo lớn</div>
+        <div class="page-sub">Xem xét và phê duyệt các đề xuất từ nhân viên</div>
       </div>
     </div>
 
-    <div class="card">
+    <!-- TAB NAVIGATION -->
+    <div class="card" style="padding: 16px 20px 0 20px; margin-bottom: 0;">
       <div class="tab-headers">
-        <div class="tab-header active" onclick="switchFilter(event, 'all')">Tất cả (4)</div>
-        <div class="tab-header" onclick="switchFilter(event, 'salary')">Đề xuất lương (1)</div>
-        <div class="tab-header" onclick="switchFilter(event, 'offboard')">Nghỉ việc (1)</div>
-        <div class="tab-header" onclick="switchFilter(event, 'booking')">Booking &amp; Campaign (1)</div>
-        <div class="tab-header" onclick="switchFilter(event, 'idea')">Ý tưởng (1)</div>
+        <div class="tab-header active" onclick="switchTab(event, 'all')">
+          <i class="ti ti-list-check"></i> Tất cả
+          <span class="badge">3</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'salary')">
+          <i class="ti ti-cash"></i> Lương
+          <span class="badge">1</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'offboard')">
+          <i class="ti ti-user-minus"></i> Nghỉ việc
+          <span class="badge">1</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'booking-approval')">
+          <i class="ti ti-star"></i> Booking
+          <span class="badge">1</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'idea')">
+          <i class="ti ti-bulb"></i> Ý tưởng
+          <span class="badge">1</span>
+        </div>
       </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Phân loại</th>
-            <th>Nội dung yêu cầu</th>
-            <th>Người gửi đề xuất</th>
-            <th>Thời gian</th>
-            <th style="text-align: right;">Hành động</th>
-          </tr>
-        </thead>
-        <tbody id="approvalTableBody">
-          <tr data-type="salary">
-            <td><span class="approval-tag tag-salary">Lương</span></td>
-            <td><strong>Đề xuất tăng lương — Trần Thị B (Booking)</strong><br><span style="color:var(--muted); font-size:12px;">Đề xuất mức lương mới: 15,000,000đ (Tăng 2,000,000đ)</span></td>
-            <td>QL Booking (Nguyễn Anh Tuấn)</td>
-            <td>2 giờ trước</td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đề xuất lương của Trần Thị B')">Duyệt</button>
-              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đề xuất lương của Trần Thị B')">Từ chối</button>
-            </td>
-          </tr>
-          <tr data-type="offboard">
-            <td><span class="approval-tag tag-offboard">Nghỉ việc</span></td>
-            <td><strong>Đơn nghỉ việc — Lê Văn C (Ý tưởng)</strong><br><span style="color:var(--muted); font-size:12px;">Lý do cá nhân, xin nghỉ từ ngày 01/09/2026. Đang bàn giao việc.</span></td>
-            <td>QL Ý tưởng (Trần Thanh Hải)</td>
-            <td>Hôm qua</td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đơn nghỉ việc của Lê Văn C')">Duyệt</button>
-              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đơn nghỉ việc của Lê Văn C')">Từ chối</button>
-            </td>
-          </tr>
-          <tr data-type="booking">
-            <td><span class="approval-tag tag-booking">Booking</span></td>
-            <td><strong>Booking KOL lớn — Client Vinamilk, 480 triệu</strong><br><span style="color:var(--muted); font-size:12px;">KOL Đặng Ngọc L, chi phí 220,000,000đ, doanh thu dự kiến 480,000,000đ.</span></td>
-            <td>QL Booking (Nguyễn Anh Tuấn)</td>
-            <td>Hôm qua</td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt booking Vinamilk 480 triệu')">Duyệt</button>
-              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối booking Vinamilk 480 triệu')">Từ chối</button>
-            </td>
-          </tr>
-          <tr data-type="idea">
-            <td><span class="approval-tag tag-idea">Ý tưởng</span></td>
-            <td><strong>Campaign "Tết Sum Vầy" — chờ duyệt triển khai</strong><br><span style="color:var(--muted); font-size:12px;">Concept quảng cáo truyền thông cho chiến dịch Tết Vinamilk.</span></td>
-            <td>QL Ý tưởng (Trần Thanh Hải)</td>
-            <td>2 ngày trước</td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="handleAction(this, 'duyệt ý tưởng Tết Sum Vầy')">Duyệt</button>
-              <button class="btn-mini reject" onclick="handleAction(this, 'từ chối ý tưởng Tết Sum Vầy')">Từ chối</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
 
-    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <!-- TAB: ALL -->
+    <div id="tab-all" class="tab-content active">
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Phân loại</th>
+              <th>Nội dung yêu cầu</th>
+              <th>Người gửi đề xuất</th>
+              <th>Thời gian</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="approvalTableBody">
+            <tr data-type="salary">
+              <td><span class="approval-tag tag-salary">Lương</span></td>
+              <td><strong>Đề xuất tăng lương — Trần Thị B (Booking)</strong><br><span style="color:var(--muted); font-size:12px;">Đề xuất mức lương mới: 15,000,000đ (Tăng 2,000,000đ)</span></td>
+              <td>QL Booking (Nguyễn Anh Tuấn)</td>
+              <td>2 giờ trước</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đề xuất lương của Trần Thị B')">Duyệt</button>
+                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đề xuất lương của Trần Thị B')">Từ chối</button>
+              </td>
+            </tr>
+            <tr data-type="offboard">
+              <td><span class="approval-tag tag-offboard">Nghỉ việc</span></td>
+              <td><strong>Đơn nghỉ việc — Lê Văn C (Ý tưởng)</strong><br><span style="color:var(--muted); font-size:12px;">Lý do cá nhân, xin nghỉ từ ngày 01/09/2026. Đang bàn giao việc.</span></td>
+              <td>QL Ý tưởng (Trần Thanh Hải)</td>
+              <td>Hôm qua</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đơn nghỉ việc của Lê Văn C')">Duyệt</button>
+                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đơn nghỉ việc của Lê Văn C')">Từ chối</button>
+              </td>
+            </tr>
+            <tr data-type="booking-approval">
+              <td><span class="approval-tag tag-booking">Booking</span></td>
+              <td><strong>Booking KOL lớn — Client Vinamilk, 480 triệu</strong><br><span style="color:var(--muted); font-size:12px;">KOL Đặng Ngọc L, chi phí 220,000,000đ, doanh thu dự kiến 480,000,000đ.</span></td>
+              <td>QL Booking (Nguyễn Anh Tuấn)</td>
+              <td>Hôm qua</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleBookingApproval(this, 'duyệt', 'Vinamilk 480 triệu')">Duyệt Booking</button>
+                <button class="btn-mini reject" onclick="handleBookingApproval(this, 'từ chối', 'Vinamilk 480 triệu')">Từ chối</button>
+              </td>
+            </tr>
+            <tr data-type="idea">
+              <td><span class="approval-tag tag-idea">Ý tưởng</span></td>
+              <td><strong>Campaign "Tết Sum Vầy" — chờ duyệt triển khai</strong><br><span style="color:var(--muted); font-size:12px;">Concept quảng cáo truyền thông cho chiến dịch Tết Vinamilk.</span></td>
+              <td>QL Ý tưởng (Trần Thanh Hải)</td>
+              <td>2 ngày trước</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt ý tưởng Tết Sum Vầy')">Duyệt</button>
+                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối ý tưởng Tết Sum Vầy')">Từ chối</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: BOOKING APPROVAL -->
+    <div id="tab-booking-approval" class="tab-content">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-star" style="color: var(--blue-500);"></i> Đơn phê duyệt Booking
+          </div>
+          <div style="font-size: 13px; color: var(--muted);">Nhân viên/QL Booking gửi đơn phê duyệt khi hoàn tất thông tin booking</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Client &amp; Chiến dịch</th>
+              <th>KOL/KOC</th>
+              <th>Giá trị Booking</th>
+              <th>Chi phí dự kiến</th>
+              <th>Lợi nhuận</th>
+              <th>NV gửi</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
+              <td>Đặng Ngọc L</td>
+              <td style="color: var(--blue-700); font-weight: 700;">480,000,000 đ</td>
+              <td>220,000,000 đ</td>
+              <td style="color: var(--green); font-weight: 700;">260,000,000 đ</td>
+              <td>Nguyễn Anh Tuấn</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleBookingApproval(this, 'duyệt', 'Vinamilk — Tết Sum Vầy 2027')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleBookingApproval(this, 'từ chối', 'Vinamilk — Tết Sum Vầy 2027')"><i class="ti ti-x"></i> Từ chối</button>
+                <button class="btn-mini" onclick="openBookingDetail(this)"><i class="ti ti-eye"></i> Chi tiết</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: SALARY -->
+    <div id="tab-salary" class="tab-content">
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Phân loại</th>
+              <th>Nội dung yêu cầu</th>
+              <th>Người gửi</th>
+              <th>Thời gian</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-type="salary">
+              <td><span class="approval-tag tag-salary">Lương</span></td>
+              <td><strong>Đề xuất tăng lương — Trần Thị B (Booking)</strong><br><span style="color:var(--muted); font-size:12px;">Mức lương mới: 15,000,000đ (Tăng 2,000,000đ)</span></td>
+              <td>QL Booking (Nguyễn Anh Tuấn)</td>
+              <td>2 giờ trước</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đề xuất lương của Trần Thị B')">Duyệt</button>
+                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đề xuất lương của Trần Thị B')">Từ chối</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: OFFBOARD -->
+    <div id="tab-offboard" class="tab-content">
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Phân loại</th>
+              <th>Nội dung yêu cầu</th>
+              <th>Người gửi</th>
+              <th>Thời gian</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-type="offboard">
+              <td><span class="approval-tag tag-offboard">Nghỉ việc</span></td>
+              <td><strong>Đơn nghỉ việc — Lê Văn C (Ý tưởng)</strong><br><span style="color:var(--muted); font-size:12px;">Lý do cá nhân, nghỉ từ 01/09/2026</span></td>
+              <td>QL Ý tưởng (Trần Thanh Hải)</td>
+              <td>Hôm qua</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đơn nghỉ việc của Lê Văn C')">Duyệt</button>
+                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đơn nghỉ việc của Lê Văn C')">Từ chối</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: IDEA -->
+    <div id="tab-idea" class="tab-content">
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Phân loại</th>
+              <th>Nội dung yêu cầu</th>
+              <th>Người gửi</th>
+              <th>Thời gian</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-type="idea">
+              <td><span class="approval-tag tag-idea">Ý tưởng</span></td>
+              <td><strong>Campaign "Tết Sum Vầy" — chờ duyệt triển khai</strong><br><span style="color:var(--muted); font-size:12px;">Concept quảng cáo cho Tết Vinamilk</span></td>
+              <td>QL Ý tưởng (Trần Thanh Hải)</td>
+              <td>2 ngày trước</td>
+              <td style="text-align: right;">
+                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt ý tưởng Tết Sum Vầy')">Duyệt</button>
+                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối ý tưởng Tết Sum Vầy')">Từ chối</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Phê duyệt — Giám đốc</footer>
   </main>
 </div>
 
 <script>
-  function switchFilter(e, type) {
-    const headers = e.target.parentElement.children;
-    for(let h of headers) {
-      h.classList.remove('active');
-    }
-    e.target.classList.add('active');
+  function switchTab(event, tabId) {
+    const headers = document.querySelectorAll('.tab-header');
+    headers.forEach(h => h.classList.remove('active'));
+    event.target.closest('.tab-header').classList.add('active');
 
-    const rows = document.getElementById('approvalTableBody').getElementsByTagName('tr');
-    for(let r of rows) {
-      if(type === 'all' || r.getAttribute('data-type') === type) {
-        r.style.display = '';
-      } else {
-        r.style.display = 'none';
-      }
-    }
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
   }
 
   function handleAction(btn, text) {
-    if(confirm(`Bạn có chắc chắn muốn ${text}?`)) {
-      alert(`Đã thực hiện: ${text}`);
+    if (confirm(`Bạn có chắc chắn muốn ${text}?`)) {
+      alert(`Đã thực hiện: ${text}\n\nHành động đã được ghi vào Audit log.`);
       const row = btn.closest('tr');
       row.style.transition = 'opacity 0.3s';
       row.style.opacity = 0;
@@ -183,6 +344,37 @@
         row.remove();
       }, 300);
     }
+  }
+
+  function handleBookingApproval(btn, action, bookingName) {
+    if (action === 'duyệt') {
+      if (confirm(`Bạn có chắc chắn muốn DUYỆT booking "${bookingName}"?\n\nSau khi duyệt, nhân viên sẽ soạn hợp đồng và gửi lên bạn ký.`)) {
+        alert(`Đã duyệt booking "${bookingName}".\n\nTrạng thái chuyển thành: "Đã duyệt (chờ soạn hợp đồng)".\n\nNV Booking sẽ nhận thông báo để soạn hợp đồng.`);
+        const row = btn.closest('tr');
+        row.style.transition = 'opacity 0.3s';
+        row.style.opacity = 0;
+        setTimeout(() => {
+          row.remove();
+        }, 300);
+        console.log(`[AUDIT LOG] Giám đốc duyệt booking: ${bookingName} - Thời gian: ${new Date().toISOString()}`);
+      }
+    } else {
+      const reason = prompt('Lý do từ chối:');
+      if (reason) {
+        alert(`Đã từ chối booking "${bookingName}".\n\nLý do: ${reason}\n\nHành động đã được ghi vào Audit log.`);
+        const row = btn.closest('tr');
+        row.style.transition = 'opacity 0.3s';
+        row.style.opacity = 0;
+        setTimeout(() => {
+          row.remove();
+        }, 300);
+        console.log(`[AUDIT LOG] Giám đốc từ chối booking: ${bookingName} - Lý do: ${reason} - Thời gian: ${new Date().toISOString()}`);
+      }
+    }
+  }
+
+  function openBookingDetail(btn) {
+    alert('Mở chi tiết booking để xem thông tin đầy đủ.');
   }
 </script>
 </body>

@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HanaMedia.Controllers
 {
+    [Authorize]
     public class AdminITController : Controller
     {
         public IActionResult Dashboard()

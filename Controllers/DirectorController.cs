@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HanaMedia.Controllers
 {
+    [Authorize]
     public class DirectorController : Controller
     {
         public IActionResult Dashboard()
@@ -45,6 +47,11 @@ namespace HanaMedia.Controllers
         }
 
         public IActionResult Report()
+        {
+            return View();
+        }
+
+        public IActionResult SignContract()
         {
             return View();
         }
