@@ -5,6 +5,7 @@ using HanaMedia.Models;
 using HanaMedia.Services;
 using HanaMedia.Services.Accounts;
 using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Dashboard;
 using HanaMedia.Services.Security;
 
 const string BootstrapAdminArgument = "--bootstrap-admin";
@@ -27,6 +28,7 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();
 builder.Services.AddScoped<ISystemAuditService, SystemAuditService>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
+builder.Services.AddScoped<IAdminITDashboardService, AdminITDashboardService>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();

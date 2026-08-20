@@ -4,6 +4,7 @@ using System.Text;
 using HanaMedia.Constants;
 using HanaMedia.Services.Accounts;
 using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Dashboard;
 using HanaMedia.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,16 +21,23 @@ public sealed class AdminITController : Controller
 
     private readonly IAccountManagementService _accountManagementService;
     private readonly IAuditLogQueryService _auditLogQueryService;
+    private readonly IAdminITDashboardService _dashboardService;
 
     public AdminITController(
         IAccountManagementService accountManagementService,
-        IAuditLogQueryService auditLogQueryService)
+        IAuditLogQueryService auditLogQueryService,
+        IAdminITDashboardService dashboardService)
     {
         _accountManagementService = accountManagementService;
         _auditLogQueryService = auditLogQueryService;
+        _dashboardService = dashboardService;
     }
 
-    public IActionResult Dashboard() => View();
+    [HttpGet]
+    public async Task<IActionResult> Dashboard(
+        string? period,
+        CancellationToken cancellationToken)
+        => View(await _dashboardService.GetAsync(period, cancellationToken));
 
     [HttpGet]
     public async Task<IActionResult> Account(string? q, CancellationToken cancellationToken)
