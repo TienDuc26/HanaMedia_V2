@@ -43,6 +43,20 @@
         </div>
       }
 
+      @if (ViewBag.LockoutError != null)
+      {
+        <div class="alert alert-lockout" style="color: #b45309; background-color: #fef3c7; padding: 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; font-weight: 500; border: 1px solid rgba(245, 158, 11, 0.4); display: flex; align-items: center; gap: 12px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <div>
+            <strong style="display: block; margin-bottom: 4px;">Tài khoản bị khóa tạm thời</strong>
+            @ViewBag.LockoutError
+          </div>
+        </div>
+      }
+
       <form method="post" action="/Login">
         <div class="form-group">
           <label class="form-label" for="username">Tên đăng nhập hoặc Email</label>

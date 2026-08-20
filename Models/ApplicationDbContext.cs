@@ -489,6 +489,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("username");
+
+            entity.Property(e => e.FailedLoginAttempts)
+                .HasDefaultValue(0)
+                .HasColumnName("failed_login_attempts");
+
+            entity.Property(e => e.LockedUntil).HasColumnName("locked_until");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -4,26 +4,24 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using HanaMedia.Models;
-using Microsoft.EntityFrameworkCore;
+using HanaMedia.Services;
 
 namespace HanaMedia.Controllers
 {
     [AllowAnonymous]
     public class AccountController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AccountService _accountService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
-            ApplicationDbContext context,
+            AccountService accountService,
             IConfiguration configuration,
             ILogger<AccountController> logger)
         {
-            _context = context;
+            _accountService = accountService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -66,58 +64,39 @@ namespace HanaMedia.Controllers
 
             _logger.LogInformation("[NetworkCheck] PASSED - IP {ClientIp} is in range {AllowedCidr}", clientIp, allowedCidr);
 
-            User? user = null;
+            // Gọi AccountService để xác thực (đã bao gồm logic lockout)
+            var (result, user, message) = await _accountService.AuthenticateAsync(username, password);
 
-            try
+            switch (result)
             {
-                user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Username == username || u.Email == username);
+                case LoginResult.Success:
+                    // Sign in
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, user!.Username),
+                        new Claim(ClaimTypes.Role, user.Role)
+                    };
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+                    };
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+                    return RedirectToDashboard(user.Role);
+
+                case LoginResult.AccountLockedTemporarily:
+                    // Popup riêng biệt - khác với popup sai mật khẩu và popup sai mạng
+                    ViewBag.LockoutError = message;
+                    return View();
+
+                case LoginResult.AccountInactive:
+                case LoginResult.UserNotFound:
+                case LoginResult.WrongPassword:
+                default:
+                    ViewBag.Error = message;
+                    return View();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Database error during login");
-                ViewBag.Error = $"Lỗi kết nối cơ sở dữ liệu: {ex.Message}";
-                return View();
-            }
-
-            if (user == null)
-            {
-                ViewBag.Error = "Tài khoản không tồn tại.";
-                return View();
-            }
-
-            if (user.Status != "active")
-            {
-                ViewBag.Error = "Tài khoản đang bị khóa.";
-                return View();
-            }
-
-            // Verify password (plain text or SHA256)
-            bool isPasswordMatch = password == user.PasswordHash || ComputeSha256Hash(password) == user.PasswordHash;
-
-            if (!isPasswordMatch)
-            {
-                ViewBag.Error = "Mật khẩu không chính xác.";
-                return View();
-            }
-
-            // Sign in
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
-            };
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
-            return RedirectToDashboard(user.Role);
         }
 
         [Route("Logout")]
@@ -232,20 +211,6 @@ namespace HanaMedia.Controllers
                     return RedirectToAction("Idea", "IdeaStaff");
                 default:
                     return RedirectToAction("Index", "Home");
-            }
-        }
-
-        private string ComputeSha256Hash(string rawData)
-        {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
             }
         }
     }

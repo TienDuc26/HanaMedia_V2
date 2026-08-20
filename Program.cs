@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using HanaMedia.Models;
+using HanaMedia.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<AccountService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -17,6 +19,37 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var app = builder.Build();
+
+// Đảm bảo 2 field lockout tồn tại trong DB (chạy SQL nếu thiếu)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        var hasFailedCount = db.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS Value FROM sys.columns WHERE object_id = OBJECT_ID(N'[users]') AND name = 'failed_login_attempts'"
+        ).AsEnumerable().FirstOrDefault();
+
+        if (hasFailedCount == 0)
+        {
+            db.Database.ExecuteSqlRaw("ALTER TABLE [users] ADD [failed_login_attempts] INT NOT NULL CONSTRAINT DF_users_failed_login_attempts DEFAULT 0");
+        }
+
+        var hasLockedUntil = db.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS Value FROM sys.columns WHERE object_id = OBJECT_ID(N'[users]') AND name = 'locked_until'"
+        ).AsEnumerable().FirstOrDefault();
+
+        if (hasLockedUntil == 0)
+        {
+            db.Database.ExecuteSqlRaw("ALTER TABLE [users] ADD [locked_until] DATETIME2 NULL");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Failed to ensure lockout fields exist in users table");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

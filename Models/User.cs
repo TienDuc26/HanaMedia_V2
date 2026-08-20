@@ -21,6 +21,10 @@ public partial class User
 
     public DateTime? UpdatedAt { get; set; }
 
+    public int FailedLoginAttempts { get; set; } = 0;
+
+    public DateTime? LockedUntil { get; set; }
+
     public virtual ICollection<BookingWageAuditLog> BookingWageAuditLogs { get; set; } = new List<BookingWageAuditLog>();
 
     public virtual Employee? Employee { get; set; }
