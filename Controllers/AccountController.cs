@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,10 +15,17 @@ namespace HanaMedia.Controllers
     public class AccountController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(ApplicationDbContext context)
+        public AccountController(
+            ApplicationDbContext context,
+            IConfiguration configuration,
+            ILogger<AccountController> logger)
         {
             _context = context;
+            _configuration = configuration;
+            _logger = logger;
         }
 
         [Route("")]
@@ -43,6 +51,21 @@ namespace HanaMedia.Controllers
                 return View();
             }
 
+            // Kiểm tra IP trước khi kiểm tra tài khoản
+            var clientIp = GetClientIpAddress();
+            var allowedCidr = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
+
+            _logger.LogInformation("[NetworkCheck] Client IP: {ClientIp}, Allowed CIDR: {AllowedCidr}", clientIp, allowedCidr);
+
+            if (!IsIpInRange(clientIp, allowedCidr))
+            {
+                _logger.LogWarning("[NetworkCheck] BLOCKED - IP {ClientIp} not in range {AllowedCidr}", clientIp, allowedCidr);
+                ViewBag.NetworkError = "Vui lòng kết nối mạng nội bộ công ty để sử dụng hệ thống.";
+                return View();
+            }
+
+            _logger.LogInformation("[NetworkCheck] PASSED - IP {ClientIp} is in range {AllowedCidr}", clientIp, allowedCidr);
+
             User? user = null;
 
             try
@@ -52,6 +75,7 @@ namespace HanaMedia.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Database error during login");
                 ViewBag.Error = $"Lỗi kết nối cơ sở dữ liệu: {ex.Message}";
                 return View();
             }
@@ -102,6 +126,88 @@ namespace HanaMedia.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
+        }
+
+        private string GetClientIpAddress()
+        {
+            // Kiểm tra X-Forwarded-For header (khi deploy qua proxy/load balancer)
+            var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedFor))
+            {
+                var ip = forwardedFor.Split(',')[0].Trim();
+                _logger.LogInformation("[GetClientIp] From X-Forwarded-For: {Ip}", ip);
+                return NormalizeIpAddress(ip);
+            }
+
+            // Kiểm tra X-Real-IP header
+            var realIp = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(realIp))
+            {
+                _logger.LogInformation("[GetClientIp] From X-Real-IP: {Ip}", realIp);
+                return NormalizeIpAddress(realIp);
+            }
+
+            // Lấy IP trực tiếp từ connection
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            _logger.LogInformation("[GetClientIp] From RemoteIpAddress: {Ip}", remoteIp);
+            return NormalizeIpAddress(remoteIp);
+        }
+
+        private string NormalizeIpAddress(string ip)
+        {
+            // Xử lý IPv4-mapped IPv6 (VD: ::ffff:192.168.1.1 → 192.168.1.1)
+            if (ip.StartsWith("::ffff:"))
+            {
+                return ip.Substring(7);
+            }
+            return ip;
+        }
+
+        private bool IsIpInRange(string ipAddress, string cidr)
+        {
+            try
+            {
+                // Loopback luôn được cho phép (COMMENT TẠM ĐỂ TEST)
+                // if (ipAddress == "127.0.0.1" || ipAddress == "::1" || ipAddress == "localhost")
+                // {
+                //     _logger.LogInformation("[IpCheck] Loopback IP allowed");
+                //     return true;
+                // }
+
+                // Xử lý format CIDR
+                if (!cidr.Contains('/'))
+                {
+                    // Single IP
+                    return ipAddress.Trim() == cidr.Trim();
+                }
+
+                var parts = cidr.Split('/');
+                var networkAddress = IPAddress.Parse(parts[0].Trim());
+                var prefixLength = int.Parse(parts[1].Trim());
+                var clientIp = IPAddress.Parse(ipAddress);
+
+                var ipBytes = clientIp.GetAddressBytes();
+                var networkBytes = networkAddress.GetAddressBytes();
+
+                // IPv4
+                if (ipBytes.Length == 4 && networkBytes.Length == 4)
+                {
+                    var ipInt = BitConverter.ToUInt32(ipBytes.Reverse().ToArray(), 0);
+                    var networkInt = BitConverter.ToUInt32(networkBytes.Reverse().ToArray(), 0);
+                    var mask = uint.MaxValue << (32 - prefixLength);
+
+                    var result = (ipInt & mask) == (networkInt & mask);
+                    _logger.LogInformation("[IpCheck] {Ip}/{Prefix} vs {Network} = {Result}", ipAddress, prefixLength, networkAddress, result);
+                    return result;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[IpCheck] Error parsing IP range: {Cidr}, IP: {Ip}", cidr, ipAddress);
+                return false;
+            }
         }
 
         private IActionResult RedirectToDashboard(string? role)

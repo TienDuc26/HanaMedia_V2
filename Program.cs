@@ -38,4 +38,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Lắng nghe trên tất cả IP (để test từ máy khác trong mạng LAN)
+app.Urls.Clear();
+app.Urls.Add("http://0.0.0.0:5028");
+app.Urls.Add("https://0.0.0.0:7107");
+
 app.Run();
