@@ -34,5 +34,6 @@ public interface IAccountManagementService
 
     Task<LoginHistoryResponseViewModel?> GetLoginHistoryAsync(
         int userId,
+        int page,
         CancellationToken cancellationToken = default);
 }

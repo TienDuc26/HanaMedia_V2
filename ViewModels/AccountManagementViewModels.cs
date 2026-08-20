@@ -65,8 +65,17 @@ public sealed record RoleOptionViewModel(string Code, string Name);
 
 public sealed class CreateAccountInputModel
 {
+    [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
+    [StringLength(50, MinimumLength = 3, ErrorMessage = "Tên đăng nhập phải dài từ 3 đến 50 ký tự.")]
+    [RegularExpression("^[A-Za-z0-9._-]+$", ErrorMessage = "Tên đăng nhập chỉ được gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.")]
+    public string Username { get; set; } = string.Empty;
+
     [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn nhân viên cần cấp tài khoản.")]
     public int EmployeeId { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng nhập mật khẩu khởi tạo.")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu khởi tạo phải có ít nhất 8 ký tự.")]
+    public string InitialPassword { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
     public string Role { get; set; } = string.Empty;
@@ -107,6 +116,14 @@ public sealed class LoginHistoryResponseViewModel
     public string DisplayName { get; init; } = string.Empty;
 
     public string Username { get; init; } = string.Empty;
+
+    public int CurrentPage { get; init; }
+
+    public int TotalPages { get; init; }
+
+    public int TotalCount { get; init; }
+
+    public int PageSize { get; init; }
 
     public IReadOnlyList<LoginHistoryItemViewModel> Items { get; init; } = [];
 }

@@ -24,6 +24,48 @@
       gap: 16px;
       flex-wrap: wrap;
     }
+    .btn-mini.is-unavailable {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+    .login-history-card {
+      width: min(720px, 92vw) !important;
+      max-height: 78vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .login-history-card .modal-body {
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 6px;
+    }
+    .login-history-card table {
+      font-size: 12.5px;
+    }
+    .login-history-device {
+      max-width: 260px;
+      overflow-wrap: anywhere;
+    }
+    .history-pagination {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .history-pagination-info {
+      color: var(--muted);
+      font-size: 12px;
+      margin-right: 4px;
+    }
+    .history-page-button.active {
+      background: var(--blue-500);
+      border-color: var(--blue-500);
+      color: #fff;
+    }
+    .history-page-button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -140,28 +182,51 @@
                         data-fullname="@account.DisplayName"
                         data-username="@account.Username"
                         onclick="openLoginHistory(this)">Lịch sử</button>
-                <button type="button"
-                        class="btn-mini"
-                        data-user-id="@account.Id"
-                        data-username="@account.Username"
-                        data-current-role="@account.RoleCode"
-                        data-current-role-label="@account.RoleName"
-                        data-security-stamp="@securityStamp"
-                        onclick="openRoleModal(this)"
-                        title="@(account.CanChangeRole ? "Đổi quyền tài khoản" : "Không thể tự đổi quyền tài khoản đang đăng nhập")"
-                        @(!account.CanChangeRole ? "disabled" : null)>Đổi Quyền</button>
-                <form method="post"
-                      action="/AdminIT/ResetPassword"
-                      style="display:inline;"
-                      onsubmit="return confirm('Bạn có chắc muốn reset mật khẩu tài khoản này?');">
-                  @Html.AntiForgeryToken()
-                  <input type="hidden" name="UserId" value="@account.Id">
-                  <input type="hidden" name="ExpectedSecurityStamp" value="@securityStamp">
-                  <button type="submit"
+                @if (account.CanChangeRole)
+                {
+                  <button type="button"
                           class="btn-mini"
-                          title="@(account.IsCurrentAccount ? "Không thể tự reset mật khẩu tài khoản đang đăng nhập" : "Reset mật khẩu tài khoản")"
-                          @(account.IsCurrentAccount ? "disabled" : null)>Reset PW</button>
-                </form>
+                          data-user-id="@account.Id"
+                          data-username="@account.Username"
+                          data-current-role="@account.RoleCode"
+                          data-current-role-label="@account.RoleName"
+                          data-security-stamp="@securityStamp"
+                          onclick="openRoleModal(this)"
+                          title="Đổi quyền tài khoản">Đổi Quyền</button>
+                }
+                else
+                {
+                  var changeRoleReason = account.IsCurrentAccount
+                    ? "Không thể tự đổi quyền tài khoản đang đăng nhập."
+                    : "Không thể hạ quyền AdminIT đang hoạt động cuối cùng.";
+                  <button type="button"
+                          class="btn-mini is-unavailable"
+                          data-message="@changeRoleReason"
+                          onclick="showUnavailableAction(this)"
+                          aria-disabled="true">Đổi Quyền</button>
+                }
+                @if (account.IsCurrentAccount)
+                {
+                  <button type="button"
+                          class="btn-mini is-unavailable"
+                          data-message="Không thể tự reset mật khẩu tài khoản đang đăng nhập. Hãy dùng chức năng Đổi mật khẩu trong menu tài khoản."
+                          onclick="showUnavailableAction(this)"
+                          aria-disabled="true">Reset PW</button>
+                }
+                else
+                {
+                  <form method="post"
+                        action="/AdminIT/ResetPassword"
+                        style="display:inline;"
+                        onsubmit="return confirm('Bạn có chắc muốn reset mật khẩu tài khoản này?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="UserId" value="@account.Id">
+                    <input type="hidden" name="ExpectedSecurityStamp" value="@securityStamp">
+                    <button type="submit"
+                            class="btn-mini"
+                            title="Reset mật khẩu tài khoản">Reset PW</button>
+                  </form>
+                }
                 <form method="post"
                       action="/AdminIT/SetAccountStatus"
                       style="display:inline;"
@@ -207,7 +272,17 @@
       <div class="modal-body">
         <div class="form-group">
           <label>Tên đăng nhập (Username)</label>
-          <input type="text" id="createUsername" class="form-control" placeholder="Ví dụ: hoanglm" readonly>
+          <input type="text"
+                 id="createUsername"
+                 name="Username"
+                 class="form-control"
+                 placeholder="Ví dụ: hoanglm"
+                 minlength="3"
+                 maxlength="50"
+                 pattern="[A-Za-z0-9._-]+"
+                 title="Chỉ dùng chữ, số, dấu chấm, gạch dưới hoặc gạch ngang"
+                 autocomplete="off"
+                 required>
         </div>
         <div class="form-group">
           <label>Họ và tên nhân sự</label>
@@ -227,7 +302,14 @@
         </div>
         <div class="form-group">
           <label>Mật khẩu khởi tạo</label>
-          <input type="password" class="form-control" value="Mật khẩu được tạo tự động" readonly>
+          <input type="password"
+                 name="InitialPassword"
+                 class="form-control"
+                 placeholder="Nhập mật khẩu khởi tạo (tối thiểu 8 ký tự)"
+                 minlength="8"
+                 maxlength="100"
+                 autocomplete="new-password"
+                 required>
         </div>
         <div class="form-group">
           <label>Vai trò hệ thống (Role)</label>
@@ -305,7 +387,7 @@
 
 <!-- MODAL LỊCH SỬ ĐĂNG NHẬP -->
 <div class="modal-backdrop" id="loginHistoryModal">
-  <div class="modal-card" style="width:600px;">
+  <div class="modal-card login-history-card">
     <div class="modal-header">
       <div class="modal-title">Lịch sử kết nối thiết bị</div>
       <button type="button" class="modal-close" onclick="closeModal('loginHistoryModal')">&times;</button>
@@ -328,7 +410,8 @@
         </tbody>
       </table>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="justify-content:space-between; align-items:center;">
+      <div class="history-pagination" id="histPagination" aria-label="Phân trang lịch sử đăng nhập"></div>
       <button type="button" class="btn-mini approve" onclick="closeModal('loginHistoryModal')">Đóng</button>
     </div>
   </div>
@@ -336,6 +419,8 @@
 
 <script>
   const loginHistoryUrl = '/AdminIT/LoginHistory';
+  let selectedHistoryUserId = '';
+  let selectedHistoryFallback = { displayName: '', username: '' };
 
   function openModal(id) {
     document.getElementById(id).classList.add('active');
@@ -347,7 +432,17 @@
 
   function updateSuggestedUsername(select) {
     const selectedOption = select.options[select.selectedIndex];
-    document.getElementById('createUsername').value = selectedOption?.dataset.suggestedUsername || '';
+    const usernameInput = document.getElementById('createUsername');
+    const previousSuggestion = usernameInput.dataset.suggestedValue || '';
+    const nextSuggestion = selectedOption?.dataset.suggestedUsername || '';
+    if (!usernameInput.value.trim() || usernameInput.value === previousSuggestion) {
+      usernameInput.value = nextSuggestion;
+    }
+    usernameInput.dataset.suggestedValue = nextSuggestion;
+  }
+
+  function showUnavailableAction(button) {
+    alert(button.dataset.message || 'Không thể thực hiện thao tác này.');
   }
 
   function openRoleModal(button) {
@@ -381,14 +476,26 @@
   }
 
   async function openLoginHistory(button) {
-    document.getElementById('histUser').innerText = button.dataset.fullname || '';
-    document.getElementById('histUsername').innerText = button.dataset.username || '';
+    selectedHistoryUserId = button.dataset.userId || '';
+    selectedHistoryFallback = {
+      displayName: button.dataset.fullname || '',
+      username: button.dataset.username || ''
+    };
+    document.getElementById('histUser').innerText = selectedHistoryFallback.displayName;
+    document.getElementById('histUsername').innerText = selectedHistoryFallback.username;
     appendHistoryMessage('Đang tải lịch sử...');
+    document.getElementById('histPagination').replaceChildren();
     openModal('loginHistoryModal');
 
+    await loadLoginHistoryPage(1);
+  }
+
+  async function loadLoginHistoryPage(page) {
+    appendHistoryMessage('Đang tải lịch sử...');
     try {
       const response = await fetch(
-        loginHistoryUrl + '?userId=' + encodeURIComponent(button.dataset.userId || ''),
+        loginHistoryUrl + '?userId=' + encodeURIComponent(selectedHistoryUserId) +
+          '&page=' + encodeURIComponent(page),
         {
           credentials: 'same-origin',
           headers: { 'Accept': 'application/json' }
@@ -403,12 +510,13 @@
       }
 
       const payload = await response.json();
-      document.getElementById('histUser').innerText = payload.displayName || button.dataset.fullname || '';
-      document.getElementById('histUsername').innerText = payload.username || button.dataset.username || '';
+      document.getElementById('histUser').innerText = payload.displayName || selectedHistoryFallback.displayName;
+      document.getElementById('histUsername').innerText = payload.username || selectedHistoryFallback.username;
 
       const tbody = document.getElementById('histTableBody');
       tbody.replaceChildren();
       const items = Array.isArray(payload.items) ? payload.items : [];
+      renderHistoryPagination(payload);
       if (items.length === 0) {
         appendHistoryMessage('Chưa có lịch sử đăng nhập.');
         return;
@@ -424,12 +532,55 @@
         badge.textContent = item.label || item.action || 'Sự kiện';
         actionCell.appendChild(badge);
 
-        row.insertCell().innerText = item.deviceInfo || 'Không xác định';
+        const deviceCell = row.insertCell();
+        deviceCell.className = 'login-history-device';
+        deviceCell.innerText = item.deviceInfo || 'Không xác định';
         row.insertCell().innerText = item.ipAddress || 'Không xác định';
       });
+
     } catch {
       appendHistoryMessage('Không tải được lịch sử đăng nhập. Vui lòng thử lại.');
+      document.getElementById('histPagination').replaceChildren();
     }
+  }
+
+  function renderHistoryPagination(payload) {
+    const pagination = document.getElementById('histPagination');
+    pagination.replaceChildren();
+
+    const currentPage = Number(payload.currentPage) || 1;
+    const totalPages = Number(payload.totalPages) || 1;
+    const totalCount = Number(payload.totalCount) || 0;
+
+    const info = document.createElement('span');
+    info.className = 'history-pagination-info';
+    info.textContent = totalCount + ' bản ghi · Trang ' + currentPage + '/' + totalPages;
+    pagination.appendChild(info);
+
+    appendHistoryPageButton(pagination, '‹', currentPage - 1, currentPage <= 1, false);
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    for (let page = startPage; page <= endPage; page++) {
+      appendHistoryPageButton(pagination, String(page), page, false, page === currentPage);
+    }
+
+    appendHistoryPageButton(pagination, '›', currentPage + 1, currentPage >= totalPages, false);
+  }
+
+  function appendHistoryPageButton(container, label, page, disabled, active) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn-mini history-page-button' + (active ? ' active' : '');
+    button.textContent = label;
+    button.disabled = disabled;
+    if (active) {
+      button.setAttribute('aria-current', 'page');
+    }
+    button.addEventListener('click', function() {
+      loadLoginHistoryPage(page);
+    });
+    container.appendChild(button);
   }
 
   async function copyTemporaryPassword(button) {
