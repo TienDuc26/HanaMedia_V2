@@ -1,6 +1,18 @@
 -- =========================================================================
 -- MS SQL SERVER (MSSQL) DATABASE SCHEMA - HANAMEDIA
 -- =========================================================================
+-- FILE LEGACY CHỈ ĐỂ THAM KHẢO, KHÔNG DÙNG ĐỂ DỰNG DATABASE MỚI.
+-- EF Core migrations trong thư mục Migrations là nguồn chuẩn duy nhất để đồng bộ
+-- cấu trúc database giữa các thành viên.
+
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET QUOTED_IDENTIFIER ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
 
 -- 1. Bảng tài khoản đăng nhập hệ thống
 CREATE TABLE users (
@@ -9,7 +21,8 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL CONSTRAINT chk_user_role CHECK (role IN ('giam_doc', 'admin_it', 'ql_hcns', 'nv_hcns', 'ql_booking', 'nv_booking', 'ql_y_tuong', 'nv_y_tuong')),
-    status VARCHAR(20) DEFAULT 'active' CONSTRAINT chk_user_status CHECK (status IN ('active', 'locked')),
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CONSTRAINT chk_user_status CHECK (status IN ('active', 'locked')),
+    security_stamp UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE()
 );
@@ -18,7 +31,7 @@ GO
 -- 2. Bảng hồ sơ nhân viên toàn công ty
 CREATE TABLE employees (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT UNIQUE, -- Có thể NULL nếu nhân sự chưa được cấp tài khoản hệ thống
+    user_id INT, -- Có thể NULL nếu nhân sự chưa được cấp tài khoản hệ thống
     full_name NVARCHAR(100) NOT NULL,
     avatar_url VARCHAR(255),
     dob DATE NOT NULL,
@@ -174,12 +187,18 @@ GO
 -- OPTIMIZATION INDEXES
 -- =========================================================================
 CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_status_role ON users(status, role) INCLUDE(username, email);
+CREATE UNIQUE INDEX UX_employees_user_id ON employees(user_id) WHERE user_id IS NOT NULL;
 CREATE INDEX idx_employees_dept ON employees(department);
 CREATE INDEX idx_kols_platform ON kols(platform);
 CREATE INDEX idx_kols_status ON kols(status);
 CREATE INDEX idx_bookings_status ON bookings(status);
 CREATE INDEX idx_ideas_status ON ideas(status);
 CREATE INDEX idx_audit_logs_created ON system_audit_logs(created_at);
+CREATE INDEX idx_audit_logs_login_history
+    ON system_audit_logs(user_id, created_at DESC)
+    INCLUDE(action_type, ip_address, device_info)
+    WHERE module = 'Tai_Khoan' AND user_id IS NOT NULL;
 GO
 
 -- =========================================================================

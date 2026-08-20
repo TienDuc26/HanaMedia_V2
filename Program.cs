@@ -1,54 +1,73 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using HanaMedia.Models;
 using HanaMedia.Services;
+using HanaMedia.Services.Accounts;
+using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Security;
 
-var builder = WebApplication.CreateBuilder(args);
+const string BootstrapAdminArgument = "--bootstrap-admin";
+var bootstrapAdminRequested = args.Any(argument =>
+    string.Equals(argument, BootstrapAdminArgument, StringComparison.OrdinalIgnoreCase));
+var applicationArguments = args
+    .Where(argument =>
+        !string.Equals(argument, BootstrapAdminArgument, StringComparison.OrdinalIgnoreCase))
+    .ToArray();
+var builder = WebApplication.CreateBuilder(applicationArguments);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddHttpContextAccessor();
+// Read-only compatibility for existing Identity hashes. New/reset passwords stay SHA-256.
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();
+builder.Services.AddScoped<ISystemAuditService, SystemAuditService>();
+builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
+builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
+builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
+builder.Services.AddScoped<AccountCookieEvents>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Login";
-        options.AccessDeniedPath = "/Login";
+        options.AccessDeniedPath = "/AccessDenied";
+        options.Cookie.Name = "HanaMedia.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+        options.SlidingExpiration = true;
+        options.EventsType = typeof(AccountCookieEvents);
     });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Đảm bảo 2 field lockout tồn tại trong DB (chạy SQL nếu thiếu)
-using (var scope = app.Services.CreateScope())
+if (bootstrapAdminRequested)
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try
+    if (!app.Environment.IsDevelopment())
     {
-        var hasFailedCount = db.Database.SqlQueryRaw<int>(
-            "SELECT COUNT(*) AS Value FROM sys.columns WHERE object_id = OBJECT_ID(N'[users]') AND name = 'failed_login_attempts'"
-        ).AsEnumerable().FirstOrDefault();
-
-        if (hasFailedCount == 0)
-        {
-            db.Database.ExecuteSqlRaw("ALTER TABLE [users] ADD [failed_login_attempts] INT NOT NULL CONSTRAINT DF_users_failed_login_attempts DEFAULT 0");
-        }
-
-        var hasLockedUntil = db.Database.SqlQueryRaw<int>(
-            "SELECT COUNT(*) AS Value FROM sys.columns WHERE object_id = OBJECT_ID(N'[users]') AND name = 'locked_until'"
-        ).AsEnumerable().FirstOrDefault();
-
-        if (hasLockedUntil == 0)
-        {
-            db.Database.ExecuteSqlRaw("ALTER TABLE [users] ADD [locked_until] DATETIME2 NULL");
-        }
+        throw new InvalidOperationException(
+            "Lệnh --bootstrap-admin chỉ được phép chạy trong môi trường Development.");
     }
-    catch (Exception ex)
-    {
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Failed to ensure lockout fields exist in users table");
-    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var bootstrapCredentials =
+        DevelopmentAdminBootstrapper.ReadConfiguration(app.Configuration);
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await context.Database.MigrateAsync();
+    var bootstrapper = scope.ServiceProvider.GetRequiredService<DevelopmentAdminBootstrapper>();
+    var result = await bootstrapper.RunAsync(bootstrapCredentials);
+    app.Logger.LogInformation("{BootstrapResult}", result.Message);
+    return;
 }
 
 // Configure the HTTP request pipeline.

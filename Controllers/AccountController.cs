@@ -1,217 +1,320 @@
+using System.Globalization;
+using System.Net;
+using System.Security.Claims;
+using HanaMedia.Constants;
+using HanaMedia.Models;
+using HanaMedia.Services;
+using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Security.Claims;
-using HanaMedia.Models;
-using HanaMedia.Services;
 
-namespace HanaMedia.Controllers
+namespace HanaMedia.Controllers;
+
+public sealed class AccountController : Controller
 {
-    [AllowAnonymous]
-    public class AccountController : Controller
-    {
-        private readonly AccountService _accountService;
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<AccountController> _logger;
+    private const string InvalidCredentialsMessage =
+        "Tên đăng nhập hoặc mật khẩu không chính xác.";
 
-        public AccountController(
-            AccountService accountService,
-            IConfiguration configuration,
-            ILogger<AccountController> logger)
+    private readonly ApplicationDbContext _context;
+    private readonly AccountService _accountService;
+    private readonly IConfiguration _configuration;
+    private readonly ISystemAuditService _auditService;
+    private readonly ILogger<AccountController> _logger;
+
+    public AccountController(
+        ApplicationDbContext context,
+        AccountService accountService,
+        IConfiguration configuration,
+        ISystemAuditService auditService,
+        ILogger<AccountController> logger)
+    {
+        _context = context;
+        _accountService = accountService;
+        _configuration = configuration;
+        _auditService = auditService;
+        _logger = logger;
+    }
+
+    [AllowAnonymous]
+    [Route("")]
+    [Route("Login")]
+    [HttpGet]
+    public IActionResult Login()
+    {
+        if (User.Identity?.IsAuthenticated == true)
         {
-            _accountService = accountService;
-            _configuration = configuration;
-            _logger = logger;
+            return RedirectToDashboard(User.FindFirstValue(ClaimTypes.Role));
         }
 
-        [Route("")]
-        [Route("Login")]
-        [HttpGet]
-        public IActionResult Login()
+        return View();
+    }
+
+    [AllowAnonymous]
+    [Route("Login")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(
+        string username,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        username = username?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                var role = User.FindFirst(ClaimTypes.Role)?.Value;
-                return RedirectToDashboard(role);
-            }
+            ViewBag.Error = "Tên đăng nhập và mật khẩu không được để trống.";
             return View();
         }
 
-        [Route("Login")]
-        [HttpPost]
-        public async Task<IActionResult> Login(string username, string password)
+        var clientIp = GetClientIpAddress();
+        var allowedCidr = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
+
+        _logger.LogInformation(
+            "[NetworkCheck] Client IP: {ClientIp}, Allowed CIDR: {AllowedCidr}",
+            clientIp,
+            allowedCidr);
+
+        if (!IsIpInRange(clientIp, allowedCidr))
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            {
-                ViewBag.Error = "Tên đăng nhập và mật khẩu không được để trống.";
-                return View();
-            }
-
-            // Kiểm tra IP trước khi kiểm tra tài khoản
-            var clientIp = GetClientIpAddress();
-            var allowedCidr = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
-
-            _logger.LogInformation("[NetworkCheck] Client IP: {ClientIp}, Allowed CIDR: {AllowedCidr}", clientIp, allowedCidr);
-
-            if (!IsIpInRange(clientIp, allowedCidr))
-            {
-                _logger.LogWarning("[NetworkCheck] BLOCKED - IP {ClientIp} not in range {AllowedCidr}", clientIp, allowedCidr);
-                ViewBag.NetworkError = "Vui lòng kết nối mạng nội bộ công ty để sử dụng hệ thống.";
-                return View();
-            }
-
-            _logger.LogInformation("[NetworkCheck] PASSED - IP {ClientIp} is in range {AllowedCidr}", clientIp, allowedCidr);
-
-            // Gọi AccountService để xác thực (đã bao gồm logic lockout)
-            var (result, user, message) = await _accountService.AuthenticateAsync(username, password);
-
-            switch (result)
-            {
-                case LoginResult.Success:
-                    // Sign in
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, user!.Username),
-                        new Claim(ClaimTypes.Role, user.Role)
-                    };
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var authProperties = new AuthenticationProperties
-                    {
-                        IsPersistent = true,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
-                    };
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-                    return RedirectToDashboard(user.Role);
-
-                case LoginResult.AccountLockedTemporarily:
-                    // Popup riêng biệt - khác với popup sai mật khẩu và popup sai mạng
-                    ViewBag.LockoutError = message;
-                    return View();
-
-                case LoginResult.AccountInactive:
-                case LoginResult.UserNotFound:
-                case LoginResult.WrongPassword:
-                default:
-                    ViewBag.Error = message;
-                    return View();
-            }
+            _logger.LogWarning(
+                "[NetworkCheck] BLOCKED - IP {ClientIp} not in range {AllowedCidr}",
+                clientIp,
+                allowedCidr);
+            await TryWriteAuditAsync(
+                null,
+                "login_blocked_network",
+                $"Chặn đăng nhập từ IP ngoài mạng nội bộ: {Truncate(clientIp, 45)}.",
+                cancellationToken);
+            ViewBag.NetworkError =
+                "Vui lòng kết nối mạng nội bộ công ty để sử dụng hệ thống.";
+            return View();
         }
 
-        [Route("Logout")]
-        [HttpGet]
-        public async Task<IActionResult> Logout()
+        _logger.LogInformation(
+            "[NetworkCheck] PASSED - IP {ClientIp} is in range {AllowedCidr}",
+            clientIp,
+            allowedCidr);
+
+        var (result, user, message) =
+            await _accountService.AuthenticateAsync(username, password);
+
+        switch (result)
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login");
-        }
+            case LoginResult.Success:
+                await TryWriteAuditAsync(
+                    user!.Id,
+                    "login_succeeded",
+                    $"Tài khoản {user.Username} đăng nhập thành công.",
+                    cancellationToken);
 
-        private string GetClientIpAddress()
-        {
-            // Kiểm tra X-Forwarded-For header (khi deploy qua proxy/load balancer)
-            var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(forwardedFor))
-            {
-                var ip = forwardedFor.Split(',')[0].Trim();
-                _logger.LogInformation("[GetClientIp] From X-Forwarded-For: {Ip}", ip);
-                return NormalizeIpAddress(ip);
-            }
-
-            // Kiểm tra X-Real-IP header
-            var realIp = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(realIp))
-            {
-                _logger.LogInformation("[GetClientIp] From X-Real-IP: {Ip}", realIp);
-                return NormalizeIpAddress(realIp);
-            }
-
-            // Lấy IP trực tiếp từ connection
-            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            _logger.LogInformation("[GetClientIp] From RemoteIpAddress: {Ip}", remoteIp);
-            return NormalizeIpAddress(remoteIp);
-        }
-
-        private string NormalizeIpAddress(string ip)
-        {
-            // Xử lý IPv4-mapped IPv6 (VD: ::ffff:192.168.1.1 → 192.168.1.1)
-            if (ip.StartsWith("::ffff:"))
-            {
-                return ip.Substring(7);
-            }
-            return ip;
-        }
-
-        private bool IsIpInRange(string ipAddress, string cidr)
-        {
-            try
-            {
-                // Loopback luôn được cho phép (COMMENT TẠM ĐỂ TEST)
-                // if (ipAddress == "127.0.0.1" || ipAddress == "::1" || ipAddress == "localhost")
-                // {
-                //     _logger.LogInformation("[IpCheck] Loopback IP allowed");
-                //     return true;
-                // }
-
-                // Xử lý format CIDR
-                if (!cidr.Contains('/'))
+                var claims = new List<Claim>
                 {
-                    // Single IP
-                    return ipAddress.Trim() == cidr.Trim();
-                }
-
-                var parts = cidr.Split('/');
-                var networkAddress = IPAddress.Parse(parts[0].Trim());
-                var prefixLength = int.Parse(parts[1].Trim());
-                var clientIp = IPAddress.Parse(ipAddress);
-
-                var ipBytes = clientIp.GetAddressBytes();
-                var networkBytes = networkAddress.GetAddressBytes();
-
-                // IPv4
-                if (ipBytes.Length == 4 && networkBytes.Length == 4)
+                    new(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
+                    new(ClaimTypes.Name, user.Username),
+                    new(ClaimTypes.Email, user.Email),
+                    new(ClaimTypes.Role, user.Role),
+                    new(SecurityClaimTypes.SecurityStamp, user.SecurityStamp.ToString("D"))
+                };
+                var claimsIdentity = new ClaimsIdentity(
+                    claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
                 {
-                    var ipInt = BitConverter.ToUInt32(ipBytes.Reverse().ToArray(), 0);
-                    var networkInt = BitConverter.ToUInt32(networkBytes.Reverse().ToArray(), 0);
-                    var mask = uint.MaxValue << (32 - prefixLength);
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2),
+                    AllowRefresh = true
+                };
 
-                    var result = (ipInt & mask) == (networkInt & mask);
-                    _logger.LogInformation("[IpCheck] {Ip}/{Prefix} vs {Network} = {Result}", ipAddress, prefixLength, networkAddress, result);
-                    return result;
-                }
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+                return RedirectToDashboard(user.Role);
 
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[IpCheck] Error parsing IP range: {Cidr}, IP: {Ip}", cidr, ipAddress);
-                return false;
-            }
-        }
+            case LoginResult.AccountLockedTemporarily:
+                await TryWriteAuditAsync(
+                    user?.Id,
+                    "login_failed",
+                    $"Tài khoản {Truncate(username, 100)} đang bị khóa tạm thời.",
+                    cancellationToken);
+                ViewBag.LockoutError = message;
+                return View();
 
-        private IActionResult RedirectToDashboard(string? role)
-        {
-            switch (role)
-            {
-                case "giam_doc":
-                    return RedirectToAction("Dashboard", "Director");
-                case "admin_it":
-                    return RedirectToAction("Dashboard", "AdminIT");
-                case "ql_hcns":
-                    return RedirectToAction("HumanResources", "ManageHuman");
-                case "nv_hcns":
-                    return RedirectToAction("HumanResources", "HumanResourcesStaff");
-                case "ql_booking":
-                    return RedirectToAction("Dashboard", "ManageBooking");
-                case "nv_booking":
-                    return RedirectToAction("Booking", "BookingStaff");
-                case "ql_y_tuong":
-                    return RedirectToAction("Dashboard", "ManageIdea");
-                case "nv_y_tuong":
-                    return RedirectToAction("Idea", "IdeaStaff");
-                default:
-                    return RedirectToAction("Index", "Home");
-            }
+            case LoginResult.AccountInactive:
+                await TryWriteAuditAsync(
+                    user?.Id,
+                    "login_failed",
+                    $"Tài khoản {Truncate(username, 100)} đang bị khóa.",
+                    cancellationToken);
+                ViewBag.Error = message;
+                return View();
+
+            case LoginResult.UserNotFound:
+            case LoginResult.WrongPassword:
+            default:
+                await TryWriteAuditAsync(
+                    user?.Id,
+                    "login_failed",
+                    $"Đăng nhập thất bại với định danh {Truncate(username, 100)}.",
+                    cancellationToken);
+                ViewBag.Error = string.IsNullOrWhiteSpace(message)
+                    ? InvalidCredentialsMessage
+                    : message;
+                return View();
         }
     }
+
+    [Authorize]
+    [Route("Logout")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public Task<IActionResult> Logout(CancellationToken cancellationToken)
+        => SignOutCurrentUserAsync(cancellationToken);
+
+    // Giữ tương thích với các view cũ của develop đang dùng liên kết GET /Logout.
+    [Authorize]
+    [Route("Logout")]
+    [HttpGet]
+    public Task<IActionResult> LogoutLegacy(CancellationToken cancellationToken)
+        => SignOutCurrentUserAsync(cancellationToken);
+
+    [AllowAnonymous]
+    [Route("AccessDenied")]
+    [HttpGet]
+    public IActionResult AccessDenied() => View();
+
+    private async Task<IActionResult> SignOutCurrentUserAsync(
+        CancellationToken cancellationToken)
+    {
+        var identifier = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (int.TryParse(
+                identifier,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var userId))
+        {
+            await TryWriteAuditAsync(
+                userId,
+                "logout",
+                $"Tài khoản {User.Identity?.Name} đăng xuất.",
+                cancellationToken);
+        }
+
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction(nameof(Login));
+    }
+
+    private string GetClientIpAddress()
+    {
+        var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwardedFor))
+        {
+            return NormalizeIpAddress(forwardedFor.Split(',')[0].Trim());
+        }
+
+        var realIp = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(realIp))
+        {
+            return NormalizeIpAddress(realIp);
+        }
+
+        return NormalizeIpAddress(
+            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+    }
+
+    private static string NormalizeIpAddress(string ip)
+        => ip.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase)
+            ? ip[7..]
+            : ip;
+
+    private bool IsIpInRange(string ipAddress, string cidr)
+    {
+        try
+        {
+            if (IPAddress.TryParse(ipAddress, out var parsedAddress) &&
+                IPAddress.IsLoopback(parsedAddress))
+            {
+                return true;
+            }
+
+            if (!cidr.Contains('/'))
+            {
+                return string.Equals(
+                    ipAddress.Trim(),
+                    cidr.Trim(),
+                    StringComparison.OrdinalIgnoreCase);
+            }
+
+            var parts = cidr.Split('/');
+            var networkAddress = IPAddress.Parse(parts[0].Trim());
+            var prefixLength = int.Parse(parts[1].Trim(), CultureInfo.InvariantCulture);
+            var clientIp = IPAddress.Parse(ipAddress);
+            var ipBytes = clientIp.GetAddressBytes();
+            var networkBytes = networkAddress.GetAddressBytes();
+
+            if (ipBytes.Length != 4 || networkBytes.Length != 4 ||
+                prefixLength is < 0 or > 32)
+            {
+                return false;
+            }
+
+            var ipValue = BitConverter.ToUInt32(ipBytes.Reverse().ToArray(), 0);
+            var networkValue = BitConverter.ToUInt32(networkBytes.Reverse().ToArray(), 0);
+            var mask = prefixLength == 0
+                ? 0U
+                : uint.MaxValue << (32 - prefixLength);
+            return (ipValue & mask) == (networkValue & mask);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "[IpCheck] Error parsing IP range: {Cidr}, IP: {Ip}",
+                cidr,
+                ipAddress);
+            return false;
+        }
+    }
+
+    private IActionResult RedirectToDashboard(string? role)
+        => role switch
+        {
+            AppRoles.Director => RedirectToAction("Dashboard", "Director"),
+            AppRoles.AdminIT => RedirectToAction("Dashboard", "AdminIT"),
+            AppRoles.HumanResourcesManager => RedirectToAction("HumanResources", "ManageHuman"),
+            AppRoles.HumanResourcesStaff => RedirectToAction("HumanResources", "HumanResourcesStaff"),
+            AppRoles.BookingManager => RedirectToAction("Dashboard", "ManageBooking"),
+            AppRoles.BookingStaff => RedirectToAction("Booking", "BookingStaff"),
+            AppRoles.IdeaManager => RedirectToAction("Dashboard", "ManageIdea"),
+            AppRoles.IdeaStaff => RedirectToAction("Idea", "IdeaStaff"),
+            _ => RedirectToAction("Index", "Home")
+        };
+
+    private async Task TryWriteAuditAsync(
+        int? userId,
+        string actionType,
+        string detail,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _auditService.AddAccountEvent(userId, actionType, detail);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                exception,
+                "Không thể ghi audit xác thực {ActionType} cho user {UserId}.",
+                actionType,
+                userId);
+        }
+    }
+
+    private static string Truncate(string value, int maxLength)
+        => value.Length <= maxLength ? value : value[..maxLength];
 }
