@@ -213,6 +213,6 @@ INSERT INTO users (username, email, password_hash, role, status) VALUES
 ('nv_hcns', 'nvhcns@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'nv_hcns', 'active'),
 ('ql_booking', 'qlbooking@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'ql_booking', 'active'),
 ('nv_booking', 'nvbooking@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'nv_booking', 'active'),
-('ql_y_tuong', 'qlytuong@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'ql_y_tuong', 'active'),
+('ql_y_tuong', 'qlytuong@hanamedia.com', 'ef92b778b afe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'ql_y_tuong', 'active'),
 ('nv_y_tuong', 'nvytuong@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'nv_y_tuong', 'active');
 GO

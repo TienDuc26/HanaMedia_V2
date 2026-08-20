@@ -172,6 +172,7 @@
   margin-top: auto;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, .12);
+  position: relative;
 }
 
 .role-pill {
@@ -230,4 +231,245 @@ footer {
   .sidebar {
     display: none;
   }
+}
+
+/* ============================================================
+   User Menu Dropdown (Module 1)
+   ============================================================ */
+.user-menu-trigger {
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s ease;
+  position: relative;
+}
+
+.user-menu-trigger:hover {
+  background: rgba(255, 255, 255, .14);
+}
+
+.user-menu-chevron {
+  margin-left: auto;
+  font-size: 14px;
+  color: rgba(255, 255, 255, .7);
+  transition: transform .2s ease;
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, .18);
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  background: transparent;
+  color: #1d2939;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .12s ease;
+  border-bottom: 1px solid #f1f3f7;
+  font-family: inherit;
+}
+
+.user-menu-item:last-child {
+  border-bottom: none;
+}
+
+.user-menu-item:hover {
+  background: #f6f8fb;
+}
+
+.user-menu-item i {
+  font-size: 16px;
+  color: #64748b;
+  width: 18px;
+  text-align: center;
+}
+
+.user-menu-logout {
+  color: #dc4e4e;
+}
+
+.user-menu-logout i {
+  color: #dc4e4e;
+}
+
+.user-menu-logout:hover {
+  background: #fff3f3;
+}
+
+/* Modal Đổi mật khẩu */
+.user-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.user-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, .25);
+  animation: modal-pop .18s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes modal-pop {
+  from { transform: scale(.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.user-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.user-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d2939;
+}
+
+.user-modal-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.user-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.user-modal-close:hover {
+  color: #1d2939;
+}
+
+/* Form controls trong modal */
+.user-modal-box .form-group {
+  margin-bottom: 14px;
+}
+
+.user-modal-box .form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2939;
+  margin-bottom: 6px;
+}
+
+.user-modal-box .form-control {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1d2939;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  box-sizing: border-box;
+}
+
+.user-modal-box .form-control:focus {
+  border-color: #2F80ED;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, .15);
+}
+
+.user-modal-box .form-control::placeholder {
+  color: #98a2b3;
+}
+
+.user-modal-error,
+.user-modal-success {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-top: 12px;
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.user-modal-error {
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid rgba(180, 35, 24, .2);
+}
+
+.user-modal-success {
+  color: #1ca36b;
+  background: #e6f7ee;
+  border: 1px solid rgba(28, 163, 107, .2);
+}
+
+.user-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.user-modal-actions .btn-primary,
+.user-modal-actions .btn-secondary {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all .15s ease;
+  font-family: inherit;
+}
+
+.user-modal-actions .btn-primary {
+  background: var(--blue-500, #2F80ED);
+  color: #fff;
+}
+
+.user-modal-actions .btn-primary:hover {
+  background: var(--blue-700, #185FA5);
+}
+
+.user-modal-actions .btn-primary:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.user-modal-actions .btn-secondary {
+  background: #f1f3f7;
+  color: #475569;
+}
+
+.user-modal-actions .btn-secondary:hover {
+  background: #e2e6ec;
 }
