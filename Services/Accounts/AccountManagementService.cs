@@ -174,7 +174,7 @@ public sealed class AccountManagementService : IAccountManagementService
                 Email = employee.Email,
                 Role = input.Role,
                 Status = AccountStatuses.Active,
-                SecurityStamp = Guid.NewGuid(),
+                SecurityStamp = Guid.NewGuid().ToString(),
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -215,7 +215,7 @@ public sealed class AccountManagementService : IAccountManagementService
             return Failure("Vai trò được chọn không hợp lệ.");
         }
 
-        if (input.ExpectedSecurityStamp == Guid.Empty)
+        if (string.IsNullOrWhiteSpace(input.ExpectedSecurityStamp))
         {
             return Failure("Dữ liệu tài khoản không hợp lệ. Vui lòng tải lại trang.");
         }
@@ -282,7 +282,7 @@ public sealed class AccountManagementService : IAccountManagementService
     public async Task<AccountOperationResult> SetStatusAsync(
         int userId,
         string targetStatus,
-        Guid expectedSecurityStamp,
+        string expectedSecurityStamp,
         int actorUserId,
         CancellationToken cancellationToken = default)
     {
@@ -291,7 +291,7 @@ public sealed class AccountManagementService : IAccountManagementService
             return Failure("Trạng thái tài khoản không hợp lệ.");
         }
 
-        if (expectedSecurityStamp == Guid.Empty)
+        if (string.IsNullOrWhiteSpace(expectedSecurityStamp))
         {
             return Failure("Dữ liệu tài khoản không hợp lệ. Vui lòng tải lại trang.");
         }
@@ -354,7 +354,7 @@ public sealed class AccountManagementService : IAccountManagementService
 
     public async Task<AccountOperationResult> ResetPasswordAsync(
         int userId,
-        Guid expectedSecurityStamp,
+        string expectedSecurityStamp,
         int actorUserId,
         CancellationToken cancellationToken = default)
     {
@@ -364,7 +364,7 @@ public sealed class AccountManagementService : IAccountManagementService
             return Failure("Không tìm thấy tài khoản.");
         }
 
-        if (expectedSecurityStamp == Guid.Empty || user.SecurityStamp != expectedSecurityStamp)
+        if (string.IsNullOrWhiteSpace(expectedSecurityStamp) || user.SecurityStamp != expectedSecurityStamp)
         {
             return StaleDataFailure();
         }
@@ -480,7 +480,7 @@ public sealed class AccountManagementService : IAccountManagementService
 
     private static void TouchSecurityState(User user)
     {
-        user.SecurityStamp = Guid.NewGuid();
+        user.SecurityStamp = Guid.NewGuid().ToString();
         user.UpdatedAt = DateTime.Now;
     }
 

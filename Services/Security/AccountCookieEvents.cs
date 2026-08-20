@@ -80,9 +80,8 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
         }
 
         var securityStampClaim = principal.FindFirst(SecurityClaimTypes.SecurityStamp)?.Value;
-        if (account.SecurityStamp == Guid.Empty ||
-            !Guid.TryParseExact(securityStampClaim, "D", out var securityStamp) ||
-            securityStamp != account.SecurityStamp)
+        if (string.IsNullOrWhiteSpace(account.SecurityStamp) ||
+            securityStampClaim != account.SecurityStamp)
         {
             await RejectAndSignOutAsync(context);
         }

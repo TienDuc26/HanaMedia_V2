@@ -538,7 +538,7 @@ public partial class ApplicationDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("role");
             entity.Property(e => e.SecurityStamp)
-                .HasDefaultValueSql("(newid())")
+                .HasColumnType("nvarchar(max)")
                 .IsConcurrencyToken()
                 .HasColumnName("security_stamp");
             entity.Property(e => e.Status)

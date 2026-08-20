@@ -116,7 +116,7 @@ public sealed class AccountController : Controller
                     new(ClaimTypes.Name, user.Username),
                     new(ClaimTypes.Email, user.Email),
                     new(ClaimTypes.Role, user.Role),
-                    new(SecurityClaimTypes.SecurityStamp, user.SecurityStamp.ToString("D"))
+                    new(SecurityClaimTypes.SecurityStamp, user.SecurityStamp)
                 };
                 var claimsIdentity = new ClaimsIdentity(
                     claims,

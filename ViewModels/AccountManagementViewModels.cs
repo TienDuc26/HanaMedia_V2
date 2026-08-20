@@ -37,7 +37,7 @@ public sealed class AccountListItemViewModel
 
     public string Status { get; init; } = string.Empty;
 
-    public Guid SecurityStamp { get; init; }
+    public string SecurityStamp { get; init; } = string.Empty;
 
     public DateTime? LastLoginAt { get; init; }
 
@@ -80,7 +80,7 @@ public sealed class ChangeRoleInputModel
     [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
     public string Role { get; set; } = string.Empty;
 
-    public Guid ExpectedSecurityStamp { get; set; }
+    public string ExpectedSecurityStamp { get; set; } = string.Empty;
 }
 
 public sealed class AccountStatusInputModel
@@ -91,7 +91,7 @@ public sealed class AccountStatusInputModel
     [Required(ErrorMessage = "Trạng thái tài khoản không hợp lệ.")]
     public string Status { get; set; } = string.Empty;
 
-    public Guid ExpectedSecurityStamp { get; set; }
+    public string ExpectedSecurityStamp { get; set; } = string.Empty;
 }
 
 public sealed class AccountIdInputModel
@@ -99,7 +99,7 @@ public sealed class AccountIdInputModel
     [Range(1, int.MaxValue, ErrorMessage = "Mã tài khoản không hợp lệ.")]
     public int UserId { get; set; }
 
-    public Guid ExpectedSecurityStamp { get; set; }
+    public string ExpectedSecurityStamp { get; set; } = string.Empty;
 }
 
 public sealed class LoginHistoryResponseViewModel
