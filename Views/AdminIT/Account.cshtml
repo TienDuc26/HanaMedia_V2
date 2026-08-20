@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+@model HanaMedia.ViewModels.AccountManagementPageViewModel
+@{
+  var hasEligibleEmployees = Model.EligibleEmployees.Any();
+}
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -53,11 +57,51 @@
     </div>
 
     <div class="card">
-      <div class="action-bar">
-        <div style="flex: 1; max-width: 300px;">
-          <input type="text" class="form-control" placeholder="Tìm tài khoản, họ tên...">
+      @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+      {
+        <div class="alert-box" style="margin-top:0; margin-bottom:16px; background:#EAF7EE; border-color:#B9DFC4;">
+          <i class="ti ti-circle-check" style="color:var(--green);"></i>
+          <div>
+            <div class="alert-title" style="color:var(--green);">Thao tác thành công</div>
+            <div class="alert-desc">@Model.SuccessMessage</div>
+          </div>
         </div>
-        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addAccountModal')"><i class="ti ti-plus"></i> Tạo tài khoản mới</button>
+      }
+
+      @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+      {
+        <div class="alert-box" style="margin-top:0; margin-bottom:16px; background:#FDEAEA; border-color:#F5C6CB;">
+          <i class="ti ti-alert-triangle" style="color:var(--red);"></i>
+          <div>
+            <div class="alert-title" style="color:#721C24;">Không thể thực hiện</div>
+            <div class="alert-desc" style="color:#721C24;">@Model.ErrorMessage</div>
+          </div>
+        </div>
+      }
+
+      @if (!string.IsNullOrWhiteSpace(Model.TemporaryPassword))
+      {
+        <div class="alert-box" style="margin-top:0; margin-bottom:16px;">
+          <i class="ti ti-key"></i>
+          <div>
+            <div class="alert-title">Mật khẩu tạm của tài khoản @Model.TemporaryPasswordUsername</div>
+            <div class="alert-desc">
+              Mật khẩu chỉ hiển thị một lần:
+              <code id="temporaryPasswordValue">@Model.TemporaryPassword</code>
+              <button type="button" class="btn-mini" style="margin-left:8px;" onclick="copyTemporaryPassword(this)">Sao chép</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="action-bar">
+        <form method="get" action="/AdminIT/Account" style="flex: 1; max-width: 300px;" role="search">
+          <input type="text" name="q" value="@Model.Search" class="form-control" placeholder="Tìm tài khoản, họ tên...">
+        </form>
+        <button type="button"
+                class="btn-mini approve"
+                style="padding: 10px 18px;"
+                onclick="openModal('addAccountModal')"><i class="ti ti-plus"></i> Tạo tài khoản mới</button>
       </div>
 
       <table>
@@ -72,45 +116,77 @@
           </tr>
         </thead>
         <tbody>
+        @if (Model.Accounts.Any())
+        {
+          @foreach (var account in Model.Accounts)
+          {
+            var isActive = string.Equals(account.Status, "active", StringComparison.OrdinalIgnoreCase);
+            var nextStatus = isActive ? "locked" : "active";
+            var securityStamp = account.SecurityStamp.ToString("D");
+            <tr>
+              <td><strong>@account.Username</strong></td>
+              <td>@account.DisplayName</td>
+              <td>@account.RoleName</td>
+              <td>
+                <span class="status-chip @(isActive ? "status-good" : "status-bad")">
+                  @(isActive ? "Đang hoạt động" : "Đang khóa (Tạm thời)")
+                </span>
+              </td>
+              <td>@(string.IsNullOrWhiteSpace(account.LastLoginIp) ? "Chưa có" : account.LastLoginIp)</td>
+              <td style="text-align: right;">
+                <button type="button"
+                        class="btn-mini"
+                        data-user-id="@account.Id"
+                        data-fullname="@account.DisplayName"
+                        data-username="@account.Username"
+                        onclick="openLoginHistory(this)">Lịch sử</button>
+                <button type="button"
+                        class="btn-mini"
+                        data-user-id="@account.Id"
+                        data-username="@account.Username"
+                        data-current-role="@account.RoleCode"
+                        data-current-role-label="@account.RoleName"
+                        data-security-stamp="@securityStamp"
+                        onclick="openRoleModal(this)"
+                        title="@(account.CanChangeRole ? "Đổi quyền tài khoản" : "Không thể tự đổi quyền tài khoản đang đăng nhập")"
+                        @(!account.CanChangeRole ? "disabled" : null)>Đổi Quyền</button>
+                <form method="post"
+                      action="/AdminIT/ResetPassword"
+                      style="display:inline;"
+                      onsubmit="return confirm('Bạn có chắc muốn reset mật khẩu tài khoản này?');">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="UserId" value="@account.Id">
+                  <input type="hidden" name="ExpectedSecurityStamp" value="@securityStamp">
+                  <button type="submit"
+                          class="btn-mini"
+                          title="@(account.IsCurrentAccount ? "Không thể tự reset mật khẩu tài khoản đang đăng nhập" : "Reset mật khẩu tài khoản")"
+                          @(account.IsCurrentAccount ? "disabled" : null)>Reset PW</button>
+                </form>
+                <form method="post"
+                      action="/AdminIT/SetAccountStatus"
+                      style="display:inline;"
+                      onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái tài khoản này?');">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="UserId" value="@account.Id">
+                  <input type="hidden" name="Status" value="@nextStatus">
+                  <input type="hidden" name="ExpectedSecurityStamp" value="@securityStamp">
+                  <button type="submit"
+                          class="btn-mini @(isActive ? "reject" : "approve")"
+                          title="@(account.CanLock ? (isActive ? "Khóa tài khoản" : "Mở khóa tài khoản") : "Không thể tự khóa tài khoản đang đăng nhập")"
+                          @(!account.CanLock ? "disabled" : null)>@(isActive ? "Khóa" : "Mở khóa")</button>
+                </form>
+              </td>
+            </tr>
+          }
+        }
+        else
+        {
           <tr>
-            <td><strong>nguyenvana</strong></td>
-            <td>Nguyễn Văn A</td>
-            <td>Giám đốc</td>
-            <td><span class="status-chip status-good">Đang hoạt động</span></td>
-            <td>192.168.1.2</td>
-            <td style="text-align: right;">
-              <button class="btn-mini" onclick="openLoginHistory('Nguyễn Văn A', 'nguyenvana', [{'time':'12/08/2026 08:15', 'action':'Đăng nhập', 'device':'MacOS / Chrome', 'ip':'192.168.1.2'}, {'time':'11/08/2026 17:30', 'action':'Đăng xuất', 'device':'MacOS / Chrome', 'ip':'192.168.1.2'}])">Lịch sử</button>
-              <button class="btn-mini" onclick="openRoleModal('nguyenvana', 'Giám đốc')">Đổi Quyền</button>
-              <button class="btn-mini" onclick="alert('Đã reset mật khẩu tài khoản nguyenvana thành mặc định (HanaMedia@2026)!')">Reset PW</button>
-              <button class="btn-mini reject" onclick="alert('Đã khóa tài khoản!')">Khóa</button>
+            <td colspan="6" style="text-align:center; color:var(--muted); padding:28px;">
+              Không tìm thấy tài khoản phù hợp.
             </td>
           </tr>
-          <tr>
-            <td><strong>nguyenanhtuan</strong></td>
-            <td>Nguyễn Anh Tuấn</td>
-            <td>QL Booking</td>
-            <td><span class="status-chip status-good">Đang hoạt động</span></td>
-            <td>192.168.1.10</td>
-            <td style="text-align: right;">
-              <button class="btn-mini" onclick="openLoginHistory('Nguyễn Anh Tuấn', 'nguyenanhtuan', [{'time':'12/08/2026 07:50', 'action':'Đăng nhập', 'device':'Windows 11 / Edge', 'ip':'192.168.1.10'}])">Lịch sử</button>
-              <button class="btn-mini" onclick="openRoleModal('nguyenanhtuan', 'QL Booking')">Đổi Quyền</button>
-              <button class="btn-mini" onclick="alert('Đã reset mật khẩu!')">Reset PW</button>
-              <button class="btn-mini reject" onclick="alert('Đã khóa tài khoản!')">Khóa</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>nguyenvanb</strong></td>
-            <td>Nguyễn Văn B</td>
-            <td>NV Booking</td>
-            <td><span class="status-chip status-bad">Đang khóa (Tạm thời)</span></td>
-            <td>192.168.1.15</td>
-            <td style="text-align: right;">
-              <button class="btn-mini" onclick="openLoginHistory('Nguyễn Văn B', 'nguyenvanb', [{'time':'12/08/2026 08:05', 'action':'Thất bại (5 lần)', 'device':'iPhone / Safari', 'ip':'192.168.1.15'}])">Lịch sử</button>
-              <button class="btn-mini" onclick="openRoleModal('nguyenvanb', 'NV Booking')">Đổi Quyền</button>
-              <button class="btn-mini" onclick="alert('Đã reset mật khẩu!')">Reset PW</button>
-              <button class="btn-mini approve" onclick="alert('Đã mở khóa tài khoản!')">Mở khóa</button>
-            </td>
-          </tr>
+        }
         </tbody>
       </table>
     </div>
@@ -124,39 +200,59 @@
   <div class="modal-card">
     <div class="modal-header">
       <div class="modal-title">Tạo tài khoản người dùng mới</div>
-      <button class="modal-close" onclick="closeModal('addAccountModal')">&times;</button>
+      <button type="button" class="modal-close" onclick="closeModal('addAccountModal')">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Tên đăng nhập (Username)</label>
-        <input type="text" class="form-control" placeholder="Ví dụ: hoanglm">
+    <form method="post" action="/AdminIT/CreateAccount">
+      @Html.AntiForgeryToken()
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tên đăng nhập (Username)</label>
+          <input type="text" id="createUsername" class="form-control" placeholder="Ví dụ: hoanglm" readonly>
+        </div>
+        <div class="form-group">
+          <label>Họ và tên nhân sự</label>
+          <select id="createEmployeeId" name="EmployeeId" class="form-control" required onchange="updateSuggestedUsername(this)">
+            <option value="">@(hasEligibleEmployees ? "Chọn nhân sự..." : "Chưa có nhân sự đủ điều kiện")</option>
+            @foreach (var employee in Model.EligibleEmployees)
+            {
+              <option value="@employee.Id" data-suggested-username="@employee.SuggestedUsername">@employee.DisplayName</option>
+            }
+          </select>
+          @if (!hasEligibleEmployees)
+          {
+            <div style="margin-top:8px; color:var(--muted); font-size:13px;">
+              Cần có nhân sự đang làm việc hoặc thử việc và chưa được cấp tài khoản trước khi tạo tài khoản mới.
+            </div>
+          }
+        </div>
+        <div class="form-group">
+          <label>Mật khẩu khởi tạo</label>
+          <input type="password" class="form-control" value="Mật khẩu được tạo tự động" readonly>
+        </div>
+        <div class="form-group">
+          <label>Vai trò hệ thống (Role)</label>
+          <select name="Role" class="form-control" required>
+            @foreach (var role in Model.Roles)
+            {
+              <option value="@role.Code">@(role.Code switch
+                {
+                  "ql_hcns" => "QL HCNS",
+                  "nv_hcns" => "NV HCNS",
+                  "ql_booking" => "QL Booking",
+                  "nv_booking" => "NV Booking",
+                  "ql_y_tuong" => "QL Ý tưởng",
+                  "nv_y_tuong" => "NV Ý tưởng",
+                  _ => role.Name
+                })</option>
+            }
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Họ và tên nhân sự</label>
-        <input type="text" class="form-control" placeholder="Nhập họ và tên đầy đủ...">
+      <div class="modal-footer">
+        <button type="button" class="btn-mini" onclick="closeModal('addAccountModal')">Hủy</button>
+        <button type="submit" class="btn-mini approve" @(!hasEligibleEmployees ? "disabled" : null)>Tạo tài khoản</button>
       </div>
-      <div class="form-group">
-        <label>Mật khẩu khởi tạo</label>
-        <input type="password" class="form-control" value="HanaMedia@2026">
-      </div>
-      <div class="form-group">
-        <label>Vai trò hệ thống (Role)</label>
-        <select class="form-control">
-          <option value="Giám đốc">Giám đốc</option>
-          <option value="AdminIT">AdminIT</option>
-          <option value="QL HCNS">Quản lý HCNS</option>
-          <option value="NV HCNS">Nhân viên HCNS</option>
-          <option value="QL Booking">Quản lý Booking</option>
-          <option value="NV Booking">Nhân viên Booking</option>
-          <option value="QL Ý tưởng">Quản lý Ý tưởng</option>
-          <option value="NV Ý tưởng">Nhân viên Ý tưởng</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-mini" onclick="closeModal('addAccountModal')">Hủy</button>
-      <button class="btn-mini approve" onclick="alert('Tạo tài khoản thành công!'); closeModal('addAccountModal');">Tạo tài khoản</button>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -165,35 +261,45 @@
   <div class="modal-card">
     <div class="modal-header">
       <div class="modal-title">Thay đổi vai trò tài khoản</div>
-      <button class="modal-close" onclick="closeModal('roleModal')">&times;</button>
+      <button type="button" class="modal-close" onclick="closeModal('roleModal')">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Tài khoản</label>
-        <input type="text" id="roleUsername" class="form-control" readonly style="background:var(--blue-50);">
+    <form method="post" action="/AdminIT/ChangeRole">
+      @Html.AntiForgeryToken()
+      <input type="hidden" id="roleUserId" name="UserId">
+      <input type="hidden" id="roleSecurityStamp" name="ExpectedSecurityStamp">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tài khoản</label>
+          <input type="text" id="roleUsername" class="form-control" readonly style="background:var(--blue-50);">
+        </div>
+        <div class="form-group">
+          <label>Vai trò hiện tại</label>
+          <input type="text" id="roleCurrent" class="form-control" readonly style="background:var(--blue-50);">
+        </div>
+        <div class="form-group">
+          <label>Vai trò mới đề xuất</label>
+          <select id="roleNew" name="Role" class="form-control" required>
+            @foreach (var role in Model.Roles)
+            {
+              <option value="@role.Code">@(role.Code switch
+                {
+                  "ql_hcns" => "QL HCNS",
+                  "nv_hcns" => "NV HCNS",
+                  "ql_booking" => "QL Booking",
+                  "nv_booking" => "NV Booking",
+                  "ql_y_tuong" => "QL Ý tưởng",
+                  "nv_y_tuong" => "NV Ý tưởng",
+                  _ => role.Name
+                })</option>
+            }
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Vai trò hiện tại</label>
-        <input type="text" id="roleCurrent" class="form-control" readonly style="background:var(--blue-50);">
+      <div class="modal-footer">
+        <button type="button" class="btn-mini" onclick="closeModal('roleModal')">Hủy</button>
+        <button type="submit" class="btn-mini approve">Cập nhật</button>
       </div>
-      <div class="form-group">
-        <label>Vai trò mới đề xuất</label>
-        <select class="form-control">
-          <option value="Giám đốc">Giám đốc</option>
-          <option value="AdminIT">AdminIT</option>
-          <option value="QL HCNS">Quản lý HCNS</option>
-          <option value="NV HCNS">Nhân viên HCNS</option>
-          <option value="QL Booking">Quản lý Booking</option>
-          <option value="NV Booking">Nhân viên Booking</option>
-          <option value="QL Ý tưởng">Quản lý Ý tưởng</option>
-          <option value="NV Ý tưởng">Nhân viên Ý tưởng</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-mini" onclick="closeModal('roleModal')">Hủy</button>
-      <button class="btn-mini approve" onclick="alert('Đã cập nhật vai trò mới thành công!'); closeModal('roleModal');">Cập nhật</button>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -202,7 +308,7 @@
   <div class="modal-card" style="width:600px;">
     <div class="modal-header">
       <div class="modal-title">Lịch sử kết nối thiết bị</div>
-      <button class="modal-close" onclick="closeModal('loginHistoryModal')">&times;</button>
+      <button type="button" class="modal-close" onclick="closeModal('loginHistoryModal')">&times;</button>
     </div>
     <div class="modal-body">
       <div style="font-size: 13.5px; margin-bottom: 12px; font-weight:600; color:var(--navy);">
@@ -223,12 +329,14 @@
       </table>
     </div>
     <div class="modal-footer">
-      <button class="btn-mini approve" onclick="closeModal('loginHistoryModal')">Đóng</button>
+      <button type="button" class="btn-mini approve" onclick="closeModal('loginHistoryModal')">Đóng</button>
     </div>
   </div>
 </div>
 
 <script>
+  const loginHistoryUrl = '/AdminIT/LoginHistory';
+
   function openModal(id) {
     document.getElementById(id).classList.add('active');
   }
@@ -237,41 +345,109 @@
     document.getElementById(id).classList.remove('active');
   }
 
-  function openRoleModal(username, currentRole) {
-    document.getElementById('roleUsername').value = username;
-    document.getElementById('roleCurrent').value = currentRole;
+  function updateSuggestedUsername(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    document.getElementById('createUsername').value = selectedOption?.dataset.suggestedUsername || '';
+  }
+
+  function openRoleModal(button) {
+    document.getElementById('roleUserId').value = button.dataset.userId || '';
+    document.getElementById('roleSecurityStamp').value = button.dataset.securityStamp || '';
+    document.getElementById('roleUsername').value = button.dataset.username || '';
+    document.getElementById('roleCurrent').value = button.dataset.currentRoleLabel || '';
+    document.getElementById('roleNew').value = button.dataset.currentRole || '';
     openModal('roleModal');
   }
 
-  function openLoginHistory(fullname, username, list) {
-    document.getElementById('histUser').innerText = fullname;
-    document.getElementById('histUsername').innerText = username;
-    
+  function appendHistoryMessage(message) {
     const tbody = document.getElementById('histTableBody');
-    tbody.innerHTML = '';
-    
-    list.forEach(item => {
-      let r = tbody.insertRow();
-      let c1 = r.insertCell(0);
-      let c2 = r.insertCell(1);
-      let c3 = r.insertCell(2);
-      let c4 = r.insertCell(3);
-      
-      c1.innerText = item.time;
-      
-      if(item.action.includes('Thất bại')) {
-        c2.innerHTML = `<span class="badge badge-danger">${item.action}</span>`;
-      } else if (item.action.includes('nhập')) {
-        c2.innerHTML = `<span class="badge badge-success">${item.action}</span>`;
-      } else {
-        c2.innerHTML = `<span class="badge badge-info">${item.action}</span>`;
-      }
-      
-      c3.innerText = item.device;
-      c4.innerText = item.ip;
-    });
+    tbody.replaceChildren();
+    const row = tbody.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 4;
+    cell.style.textAlign = 'center';
+    cell.textContent = message;
+  }
 
+  function getHistoryBadgeClass(action) {
+    const normalizedAction = String(action || '').toLowerCase();
+    if (normalizedAction.includes('failed') || normalizedAction.includes('thất bại')) {
+      return 'badge-danger';
+    }
+    if (normalizedAction.includes('logout') || normalizedAction.includes('đăng xuất')) {
+      return 'badge-info';
+    }
+    return 'badge-success';
+  }
+
+  async function openLoginHistory(button) {
+    document.getElementById('histUser').innerText = button.dataset.fullname || '';
+    document.getElementById('histUsername').innerText = button.dataset.username || '';
+    appendHistoryMessage('Đang tải lịch sử...');
     openModal('loginHistoryModal');
+
+    try {
+      const response = await fetch(
+        loginHistoryUrl + '?userId=' + encodeURIComponent(button.dataset.userId || ''),
+        {
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json' }
+        });
+
+      if (response.redirected) {
+        window.location.assign(response.url);
+        return;
+      }
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+
+      const payload = await response.json();
+      document.getElementById('histUser').innerText = payload.displayName || button.dataset.fullname || '';
+      document.getElementById('histUsername').innerText = payload.username || button.dataset.username || '';
+
+      const tbody = document.getElementById('histTableBody');
+      tbody.replaceChildren();
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      if (items.length === 0) {
+        appendHistoryMessage('Chưa có lịch sử đăng nhập.');
+        return;
+      }
+
+      items.forEach(item => {
+        const row = tbody.insertRow();
+        row.insertCell().innerText = item.occurredAt || '—';
+
+        const actionCell = row.insertCell();
+        const badge = document.createElement('span');
+        badge.className = 'badge ' + getHistoryBadgeClass(item.action);
+        badge.textContent = item.label || item.action || 'Sự kiện';
+        actionCell.appendChild(badge);
+
+        row.insertCell().innerText = item.deviceInfo || 'Không xác định';
+        row.insertCell().innerText = item.ipAddress || 'Không xác định';
+      });
+    } catch {
+      appendHistoryMessage('Không tải được lịch sử đăng nhập. Vui lòng thử lại.');
+    }
+  }
+
+  async function copyTemporaryPassword(button) {
+    const value = document.getElementById('temporaryPasswordValue');
+    if (!value) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value.textContent || '');
+      button.textContent = 'Đã sao chép';
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(value);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   }
 </script>
 </body>

@@ -36,15 +36,23 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnection");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnection");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__bookings__3213E83F446D00CB");
+            entity.HasKey(e => e.Id).HasName("PK_bookings");
 
-            entity.ToTable("bookings");
+            entity.ToTable("bookings", table =>
+                table.HasCheckConstraint(
+                    "chk_booking_status",
+                    "[status] IN ('dang_cho', 'thuong_luong', 'da_chot', 'dang_trien_khai', 'hoan_thanh', 'huy')"));
 
             entity.HasIndex(e => e.Status, "idx_bookings_status");
 
@@ -96,16 +104,16 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Kol).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.KolId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK__bookings__kol_id__7E37BEF6");
+                .HasConstraintName("FK_bookings_kols_kol_id");
 
             entity.HasOne(d => d.PrimaryManager).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.PrimaryManagerId)
-                .HasConstraintName("FK__bookings__primar__7F2BE32F");
+                .HasConstraintName("FK_bookings_employees_primary_manager_id");
         });
 
         modelBuilder.Entity<BookingWage>(entity =>
         {
-            entity.HasKey(e => new { e.BookingId, e.EmployeeId }).HasName("PK__booking___C1B1450B40E1706B");
+            entity.HasKey(e => new { e.BookingId, e.EmployeeId }).HasName("PK_booking_wages");
 
             entity.ToTable("booking_wages");
 
@@ -125,16 +133,16 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Booking).WithMany(p => p.BookingWages)
                 .HasForeignKey(d => d.BookingId)
-                .HasConstraintName("FK__booking_w__booki__03F0984C");
+                .HasConstraintName("FK_booking_wages_bookings_booking_id");
 
             entity.HasOne(d => d.Employee).WithMany(p => p.BookingWages)
                 .HasForeignKey(d => d.EmployeeId)
-                .HasConstraintName("FK__booking_w__emplo__04E4BC85");
+                .HasConstraintName("FK_booking_wages_employees_employee_id");
         });
 
         modelBuilder.Entity<BookingWageAuditLog>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__booking___3213E83F0CE97CF5");
+            entity.HasKey(e => e.Id).HasName("PK_booking_wage_audit_logs");
 
             entity.ToTable("booking_wage_audit_logs");
 
@@ -152,17 +160,17 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Booking).WithMany(p => p.BookingWageAuditLogs)
                 .HasForeignKey(d => d.BookingId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK__booking_w__booki__08B54D69");
+                .HasConstraintName("FK_booking_wage_audit_logs_bookings_booking_id");
 
             entity.HasOne(d => d.PerformedByUser).WithMany(p => p.BookingWageAuditLogs)
                 .HasForeignKey(d => d.PerformedByUserId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK__booking_w__perfo__09A971A2");
+                .HasConstraintName("FK_booking_wage_audit_logs_users_performed_by_user_id");
         });
 
         modelBuilder.Entity<BusinessConfig>(entity =>
         {
-            entity.HasKey(e => e.ConfigKey).HasName("PK__business__BDF6033CB924E59B");
+            entity.HasKey(e => e.ConfigKey).HasName("PK_business_configs");
 
             entity.ToTable("business_configs");
 
@@ -185,13 +193,26 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<Employee>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__employee__3213E83FCE719B40");
+            entity.HasKey(e => e.Id).HasName("PK_employees");
 
-            entity.ToTable("employees");
+            entity.ToTable("employees", table =>
+            {
+                table.HasCheckConstraint(
+                    "chk_emp_dept",
+                    "[department] IN ('HCNS', 'Booking', 'Y_tuong', 'IT')");
+                table.HasCheckConstraint(
+                    "chk_emp_contract",
+                    "[contract_type] IN ('thu_viec', 'chinh_thuc_1_nam', 'vo_thoi_han')");
+                table.HasCheckConstraint(
+                    "chk_emp_status",
+                    "[status] IN ('dang_lam_viec', 'thu_viec', 'cho_duyet_nghi', 'ngung_hoat_dong')");
+            });
 
-            entity.HasIndex(e => e.Email, "UQ__employee__AB6E616482BC8677").IsUnique();
+            entity.HasIndex(e => e.Email, "UX_employees_email").IsUnique();
 
-            entity.HasIndex(e => e.UserId, "UQ__employee__B9BE370E68AE089C").IsUnique();
+            entity.HasIndex(e => e.UserId, "UX_employees_user_id")
+                .IsUnique()
+                .HasFilter("[user_id] IS NOT NULL");
 
             entity.HasIndex(e => e.Department, "idx_employees_dept");
 
@@ -252,19 +273,27 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Manager).WithMany(p => p.InverseManager)
                 .HasForeignKey(d => d.ManagerId)
-                .HasConstraintName("FK__employees__manag__6EF57B66");
+                .HasConstraintName("FK_employees_employees_manager_id");
 
             entity.HasOne(d => d.User).WithOne(p => p.Employee)
                 .HasForeignKey<Employee>(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK__employees__user___6E01572D");
+                .HasConstraintName("FK_employees_users_user_id");
         });
 
         modelBuilder.Entity<Idea>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ideas__3213E83F62C66024");
+            entity.HasKey(e => e.Id).HasName("PK_ideas");
 
-            entity.ToTable("ideas");
+            entity.ToTable("ideas", table =>
+            {
+                table.HasCheckConstraint(
+                    "chk_idea_cat",
+                    "[category] IN ('trend', 'viral', 'da_trien_khai', 'chua_su_dung')");
+                table.HasCheckConstraint(
+                    "chk_idea_status",
+                    "[status] IN ('y_tuong', 'review', 'need_revision', 'approved', 'done')");
+            });
 
             entity.HasIndex(e => e.Status, "idx_ideas_status");
 
@@ -315,22 +344,33 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.CreatorEmployee).WithMany(p => p.IdeaCreatorEmployees)
                 .HasForeignKey(d => d.CreatorEmployeeId)
-                .HasConstraintName("FK__ideas__creator_e__114A936A");
+                .HasConstraintName("FK_ideas_employees_creator_employee_id");
 
             entity.HasOne(d => d.PrimaryStaff).WithMany(p => p.IdeaPrimaryStaffs)
                 .HasForeignKey(d => d.PrimaryStaffId)
-                .HasConstraintName("FK__ideas__primary_s__123EB7A3");
+                .HasConstraintName("FK_ideas_employees_primary_staff_id");
 
             entity.HasOne(d => d.ReviewerEmployee).WithMany(p => p.IdeaReviewerEmployees)
                 .HasForeignKey(d => d.ReviewerEmployeeId)
-                .HasConstraintName("FK__ideas__reviewer___1332DBDC");
+                .HasConstraintName("FK_ideas_employees_reviewer_employee_id");
         });
 
         modelBuilder.Entity<Kol>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__kols__3213E83F79266D0D");
+            entity.HasKey(e => e.Id).HasName("PK_kols");
 
-            entity.ToTable("kols");
+            entity.ToTable("kols", table =>
+            {
+                table.HasCheckConstraint(
+                    "chk_kol_platform",
+                    "[platform] IN ('TikTok', 'Instagram', 'YouTube', 'Facebook')");
+                table.HasCheckConstraint(
+                    "chk_kol_rating",
+                    "[rating_score] BETWEEN 1 AND 5");
+                table.HasCheckConstraint(
+                    "chk_kol_status",
+                    "[status] IN ('tiem_nang', 'da_lien_he', 'dang_deal', 'da_chot', 'dang_chay', 'hoan_thanh')");
+            });
 
             entity.HasIndex(e => e.Platform, "idx_kols_platform");
 
@@ -383,16 +423,26 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.ResponsibleStaff).WithMany(p => p.Kols)
                 .HasForeignKey(d => d.ResponsibleStaffId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK__kols__responsibl__778AC167");
+                .HasConstraintName("FK_kols_employees_responsible_staff_id");
         });
 
         modelBuilder.Entity<SystemAuditLog>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__system_a__3213E83F2A038E81");
+            entity.HasKey(e => e.Id).HasName("PK_system_audit_logs");
 
-            entity.ToTable("system_audit_logs");
+            entity.ToTable("system_audit_logs", table =>
+                table.HasCheckConstraint(
+                    "chk_log_module",
+                    "[module] IN ('Nhan_Su', 'Booking', 'Y_Tuong', 'Tai_Khoan', 'Cau_Hinh')"));
 
             entity.HasIndex(e => e.CreatedAt, "idx_audit_logs_created");
+
+            entity.HasIndex(
+                    e => new { e.UserId, e.CreatedAt },
+                    "idx_audit_logs_login_history")
+                .IsDescending(false, true)
+                .HasFilter("[module] = 'Tai_Khoan' AND [user_id] IS NOT NULL")
+                .IncludeProperties(e => new { e.ActionType, e.IpAddress, e.DeviceInfo });
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ActionType)
@@ -421,12 +471,12 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.SystemAuditLogs)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK__system_au__user___17F790F9");
+                .HasConstraintName("FK_system_audit_logs_users_user_id");
         });
 
         modelBuilder.Entity<SystemConfig>(entity =>
         {
-            entity.HasKey(e => e.ConfigKey).HasName("PK__system_c__BDF6033C8CA1087D");
+            entity.HasKey(e => e.ConfigKey).HasName("PK_system_configs");
 
             entity.ToTable("system_configs");
 
@@ -449,15 +499,26 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__users__3213E83F462D2B60");
+            entity.HasKey(e => e.Id).HasName("PK_users");
 
-            entity.ToTable("users");
+            entity.ToTable("users", table =>
+            {
+                table.HasCheckConstraint(
+                    "chk_user_role",
+                    "[role] IN ('giam_doc', 'admin_it', 'ql_hcns', 'nv_hcns', 'ql_booking', 'nv_booking', 'ql_y_tuong', 'nv_y_tuong')");
+                table.HasCheckConstraint(
+                    "chk_user_status",
+                    "[status] IN ('active', 'locked')");
+            });
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E6164982D099A").IsUnique();
+            entity.HasIndex(e => e.Email, "UX_users_email").IsUnique();
 
-            entity.HasIndex(e => e.Username, "UQ__users__F3DBC57222B3371D").IsUnique();
+            entity.HasIndex(e => e.Username, "UX_users_username").IsUnique();
 
             entity.HasIndex(e => e.Role, "idx_users_role");
+
+            entity.HasIndex(e => new { e.Status, e.Role }, "idx_users_status_role")
+                .IncludeProperties(e => new { e.Username, e.Email });
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -476,9 +537,14 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("role");
+            entity.Property(e => e.SecurityStamp)
+                .HasDefaultValueSql("(newid())")
+                .IsConcurrencyToken()
+                .HasColumnName("security_stamp");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .IsUnicode(false)
+                .IsRequired()
                 .HasDefaultValue("active")
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)

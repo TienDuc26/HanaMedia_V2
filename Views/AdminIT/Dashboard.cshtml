@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+@model HanaMedia.ViewModels.AdminITDashboardViewModel
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -42,10 +43,10 @@
       </div>
       <div class="topbar-actions">
         <div class="period-tabs">
-          <div class="period-tab active">Hôm nay</div>
-          <div class="period-tab">Tuần này</div>
+          <a href="/AdminIT/Dashboard?period=today" class="period-tab @(Model.Period == "today" ? "active" : null)">Hôm nay</a>
+          <a href="/AdminIT/Dashboard?period=week" class="period-tab @(Model.Period == "week" ? "active" : null)">Tuần này</a>
         </div>
-        <div class="icon-btn"><i class="ti ti-bell"></i><span class="dot"></span></div>
+        <a href="/AdminIT/AuditLog" class="icon-btn" aria-label="Mở nhật ký hệ thống"><i class="ti ti-bell"></i>@if (Model.SecurityAlertCount > 0) {<span class="dot"></span>}</a>
       </div>
     </div>
 
@@ -56,17 +57,17 @@
           <div class="kpi-label">Lượt đăng nhập hôm nay</div>
           <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-login-2"></i></div>
         </div>
-        <div class="kpi-value">47</div>
-        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+10% so với ngày thường</div>
+        <div class="kpi-value">@Model.LoginCount</div>
+        <div class="kpi-delta @(Model.IsLoginComparisonUp ? "up" : "down")"><i class="ti @(Model.IsLoginComparisonUp ? "ti-arrow-up-right" : "ti-arrow-down-right")"></i>@Model.LoginComparisonText</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-top">
-          <div class="kpi-label">Người dùng online</div>
+          <div class="kpi-label">Người dùng hoạt động</div>
           <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-users"></i></div>
         </div>
-        <div class="kpi-value">31</div>
-        <div class="kpi-note">Phiên hoạt động hiện tại</div>
+        <div class="kpi-value">@Model.ActiveUserCount</div>
+        <div class="kpi-note">Có đăng nhập trong @Model.PeriodLabel.ToLowerInvariant()</div>
       </div>
 
       <div class="kpi-card">
@@ -74,7 +75,7 @@
           <div class="kpi-label">Truy cập ngoài bị chặn</div>
           <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-wifi-off"></i></div>
         </div>
-        <div class="kpi-value">3</div>
+        <div class="kpi-value">@Model.BlockedNetworkCount</div>
         <div class="kpi-delta down"><i class="ti ti-alert-triangle"></i>Whitelist IP đang kích hoạt</div>
       </div>
 
@@ -83,7 +84,7 @@
           <div class="kpi-label">Cảnh báo bảo mật</div>
           <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-shield-alert"></i></div>
         </div>
-        <div class="kpi-value">2</div>
+        <div class="kpi-value">@Model.SecurityAlertCount</div>
         <div class="kpi-note">Cần xem xét nhật ký</div>
       </div>
 
@@ -92,8 +93,8 @@
           <div class="kpi-label">Trạng thái server</div>
           <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-server"></i></div>
         </div>
-        <div class="kpi-value">99.9%</div>
-        <div class="kpi-note">Hoạt động ổn định</div>
+        <div class="kpi-value" style="font-size:24px;">Đang chạy</div>
+        <div class="kpi-note">Ứng dụng và DB phản hồi ổn định</div>
       </div>
     </div>
 
@@ -102,20 +103,30 @@
         <div class="card-head">
           <div class="card-title">Cảnh báo bảo mật cần xem xét</div>
         </div>
-        <div class="alert-box" style="margin-top:0;">
-          <i class="ti ti-alert-triangle" style="color:var(--red);"></i>
-          <div>
-            <div class="alert-title" style="color:#721C24;">Đăng nhập thất bại liên tiếp (1 tài khoản)</div>
-            <div class="alert-desc" style="color:#721C24;">Tài khoản 'nguyenvanb' nhập sai mật khẩu 5 lần liên tiếp từ IP mạng nội bộ (192.168.1.15). Đã tự động khóa tài khoản tạm thời.</div>
+        @if (Model.SecurityAlerts.Count == 0)
+        {
+          <div class="alert-box" style="margin-top:0; background:var(--green-bg); border-color:#B9DFC4;">
+            <i class="ti ti-shield-check" style="color:var(--green);"></i>
+            <div>
+              <div class="alert-title" style="color:var(--green);">Chưa phát hiện cảnh báo bảo mật</div>
+              <div class="alert-desc">Không có tài khoản bị khóa tạm hoặc truy cập ngoài mạng trong @Model.PeriodLabel.ToLowerInvariant().</div>
+            </div>
           </div>
-        </div>
-        <div class="alert-box">
-          <i class="ti ti-shield-lock" style="color:var(--amber);"></i>
-          <div>
-            <div class="alert-title">Cố gắng kết nối ngoài mạng LAN (3 lần, cùng 1 IP)</div>
-            <div class="alert-desc">Request gửi từ ngoài IP whitelist văn phòng bị tường lửa từ chối. IP nguồn: 14.226.24.88.</div>
-          </div>
-        </div>
+        }
+        else
+        {
+          @for (var alertIndex = 0; alertIndex < Model.SecurityAlerts.Count; alertIndex++)
+          {
+            var alert = Model.SecurityAlerts[alertIndex];
+            <div class="alert-box" style="@(alertIndex == 0 ? "margin-top:0;" : null) @(alert.IsCritical ? "background:var(--red-bg); border-color:#F5C6CB;" : null)">
+              <i class="ti @alert.Icon" style="color:@alert.Color;"></i>
+              <div>
+                <div class="alert-title" style="@(alert.IsCritical ? "color:#721C24;" : null)">@alert.Title</div>
+                <div class="alert-desc" style="@(alert.IsCritical ? "color:#721C24;" : null)">@alert.Description</div>
+              </div>
+            </div>
+          }
+        }
       </div>
 
       <div class="card">
@@ -132,30 +143,30 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>Nguyễn Văn A</strong></td>
-              <td>Giám đốc</td>
-              <td>192.168.1.2</td>
-              <td>Vừa mới đây</td>
-            </tr>
-            <tr>
-              <td><strong>Nguyễn Anh Tuấn</strong></td>
-              <td>QL Booking</td>
-              <td>192.168.1.10</td>
-              <td>15 phút trước</td>
-            </tr>
-            <tr>
-              <td><strong>Vũ Ngọc Lan</strong></td>
-              <td>QL HCNS</td>
-              <td>192.168.1.5</td>
-              <td>1 giờ trước</td>
-            </tr>
+            @if (Model.RecentSessions.Count == 0)
+            {
+              <tr>
+                <td colspan="4" style="text-align:center; color:var(--muted); padding:24px;">Chưa có phiên đăng nhập nào.</td>
+              </tr>
+            }
+            else
+            {
+              @foreach (var session in Model.RecentSessions)
+              {
+                <tr>
+                  <td><strong>@session.DisplayName</strong></td>
+                  <td>@session.RoleName</td>
+                  <td>@session.IpAddress</td>
+                  <td>@session.TimeLabel</td>
+                </tr>
+              }
+            }
           </tbody>
         </table>
       </div>
     </div>
 
-    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <footer>HanaMedia · Dashboard AdminIT — dữ liệu cập nhật từ hệ thống</footer>
   </main>
 </div>
 </body>
