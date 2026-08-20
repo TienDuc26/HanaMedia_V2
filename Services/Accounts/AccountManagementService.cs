@@ -11,6 +11,7 @@ namespace HanaMedia.Services.Accounts;
 
 public sealed class AccountManagementService : IAccountManagementService
 {
+    private const int LoginHistoryPageSize = 20;
     private static readonly string[] ActiveEmployeeStatuses = ["dang_lam_viec", "thu_viec"];
     private static readonly string[] LoginActions = ["login_succeeded", "login_failed", "logout"];
 
@@ -135,9 +136,21 @@ public sealed class AccountManagementService : IAccountManagementService
         int actorUserId,
         CancellationToken cancellationToken = default)
     {
+        var username = (input.Username ?? string.Empty).Trim();
+        if (username.Length is < 3 or > 50 ||
+            !username.All(character => char.IsAsciiLetterOrDigit(character) || character is '.' or '_' or '-'))
+        {
+            return Failure("Tên đăng nhập phải dài từ 3 đến 50 ký tự và chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.");
+        }
+
         if (!AppRoles.IsValid(input.Role))
         {
             return Failure("Vai trò được chọn không hợp lệ.");
+        }
+
+        if (string.IsNullOrEmpty(input.InitialPassword) || input.InitialPassword.Length is < 8 or > 100)
+        {
+            return Failure("Mật khẩu khởi tạo phải có từ 8 đến 100 ký tự.");
         }
 
         var employee = await _context.Employees
@@ -162,11 +175,14 @@ public sealed class AccountManagementService : IAccountManagementService
             return Failure("Email của nhân viên đã được một tài khoản khác sử dụng.");
         }
 
+        if (await _context.Users.AnyAsync(user => user.Username == username, cancellationToken))
+        {
+            return Failure("Tên đăng nhập đã được sử dụng.");
+        }
+
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var username = await BuildUniqueUsernameAsync(employee.Email, employee.Id, cancellationToken);
-            var temporaryPassword = _passwordService.GenerateTemporaryPassword();
             var now = DateTime.Now;
             var user = new User
             {
@@ -179,7 +195,7 @@ public sealed class AccountManagementService : IAccountManagementService
                 UpdatedAt = now
             };
 
-            user.PasswordHash = _passwordService.HashPassword(user, temporaryPassword);
+            user.PasswordHash = _passwordService.HashPassword(user, input.InitialPassword);
             _context.Users.Add(user);
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -196,7 +212,7 @@ public sealed class AccountManagementService : IAccountManagementService
             return new AccountOperationResult(
                 true,
                 $"Đã tạo tài khoản {user.Username}.",
-                temporaryPassword,
+                null,
                 user.Username);
         }
         catch (DbUpdateException)
@@ -399,6 +415,7 @@ public sealed class AccountManagementService : IAccountManagementService
 
     public async Task<LoginHistoryResponseViewModel?> GetLoginHistoryAsync(
         int userId,
+        int page,
         CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
@@ -410,20 +427,32 @@ public sealed class AccountManagementService : IAccountManagementService
             return null;
         }
 
-        var logs = await _context.SystemAuditLogs
+        var historyQuery = _context.SystemAuditLogs
             .AsNoTracking()
             .Where(log =>
                 log.UserId == userId &&
                 log.Module == "Tai_Khoan" &&
-                LoginActions.Contains(log.ActionType))
+                LoginActions.Contains(log.ActionType));
+
+        var totalCount = await historyQuery.CountAsync(cancellationToken);
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)LoginHistoryPageSize));
+        var currentPage = Math.Clamp(page, 1, totalPages);
+
+        var logs = await historyQuery
             .OrderByDescending(log => log.CreatedAt)
-            .Take(50)
+            .ThenByDescending(log => log.Id)
+            .Skip((currentPage - 1) * LoginHistoryPageSize)
+            .Take(LoginHistoryPageSize)
             .ToListAsync(cancellationToken);
 
         return new LoginHistoryResponseViewModel
         {
             DisplayName = user.Employee?.FullName ?? user.Email,
             Username = user.Username,
+            CurrentPage = currentPage,
+            TotalPages = totalPages,
+            TotalCount = totalCount,
+            PageSize = LoginHistoryPageSize,
             Items = logs.Select(log => new LoginHistoryItemViewModel
             {
                 OccurredAt = (log.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm:ss"),

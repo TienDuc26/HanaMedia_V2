@@ -146,14 +146,17 @@ public sealed class AdminITController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> LoginHistory(int userId, CancellationToken cancellationToken)
+    public async Task<IActionResult> LoginHistory(
+        int userId,
+        int page = 1,
+        CancellationToken cancellationToken = default)
     {
         if (userId <= 0)
         {
             return BadRequest(new { message = "Mã tài khoản không hợp lệ." });
         }
 
-        var history = await _accountManagementService.GetLoginHistoryAsync(userId, cancellationToken);
+        var history = await _accountManagementService.GetLoginHistoryAsync(userId, page, cancellationToken);
         return history is null
             ? NotFound(new { message = "Không tìm thấy tài khoản." })
             : Json(history);
