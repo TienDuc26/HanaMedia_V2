@@ -1,0 +1,343 @@
+@using System.Security.Claims
+@{
+    var username = User.Identity?.Name ?? "User";
+    var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    var avatar = string.IsNullOrEmpty(username) ? "?" : username.Substring(0, 1).ToUpper();
+
+    var roleDisplay = role switch
+    {
+        "giam_doc" => "Giám đốc",
+        "admin_it" => "AdminIT",
+        "ql_hcns" => "QL HCNS",
+        "nv_hcns" => "NV HCNS",
+        "ql_booking" => "QL Booking",
+        "nv_booking" => "NV Booking",
+        "ql_y_tuong" => "QL Ý tưởng",
+        "nv_y_tuong" => "NV Ý tưởng",
+        _ => role
+    };
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+<style>
+/* CSS scoped chỉ cho modal của partial này */
+#changePasswordModal .cp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1d2939;
+}
+#changePasswordModal * { font-family: inherit; }
+#changePasswordModal .cp-box {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 28px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, .25);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+#changePasswordModal .cp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: 12px;
+}
+#changePasswordModal .cp-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1d2939;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+#changePasswordModal .cp-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+#changePasswordModal .cp-close {
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  color: #64748b;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+#changePasswordModal .cp-field {
+  display: block !important;
+  position: relative !important;
+  margin-bottom: 18px !important;
+  clear: both !important;
+}
+#changePasswordModal .cp-label {
+  display: block !important;
+  position: static !important;
+  transform: none !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #1d2939 !important;
+  margin: 0 0 8px 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  line-height: 1.4 !important;
+  width: 100% !important;
+  float: none !important;
+  font-family: inherit !important;
+}
+#changePasswordModal .cp-input {
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  padding: 11px 14px !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  color: #1d2939 !important;
+  background: #fff !important;
+  border: 1px solid #d0d5dd !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  float: none !important;
+}
+#changePasswordModal .cp-input:focus {
+  border-color: #2F80ED !important;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, .15) !important;
+}
+#changePasswordModal .cp-error,
+#changePasswordModal .cp-success {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-top: 8px;
+  font-weight: 500;
+  display: none;
+}
+#changePasswordModal .cp-error { color: #b42318; background: #fef3f2; border: 1px solid rgba(180, 35, 24, .2); }
+#changePasswordModal .cp-success { color: #1ca36b; background: #e6f7ee; border: 1px solid rgba(28, 163, 107, .2); }
+#changePasswordModal .cp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+#changePasswordModal .cp-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+#changePasswordModal .cp-btn-primary {
+  background: #2F80ED;
+  color: #fff;
+}
+#changePasswordModal .cp-btn-primary:hover { background: #185FA5; }
+#changePasswordModal .cp-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+#changePasswordModal .cp-btn-secondary {
+  background: #f1f3f7;
+  color: #475569;
+}
+#changePasswordModal .cp-btn-secondary:hover { background: #e2e6ec; }
+</style>
+
+<div class="sidebar-footer">
+  <div class="role-pill user-menu-trigger" onclick="toggleUserMenu(event)">
+    <div class="avatar">@avatar</div>
+    <div>
+      <div class="role-name">@username</div>
+      <div class="role-title">@roleDisplay</div>
+    </div>
+    <i class="fa-solid fa-chevron-down user-menu-chevron" id="userMenuChevron"></i>
+  </div>
+
+  <div class="user-menu-dropdown" id="userMenuDropdown" style="display:none;">
+    <button type="button" class="user-menu-item" onclick="openChangePasswordModal()">
+      <i class="fa-solid fa-key"></i>
+      <span>Đổi mật khẩu</span>
+    </button>
+    <a href="/Logout" class="user-menu-item user-menu-logout" id="logoutLink">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Đăng xuất</span>
+    </a>
+  </div>
+</div>
+
+<div id="changePasswordModal" style="display:none;">
+  <div class="cp-overlay" onclick="if(event.target===this) closeChangePasswordModal()">
+    <div class="cp-box" role="dialog" aria-labelledby="cp-title">
+      <div class="cp-head">
+        <div>
+          <div class="cp-title" id="cp-title">Đổi mật khẩu</div>
+          <p class="cp-sub">Vui lòng nhập đầy đủ thông tin bên dưới</p>
+        </div>
+        <button type="button" class="cp-close" onclick="closeChangePasswordModal()" aria-label="Đóng">&times;</button>
+      </div>
+
+      <form id="changePasswordForm" onsubmit="return submitChangePassword(event)">
+        <div class="cp-field">
+          <label class="cp-label" for="cp_current">Mật khẩu hiện tại</label>
+          <input type="password" id="cp_current" name="currentPassword" class="cp-input" placeholder="Nhập mật khẩu hiện tại..." required />
+        </div>
+
+        <div class="cp-field">
+          <label class="cp-label" for="cp_new">Mật khẩu mới</label>
+          <input type="password" id="cp_new" name="newPassword" class="cp-input" placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)..." required minlength="8" />
+        </div>
+
+        <div class="cp-field">
+          <label class="cp-label" for="cp_confirm">Xác nhận mật khẩu mới</label>
+          <input type="password" id="cp_confirm" name="confirmPassword" class="cp-input" placeholder="Nhập lại mật khẩu mới..." required minlength="8" />
+        </div>
+
+        <div id="cp_error" class="cp-error"></div>
+        <div id="cp_success" class="cp-success"></div>
+
+        <div class="cp-actions">
+          <button type="button" class="cp-btn cp-btn-secondary" onclick="closeChangePasswordModal()">Hủy</button>
+          <button type="submit" class="cp-btn cp-btn-primary" id="cp_submit_btn">Đổi mật khẩu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('userMenuDropdown');
+  var chev = document.getElementById('userMenuChevron');
+  if (!dd) return;
+  var open = dd.style.display === 'block';
+  dd.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('userMenuDropdown');
+  var trigger = e.target.closest('.user-menu-trigger');
+  if (!trigger && dd && dd.style.display === 'block') {
+    dd.style.display = 'none';
+    var chev = document.getElementById('userMenuChevron');
+    if (chev) chev.style.transform = '';
+  }
+});
+
+function openChangePasswordModal() {
+  var dd = document.getElementById('userMenuDropdown');
+  if (dd) dd.style.display = 'none';
+  var chev = document.getElementById('userMenuChevron');
+  if (chev) chev.style.transform = '';
+  document.getElementById('changePasswordModal').style.display = 'block';
+  var f = document.getElementById('cp_current');
+  if (f) setTimeout(function() { f.focus(); }, 50);
+}
+
+function closeChangePasswordModal() {
+  var m = document.getElementById('changePasswordModal');
+  if (m) m.style.display = 'none';
+  var form = document.getElementById('changePasswordForm');
+  if (form) form.reset();
+  var err = document.getElementById('cp_error');
+  if (err) err.style.display = 'none';
+  var ok = document.getElementById('cp_success');
+  if (ok) ok.style.display = 'none';
+  var btn = document.getElementById('cp_submit_btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Đổi mật khẩu'; }
+}
+
+async function submitChangePassword(e) {
+  e.preventDefault();
+  var currentPassword = document.getElementById('cp_current').value;
+  var newPassword = document.getElementById('cp_new').value;
+  var confirmPassword = document.getElementById('cp_confirm').value;
+
+  var errBox = document.getElementById('cp_error');
+  var okBox = document.getElementById('cp_success');
+  errBox.style.display = 'none';
+  okBox.style.display = 'none';
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    errBox.textContent = 'Vui lòng nhập đầy đủ cả 3 trường.';
+    errBox.style.display = 'block';
+    return false;
+  }
+  if (newPassword.length < 8) {
+    errBox.textContent = 'Mật khẩu mới phải có ít nhất 8 ký tự.';
+    errBox.style.display = 'block';
+    return false;
+  }
+  if (newPassword !== confirmPassword) {
+    errBox.textContent = 'Mật khẩu mới và Xác nhận mật khẩu không khớp nhau.';
+    errBox.style.display = 'block';
+    return false;
+  }
+  if (newPassword === currentPassword) {
+    errBox.textContent = 'Mật khẩu mới phải khác mật khẩu hiện tại.';
+    errBox.style.display = 'block';
+    return false;
+  }
+
+  var btn = document.getElementById('cp_submit_btn');
+  btn.disabled = true;
+  btn.textContent = 'Đang xử lý...';
+
+  try {
+    // TODO: nối API đổi mật khẩu thật khi backend sẵn sàng
+    var result = await mockChangePassword(currentPassword, newPassword);
+    if (result.success) {
+      okBox.textContent = 'Đổi mật khẩu thành công! (Mock — backend chưa nối)';
+      okBox.style.display = 'block';
+      setTimeout(closeChangePasswordModal, 1500);
+    } else {
+      errBox.textContent = result.message || 'Đổi mật khẩu thất bại.';
+      errBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Đổi mật khẩu';
+    }
+  } catch (ex) {
+    errBox.textContent = 'Lỗi: ' + ex.message;
+    errBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Đổi mật khẩu';
+  }
+  return false;
+}
+
+// TODO: nối API đổi mật khẩu thật khi backend sẵn sàng
+async function mockChangePassword(currentPassword, newPassword) {
+  console.log('[ChangePassword] Mock — current:', currentPassword, 'new:', newPassword);
+  await new Promise(function(r) { setTimeout(r, 500); });
+  return { success: true, message: 'OK (mock)' };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Move modal ra document.body để thoát khỏi stacking context của sidebar
+  var modal = document.getElementById('changePasswordModal');
+  if (modal && modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  var link = document.getElementById('logoutLink');
+  if (link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      try { window.history.replaceState(null, '', '/Login'); } catch (err) {}
+      window.location.replace('/Logout');
+    });
+  }
+});
+</script>
