@@ -14,7 +14,13 @@ var applicationArguments = args
     .Where(argument =>
         !string.Equals(argument, BootstrapAdminArgument, StringComparison.OrdinalIgnoreCase))
     .ToArray();
-var builder = WebApplication.CreateBuilder(applicationArguments);
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = applicationArguments,
+    ContentRootPath = Path.Combine(AppContext.BaseDirectory, "..", "..", ".."),
+    WebRootPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "wwwroot")
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
