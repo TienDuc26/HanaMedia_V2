@@ -1,6 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
 using HanaMedia.Models;
+using HanaMedia.Services.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace HanaMedia.Services
@@ -17,14 +16,19 @@ namespace HanaMedia.Services
     public class AccountService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAccountPasswordService _passwordService;
         private readonly ILogger<AccountService> _logger;
 
         private const int MaxFailedAttempts = 5;
         private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
-        public AccountService(ApplicationDbContext context, ILogger<AccountService> logger)
+        public AccountService(
+            ApplicationDbContext context,
+            IAccountPasswordService passwordService,
+            ILogger<AccountService> logger)
         {
             _context = context;
+            _passwordService = passwordService;
             _logger = logger;
         }
 
@@ -57,9 +61,8 @@ namespace HanaMedia.Services
                         $"Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau {minutesLeft} phút hoặc liên hệ quản trị viên.");
                 }
 
-                // Verify password
-                bool isPasswordMatch = password == user.PasswordHash
-                                       || ComputeSha256Hash(password) == user.PasswordHash;
+                // Verify password using AccountPasswordService (hỗ trợ mọi loại hash)
+                bool isPasswordMatch = _passwordService.VerifyPassword(user, password) == PasswordVerificationStatus.Success;
 
                 if (!isPasswordMatch)
                 {
@@ -120,20 +123,6 @@ namespace HanaMedia.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[Lockout] Failed to reset counter for {Username}", user.Username);
-            }
-        }
-
-        public static string ComputeSha256Hash(string rawData)
-        {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
             }
         }
     }

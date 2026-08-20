@@ -9,6 +9,7 @@ using HanaMedia.Services.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HanaMedia.Controllers;
@@ -23,19 +24,22 @@ public sealed class AccountController : Controller
     private readonly IConfiguration _configuration;
     private readonly ISystemAuditService _auditService;
     private readonly ILogger<AccountController> _logger;
+    private readonly IWebHostEnvironment _environment;
 
     public AccountController(
         ApplicationDbContext context,
         AccountService accountService,
         IConfiguration configuration,
         ISystemAuditService auditService,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger,
+        IWebHostEnvironment environment)
     {
         _context = context;
         _accountService = accountService;
         _configuration = configuration;
         _auditService = auditService;
         _logger = logger;
+        _environment = environment;
     }
 
     [AllowAnonymous]
@@ -210,18 +214,8 @@ public sealed class AccountController : Controller
 
     private string GetClientIpAddress()
     {
-        var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwardedFor))
-        {
-            return NormalizeIpAddress(forwardedFor.Split(',')[0].Trim());
-        }
-
-        var realIp = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(realIp))
-        {
-            return NormalizeIpAddress(realIp);
-        }
-
+        // CHỈ dùng RemoteIpAddress - không tin header X-Forwarded-For/X-Real-IP
+        // để tránh IP spoofing attack
         return NormalizeIpAddress(
             HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
     }
@@ -235,12 +229,6 @@ public sealed class AccountController : Controller
     {
         try
         {
-            if (IPAddress.TryParse(ipAddress, out var parsedAddress) &&
-                IPAddress.IsLoopback(parsedAddress))
-            {
-                return true;
-            }
-
             if (!cidr.Contains('/'))
             {
                 return string.Equals(
