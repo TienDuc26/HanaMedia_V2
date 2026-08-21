@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -262,6 +262,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Position)
                 .HasMaxLength(100)
                 .HasColumnName("position");
+            entity.Property(e => e.IsManager)
+                .HasColumnName("is_manager")
+                .HasDefaultValue(false);
             entity.Property(e => e.Status)
                 .HasMaxLength(30)
                 .IsUnicode(false)

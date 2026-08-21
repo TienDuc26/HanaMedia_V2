@@ -1,5 +1,7 @@
 using HanaMedia.Models;
 using HanaMedia.Services.Security;
+using HanaMedia.Constants;
+using HanaMedia.Services.Auditing;
 using Microsoft.EntityFrameworkCore;
 
 namespace HanaMedia.Services
@@ -18,6 +20,7 @@ namespace HanaMedia.Services
         private readonly ApplicationDbContext _context;
         private readonly IAccountPasswordService _passwordService;
         private readonly ILogger<AccountService> _logger;
+        private readonly ISystemAuditService _auditService;
 
         private const int MaxFailedAttempts = 5;
         private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
@@ -25,11 +28,13 @@ namespace HanaMedia.Services
         public AccountService(
             ApplicationDbContext context,
             IAccountPasswordService passwordService,
-            ILogger<AccountService> logger)
+            ILogger<AccountService> logger,
+            ISystemAuditService auditService)
         {
             _context = context;
             _passwordService = passwordService;
             _logger = logger;
+            _auditService = auditService;
         }
 
         public async Task<(LoginResult Result, User? User, string? Message)> AuthenticateAsync(
@@ -67,7 +72,7 @@ namespace HanaMedia.Services
                 if (!isPasswordMatch)
                 {
                     await IncrementFailedAttemptsAsync(user);
-                    return (LoginResult.WrongPassword, null, "Mật khẩu không chính xác.");
+                    return (LoginResult.WrongPassword, user, "Mật khẩu không chính xác.");
                 }
 
                 // Đăng nhập thành công → reset bộ đếm
@@ -96,8 +101,14 @@ namespace HanaMedia.Services
                     _logger.LogWarning("[Lockout] Account {Username} auto-locked until {LockedUntil} after {Count} failed attempts",
                         user.Username, user.LockedUntil, user.FailedLoginAttempts);
 
-                    // TODO: Khi Module 3 (Audit Log) hoàn thành, gọi qua AuditLogService ở đây
-                    // _auditLogService.LogSecurityWarning("AUTO_LOCKOUT", user.Username, ...);
+                    _auditService.AddEvent(new AuditEvent(
+                        AuditModules.Accounts,
+                        AuditActions.AccountAutoLocked,
+                        $"Tài khoản {user.Username} tự động bị khóa trong {LockoutDuration.TotalMinutes:0} phút sau {MaxFailedAttempts} lần đăng nhập sai.",
+                        user.Id,
+                        "user",
+                        user.Id.ToString(),
+                        AuditSeverity.Warning));
                 }
 
                 await _context.SaveChangesAsync();

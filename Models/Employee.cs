@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HanaMedia.Models;
@@ -26,6 +26,14 @@ public partial class Employee
     public string Department { get; set; } = null!;
 
     public string Position { get; set; } = null!;
+
+    /// <summary>
+    /// Cờ xác định nhân sự này thuộc nhóm chức vụ quản lý (Trưởng phòng, Quản lý, Giám đốc, ...).
+    /// Dropdown "Người quản lý trực tiếp" chỉ liệt kê nhân sự có IsManager = true.
+    /// Mặc định false (nhân viên thường). Quản trị viên cấu hình thủ công theo từng chức vụ,
+    /// không hard-code theo chuỗi "Quản lý"/"Trưởng phòng" ở tầng ứng dụng.
+    /// </summary>
+    public bool IsManager { get; set; }
 
     public int? ManagerId { get; set; }
 

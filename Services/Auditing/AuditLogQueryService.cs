@@ -19,7 +19,10 @@ public sealed class AuditLogQueryService : IAuditLogQueryService
             ["login"] = "Đăng nhập",
             ["login_succeeded"] = "Đăng nhập",
             ["login_failed"] = "Đăng nhập thất bại",
+            ["login_blocked_network"] = "Chặn truy cập ngoài mạng",
             ["logout"] = "Đăng xuất",
+            ["account_auto_locked"] = "Tự động khóa tài khoản",
+            ["bulk_delete"] = "Xóa hàng loạt",
             ["create"] = "Tạo mới",
             ["account_created"] = "Tạo tài khoản",
             ["edit"] = "Chỉnh sửa",
@@ -90,6 +93,7 @@ public sealed class AuditLogQueryService : IAuditLogQueryService
             .Select(log => log.Module)
             .Distinct()
             .ToListAsync(cancellationToken);
+        var alerts = await GetAlertsAsync(cancellationToken);
 
         return new AuditLogPageViewModel
         {
@@ -97,6 +101,7 @@ public sealed class AuditLogQueryService : IAuditLogQueryService
             Items = logs.Select(MapItem).ToList(),
             TotalCount = totalCount,
             FailureCount = failureCount,
+            Alerts = alerts,
             CurrentPage = currentPage,
             PageSize = PageSize,
             TotalPages = totalPages,
@@ -113,6 +118,75 @@ public sealed class AuditLogQueryService : IAuditLogQueryService
                 .ThenBy(option => option.Code, StringComparer.Ordinal)
                 .ToList()
         };
+    }
+
+    private async Task<IReadOnlyList<AuditAlertViewModel>> GetAlertsAsync(
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.Now;
+        var last24Hours = now.AddHours(-24);
+        var recentLogs = _context.SystemAuditLogs
+            .AsNoTracking()
+            .Where(log => log.CreatedAt >= last24Hours && log.CreatedAt <= now);
+
+        var autoLockedCount = await recentLogs.CountAsync(
+            log => log.ActionType == AuditActions.AccountAutoLocked,
+            cancellationToken);
+        var networkBlockedCount = await recentLogs.CountAsync(
+            log => log.ActionType == AuditActions.LoginBlockedNetwork,
+            cancellationToken);
+        var bulkDeleteCount = await recentLogs.CountAsync(
+            log => log.ActionType == AuditActions.BulkDelete,
+            cancellationToken);
+        var failedSince = now.AddMinutes(-15);
+        var repeatedFailureSources = await _context.SystemAuditLogs
+            .AsNoTracking()
+            .Where(log =>
+                log.ActionType == AuditActions.LoginFailed &&
+                log.CreatedAt >= failedSince &&
+                log.CreatedAt <= now)
+            .GroupBy(log => new { log.UserId, log.IpAddress })
+            .Where(group => group.Count() >= 5)
+            .CountAsync(cancellationToken);
+
+        var alerts = new List<AuditAlertViewModel>();
+        if (autoLockedCount > 0)
+        {
+            alerts.Add(new AuditAlertViewModel(
+                "Tài khoản bị tự động khóa",
+                $"Có {autoLockedCount} tài khoản bị khóa sau nhiều lần đăng nhập sai trong 24 giờ qua.",
+                "ti-lock",
+                "warning"));
+        }
+
+        if (repeatedFailureSources > 0)
+        {
+            alerts.Add(new AuditAlertViewModel(
+                "Đăng nhập thất bại liên tiếp",
+                $"Phát hiện {repeatedFailureSources} nguồn có ít nhất 5 lần đăng nhập thất bại trong 15 phút gần đây.",
+                "ti-alert-triangle",
+                "critical"));
+        }
+
+        if (networkBlockedCount > 0)
+        {
+            alerts.Add(new AuditAlertViewModel(
+                "Truy cập ngoài mạng nội bộ bị chặn",
+                $"Hệ thống đã chặn {networkBlockedCount} yêu cầu đăng nhập ngoài dải IP cho phép trong 24 giờ qua.",
+                "ti-shield-lock",
+                "warning"));
+        }
+
+        if (bulkDeleteCount > 0)
+        {
+            alerts.Add(new AuditAlertViewModel(
+                "Xóa dữ liệu hàng loạt",
+                $"Có {bulkDeleteCount} thao tác xóa hàng loạt trong 24 giờ qua. AdminIT cần kiểm tra nhật ký chi tiết.",
+                "ti-trash",
+                "critical"));
+        }
+
+        return alerts;
     }
 
     public async Task<AuditLogExportResult> GetExportRowsAsync(

@@ -31,12 +31,20 @@ public sealed class AuditLogPageViewModel
 
     public int FailureCount { get; init; }
 
+    public IReadOnlyList<AuditAlertViewModel> Alerts { get; init; } = [];
+
     public int CurrentPage { get; init; } = 1;
 
     public int PageSize { get; init; } = 20;
 
     public int TotalPages { get; init; } = 1;
 }
+
+public sealed record AuditAlertViewModel(
+    string Title,
+    string Description,
+    string Icon,
+    string Severity);
 
 public sealed record AuditLogOptionViewModel(string Code, string Label);
 
