@@ -296,10 +296,9 @@ async function submitChangePassword(e) {
   btn.textContent = 'Đang xử lý...';
 
   try {
-    // TODO: nối API đổi mật khẩu thật khi backend sẵn sàng
-    var result = await mockChangePassword(currentPassword, newPassword);
+    var result = await realChangePassword(currentPassword, newPassword);
     if (result.success) {
-      okBox.textContent = 'Đổi mật khẩu thành công! (Mock — backend chưa nối)';
+      okBox.textContent = result.message || 'Đổi mật khẩu thành công!';
       okBox.style.display = 'block';
       setTimeout(closeChangePasswordModal, 1500);
     } else {
@@ -309,7 +308,7 @@ async function submitChangePassword(e) {
       btn.textContent = 'Đổi mật khẩu';
     }
   } catch (ex) {
-    errBox.textContent = 'Lỗi: ' + ex.message;
+    errBox.textContent = 'Lỗi: ' + (ex && ex.message ? ex.message : ex);
     errBox.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Đổi mật khẩu';
@@ -317,11 +316,30 @@ async function submitChangePassword(e) {
   return false;
 }
 
-// TODO: nối API đổi mật khẩu thật khi backend sẵn sàng
-async function mockChangePassword(currentPassword, newPassword) {
-  console.log('[ChangePassword] Mock — current:', currentPassword, 'new:', newPassword);
-  await new Promise(function(r) { setTimeout(r, 500); });
-  return { success: true, message: 'OK (mock)' };
+async function realChangePassword(currentPassword, newPassword) {
+  var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+  var token = tokenInput ? tokenInput.value : '';
+  var res = await fetch('/Account/ChangePassword', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'RequestVerificationToken': token,
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmPassword: newPassword
+    })
+  });
+  var json = null;
+  try { json = await res.json(); } catch (e) { json = null; }
+  if (!res.ok) {
+    return { success: false, message: (json && json.message) || ('HTTP ' + res.status) };
+  }
+  return json || { success: false, message: 'Phản hồi không hợp lệ.' };
 }
 
 document.addEventListener('DOMContentLoaded', function() {

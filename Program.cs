@@ -30,6 +30,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<EmployeeAvatarService>();
 // Read-only compatibility for existing Identity hashes. New/reset passwords stay SHA-256.
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();

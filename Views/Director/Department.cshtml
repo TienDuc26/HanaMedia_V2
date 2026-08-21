@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
   <link rel="stylesheet" href="~/css/components.css">
+  @Html.AntiForgeryToken()
   <style>
     /* ── Page header + nút thêm ── */
     .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
@@ -145,13 +146,7 @@
     <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
 
     <div class="sidebar-footer">
-      <div class="role-pill">
-        <div class="avatar">NV</div>
-        <div>
-          <div class="role-name">Nguyễn Văn A</div>
-          <div class="role-title">Giám đốc</div>
-        </div>
-      </div>
+      <partial name="_UserMenuPartial" />
     </div>
   </aside>
 

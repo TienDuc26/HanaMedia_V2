@@ -9,7 +9,9 @@ namespace HanaMedia.Controllers
     {
         public IActionResult HumanResources()
         {
-            return View();
+            // Share view chung với ql_hcns — FE sẽ ẩn cột Lương + nút Xóa nếu IsStaff.
+            ViewBag.IsStaff = true;
+            return View("~/Views/ManageHuman/HumanResources.cshtml");
         }
 
         public IActionResult Reported()

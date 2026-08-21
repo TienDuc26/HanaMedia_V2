@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HanaMedia.Controllers;
 
@@ -21,6 +22,7 @@ public sealed class AccountController : Controller
 
     private readonly ApplicationDbContext _context;
     private readonly AccountService _accountService;
+    private readonly IAccountPasswordService _passwordService;
     private readonly IConfiguration _configuration;
     private readonly ISystemAuditService _auditService;
     private readonly ILogger<AccountController> _logger;
@@ -29,6 +31,7 @@ public sealed class AccountController : Controller
     public AccountController(
         ApplicationDbContext context,
         AccountService accountService,
+        IAccountPasswordService passwordService,
         IConfiguration configuration,
         ISystemAuditService auditService,
         ILogger<AccountController> logger,
@@ -36,6 +39,7 @@ public sealed class AccountController : Controller
     {
         _context = context;
         _accountService = accountService;
+        _passwordService = passwordService;
         _configuration = configuration;
         _auditService = auditService;
         _logger = logger;
@@ -191,6 +195,115 @@ public sealed class AccountController : Controller
     [Route("AccessDenied")]
     [HttpGet]
     public IActionResult AccessDenied() => View();
+
+    // POST: /Account/ChangePassword
+    // Body: { currentPassword, newPassword, confirmPassword }
+    [Authorize]
+    [Route("ChangePassword")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest? input,
+        CancellationToken cancellationToken)
+    {
+        if (input == null
+            || string.IsNullOrEmpty(input.CurrentPassword)
+            || string.IsNullOrEmpty(input.NewPassword)
+            || string.IsNullOrEmpty(input.ConfirmPassword))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Vui lòng nhập đầy đủ cả 3 trường."
+            });
+        }
+
+        if (input.NewPassword.Length < 8)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Mật khẩu mới phải có ít nhất 8 ký tự."
+            });
+        }
+
+        if (input.NewPassword != input.ConfirmPassword)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Mật khẩu mới và Xác nhận mật khẩu không khớp nhau."
+            });
+        }
+
+        if (input.NewPassword == input.CurrentPassword)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Mật khẩu mới phải khác mật khẩu hiện tại."
+            });
+        }
+
+        var identifier = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(
+                identifier,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var userId))
+        {
+            return Unauthorized(new
+            {
+                success = false,
+                message = "Phiên đăng nhập không hợp lệ."
+            });
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(
+            u => u.Id == userId,
+            cancellationToken);
+        if (user == null)
+        {
+            return Unauthorized(new
+            {
+                success = false,
+                message = "Không tìm thấy tài khoản."
+            });
+        }
+
+        var verification = _passwordService.VerifyPassword(user, input.CurrentPassword);
+        if (verification != PasswordVerificationStatus.Success)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Mật khẩu hiện tại không chính xác."
+            });
+        }
+
+        user.PasswordHash = _passwordService.HashPassword(user, input.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await TryWriteAuditAsync(
+            userId,
+            "change_password",
+            $"Tài khoản {user.Username} đổi mật khẩu.",
+            cancellationToken);
+
+        return Ok(new
+        {
+            success = true,
+            message = "Đổi mật khẩu thành công."
+        });
+    }
+
+    public sealed class ChangePasswordRequest
+    {
+        public string? CurrentPassword { get; set; }
+        public string? NewPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
+    }
 
     private async Task<IActionResult> SignOutCurrentUserAsync(
         CancellationToken cancellationToken)
