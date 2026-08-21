@@ -74,19 +74,22 @@ public sealed class AccountController : Controller
         }
 
         var clientIp = GetClientIpAddress();
-        var allowedCidr = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
+        var allowedCidrConfig = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
+        var allowedCidrs = allowedCidrConfig
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         _logger.LogInformation(
-            "[NetworkCheck] Client IP: {ClientIp}, Allowed CIDR: {AllowedCidr}",
+            "[NetworkCheck] Client IP: {ClientIp}, Allowed CIDRs: {AllowedCidrs}",
             clientIp,
-            allowedCidr);
+            string.Join(", ", allowedCidrs));
 
-        if (!IsIpInRange(clientIp, allowedCidr))
+        var inAnyRange = allowedCidrs.Any(cidr => IsIpInRange(clientIp, cidr));
+        if (!inAnyRange)
         {
             _logger.LogWarning(
-                "[NetworkCheck] BLOCKED - IP {ClientIp} not in range {AllowedCidr}",
+                "[NetworkCheck] BLOCKED - IP {ClientIp} not in any of ranges {AllowedCidrs}",
                 clientIp,
-                allowedCidr);
+                string.Join(", ", allowedCidrs));
             await TryWriteAuditAsync(
                 null,
                 "login_blocked_network",
@@ -98,9 +101,8 @@ public sealed class AccountController : Controller
         }
 
         _logger.LogInformation(
-            "[NetworkCheck] PASSED - IP {ClientIp} is in range {AllowedCidr}",
-            clientIp,
-            allowedCidr);
+            "[NetworkCheck] PASSED - IP {ClientIp} is in allowed ranges",
+            clientIp);
 
         var (result, user, message) =
             await _accountService.AuthenticateAsync(username, password);

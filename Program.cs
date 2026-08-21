@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using HanaMedia.Middlewares;
 using HanaMedia.Models;
 using HanaMedia.Services;
 using HanaMedia.Services.Accounts;
@@ -85,6 +86,11 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
     app.UseHttpsRedirection();
+}
+else
+{
+    // Development: middleware bắt exception & trả JSON chuẩn cho API
+    app.UseGlobalExceptionHandler();
 }
 app.UseStaticFiles();
 

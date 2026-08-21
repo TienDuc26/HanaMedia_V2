@@ -209,7 +209,7 @@ GO
 INSERT INTO users (username, email, password_hash, role, status) VALUES
 ('giam_doc', 'giamdoc@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'giam_doc', 'active'),
 ('admin_it', 'adminit@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'admin_it', 'active'),
-('ql_hcns', 'qlhcns@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'ql_hcns', 'active'),
+('ql_hcns', 'qlhcns@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd12 4136458f00dbd8551c69a7a93bc', 'ql_hcns', 'active'),
 ('nv_hcns', 'nvhcns@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'nv_hcns', 'active'),
 ('ql_booking', 'qlbooking@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'ql_booking', 'active'),
 ('nv_booking', 'nvbooking@hanamedia.com', 'ef92b778bafe421e48a550b0915f1116abd124136458f00dbd8551c69a7a93bc', 'nv_booking', 'active'),

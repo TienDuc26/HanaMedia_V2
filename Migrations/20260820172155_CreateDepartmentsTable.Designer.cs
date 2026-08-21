@@ -4,6 +4,7 @@ using HanaMedia.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HanaMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820172155_CreateDepartmentsTable")]
+    partial class CreateDepartmentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -795,16 +798,6 @@ namespace HanaMedia.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(20)")
                         .HasColumnName("role");
-
-                    b.Property<int>("FailedLoginAttempts")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("failed_login_attempts")
-                        .HasDefaultValue(0);
-
-                    b.Property<DateTime?>("LockedUntil")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("locked_until");
 
                     b.Property<string>("SecurityStamp")
                         .IsConcurrencyToken()
