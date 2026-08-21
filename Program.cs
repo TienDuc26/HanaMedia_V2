@@ -35,6 +35,7 @@ builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();
 builder.Services.AddScoped<ISystemAuditService, SystemAuditService>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
 builder.Services.AddScoped<IAdminITDashboardService, AdminITDashboardService>();
+builder.Services.AddScoped<IDirectorMonitoringService, DirectorMonitoringService>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();

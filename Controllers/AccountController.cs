@@ -85,7 +85,7 @@ public sealed class AccountController : Controller
                 allowedCidr);
             await TryWriteAuditAsync(
                 null,
-                "login_blocked_network",
+                AuditActions.LoginBlockedNetwork,
                 $"Chặn đăng nhập từ IP ngoài mạng nội bộ: {Truncate(clientIp, 45)}.",
                 cancellationToken);
             ViewBag.NetworkError =
@@ -106,7 +106,7 @@ public sealed class AccountController : Controller
             case LoginResult.Success:
                 await TryWriteAuditAsync(
                     user!.Id,
-                    "login_succeeded",
+                    AuditActions.LoginSucceeded,
                     $"Tài khoản {user.Username} đăng nhập thành công.",
                     cancellationToken);
 
@@ -137,7 +137,7 @@ public sealed class AccountController : Controller
             case LoginResult.AccountLockedTemporarily:
                 await TryWriteAuditAsync(
                     user?.Id,
-                    "login_failed",
+                    AuditActions.LoginFailed,
                     $"Tài khoản {Truncate(username, 100)} đang bị khóa tạm thời.",
                     cancellationToken);
                 ViewBag.LockoutError = message;
@@ -146,7 +146,7 @@ public sealed class AccountController : Controller
             case LoginResult.AccountInactive:
                 await TryWriteAuditAsync(
                     user?.Id,
-                    "login_failed",
+                    AuditActions.LoginFailed,
                     $"Tài khoản {Truncate(username, 100)} đang bị khóa.",
                     cancellationToken);
                 ViewBag.Error = message;
@@ -157,7 +157,7 @@ public sealed class AccountController : Controller
             default:
                 await TryWriteAuditAsync(
                     user?.Id,
-                    "login_failed",
+                    AuditActions.LoginFailed,
                     $"Đăng nhập thất bại với định danh {Truncate(username, 100)}.",
                     cancellationToken);
                 ViewBag.Error = string.IsNullOrWhiteSpace(message)
@@ -198,7 +198,7 @@ public sealed class AccountController : Controller
         {
             await TryWriteAuditAsync(
                 userId,
-                "logout",
+                AuditActions.Logout,
                 $"Tài khoản {User.Identity?.Name} đăng xuất.",
                 cancellationToken);
         }

@@ -99,23 +99,26 @@
             </div>
           </div>
         }
-        else if (Model.FailureCount > 0)
+        else if (Model.Alerts.Count > 0)
         {
-          <div class="alert-box" style="margin-top:0;">
-            <i class="ti ti-lock"></i>
-            <div>
-              <div class="alert-title">Đăng nhập thất bại quá số lần quy định</div>
-              <div class="alert-desc">Có @Model.FailureCount thao tác thất bại trong kết quả nhật ký phù hợp với bộ lọc hiện tại.</div>
+          @foreach (var alert in Model.Alerts)
+          {
+            <div class="alert-box" style="margin-top:0;">
+              <i class="ti @alert.Icon"></i>
+              <div>
+                <div class="alert-title">@alert.Title</div>
+                <div class="alert-desc">@alert.Description</div>
+              </div>
             </div>
-          </div>
+          }
         }
         else
         {
           <div class="alert-box" style="margin-top:0;">
             <i class="ti ti-shield-check"></i>
             <div>
-              <div class="alert-title">Không phát hiện thao tác thất bại</div>
-              <div class="alert-desc">Không có thao tác thất bại nào trong kết quả nhật ký phù hợp với bộ lọc hiện tại.</div>
+              <div class="alert-title">Chưa phát hiện hành vi bất thường</div>
+              <div class="alert-desc">Không có cảnh báo đăng nhập liên tiếp, truy cập ngoài mạng hoặc xóa hàng loạt trong khoảng giám sát gần đây.</div>
             </div>
           </div>
         }
