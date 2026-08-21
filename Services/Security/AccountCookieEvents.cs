@@ -4,6 +4,7 @@ using HanaMedia.Constants;
 using HanaMedia.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace HanaMedia.Services.Security;
@@ -92,6 +93,51 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
         context.RejectPrincipal();
         await context.HttpContext.SignOutAsync(
             CookieAuthenticationDefaults.AuthenticationScheme);
+    }
+
+    public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        // Nếu là request API (XHR/fetch với Accept JSON hoặc X-Requested-With),
+        // trả 401 JSON thay vì redirect 302 về trang Login.
+        if (IsApiRequest(context.HttpContext.Request))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return context.Response.WriteAsJsonAsync(new
+            {
+                success = false,
+                message = "Bạn chưa đăng nhập hoặc phiên đã hết hạn.",
+                code = "UNAUTHORIZED"
+            });
+        }
+        return base.RedirectToLogin(context);
+    }
+
+    public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        if (IsApiRequest(context.HttpContext.Request))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return context.Response.WriteAsJsonAsync(new
+            {
+                success = false,
+                message = "Bạn không có quyền thực hiện thao tác này.",
+                code = "FORBIDDEN"
+            });
+        }
+        return base.RedirectToAccessDenied(context);
+    }
+
+    private static bool IsApiRequest(HttpRequest request)
+    {
+        if (string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
+            return true;
+        var accept = request.Headers["Accept"].ToString();
+        if (!string.IsNullOrEmpty(accept) && accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (request.Path.StartsWithSegments("/Director/Department", StringComparison.OrdinalIgnoreCase) &&
+            request.Path.Value!.Contains("/Api", StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
     }
 }
 

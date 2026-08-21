@@ -23,6 +23,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<BusinessConfig> BusinessConfigs { get; set; }
 
+    public virtual DbSet<Department> Departments { get; set; }
+
     public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<Idea> Ideas { get; set; }
@@ -279,6 +281,31 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey<Employee>(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_employees_users_user_id");
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_departments");
+
+            entity.ToTable("departments");
+
+            entity.HasIndex(e => e.Code, "UX_departments_code").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.Status)
+                .HasColumnName("status")
+                .HasMaxLength(20)
+                .HasDefaultValue("active")
+                .IsRequired();
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasDefaultValueSql("(sysutcdatetime())");
         });
 
         modelBuilder.Entity<Idea>(entity =>
