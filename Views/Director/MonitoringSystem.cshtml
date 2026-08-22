@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+@model HanaMedia.ViewModels.DirectorMonitoringViewModel
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -57,19 +58,19 @@
         </div>
         <div class="monitor-row">
           <div class="monitor-label"><i class="ti ti-login-2"></i>Lượt đăng nhập thành công hôm nay</div>
-          <div class="monitor-value">47 lượt</div>
+          <div class="monitor-value">@Model.TodayLoginCount lượt</div>
         </div>
         <div class="monitor-row">
-          <div class="monitor-label"><i class="ti ti-users-group"></i>Người dùng đang online</div>
-          <div class="monitor-value">31 người</div>
+          <div class="monitor-label"><i class="ti ti-users-group"></i>Người dùng hoạt động 15 phút gần đây</div>
+          <div class="monitor-value">@Model.RecentActiveUserCount người</div>
         </div>
         <div class="monitor-row">
           <div class="monitor-label"><i class="ti ti-wifi-off"></i>Nỗ lực truy cập ngoài mạng LAN/Wifi bị chặn</div>
-          <div class="monitor-value">3 lần</div>
+          <div class="monitor-value">@Model.TodayBlockedNetworkCount lần</div>
         </div>
         <div class="monitor-row">
           <div class="monitor-label"><i class="ti ti-alert-triangle"></i>Cảnh báo bảo mật</div>
-          <div class="monitor-value" style="color:var(--amber);">2 cảnh báo</div>
+          <div class="monitor-value" style="color:var(--amber);">@Model.TodaySecurityAlertCount cảnh báo</div>
         </div>
       </div>
 
@@ -77,20 +78,29 @@
         <div class="card-head">
           <div class="card-title">Cảnh báo bất thường hiện tại</div>
         </div>
-        <div class="alert-box" style="margin-top:0;">
-          <i class="ti ti-alert-triangle"></i>
-          <div>
-            <div class="alert-title">Đăng nhập thất bại liên tiếp (1 tài khoản)</div>
-            <div class="alert-desc">Nhân viên Booking (Nguyễn Văn B) nhập sai mật khẩu 5 lần liên tiếp từ IP mạng nội bộ. Đã tự động tạm khóa.</div>
+        @if (Model.Alerts.Count == 0)
+        {
+          <div class="alert-box" style="margin-top:0;">
+            <i class="ti ti-shield-check"></i>
+            <div>
+              <div class="alert-title">Chưa có cảnh báo mức cao</div>
+              <div class="alert-desc">Không phát hiện tài khoản tự khóa, truy cập ngoài mạng hoặc xóa hàng loạt trong hôm nay.</div>
+            </div>
           </div>
-        </div>
-        <div class="alert-box">
-          <i class="ti ti-shield-lock"></i>
-          <div>
-            <div class="alert-title">Cố gắng truy cập ngoài mạng LAN (3 lần, cùng 1 IP)</div>
-            <div class="alert-desc">Yêu cầu đăng nhập từ ngoài IP whitelist văn phòng bị tường lửa từ chối. IP nguồn: 14.226.x.x (Mạng 4G Viettel).</div>
-          </div>
-        </div>
+        }
+        else
+        {
+          @foreach (var alert in Model.Alerts)
+          {
+            <div class="alert-box" style="margin-top:10px;">
+              <i class="ti @alert.Icon"></i>
+              <div>
+                <div class="alert-title">@alert.Title</div>
+                <div class="alert-desc">@alert.Summary</div>
+              </div>
+            </div>
+          }
+        }
       </div>
     </div>
 
@@ -115,29 +125,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><strong>Nhân sự</strong></td>
-            <td>12 thao tác</td>
-            <td>Tạo hồ sơ nhân viên mới, thay đổi trạng thái</td>
-            <td>10 phút trước</td>
-          </tr>
-          <tr>
-            <td><strong>Booking / KOL</strong></td>
-            <td>45 thao tác</td>
-            <td>Gán thù lao nhân viên, đổi trạng thái booking</td>
-            <td>2 giờ trước</td>
-          </tr>
-          <tr>
-            <td><strong>Ý tưởng sáng tạo</strong></td>
-            <td>18 thao tác</td>
-            <td>Nộp ý tưởng cho Manager duyệt, comment feedback</td>
-            <td>Hôm qua</td>
-          </tr>
+          @foreach (var module in Model.Modules)
+          {
+            <tr>
+              <td><strong>@module.ModuleLabel</strong></td>
+              <td>@module.ActionCount thao tác</td>
+              <td>@module.CommonAction</td>
+              <td>@(module.LastUpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có dữ liệu")</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
 
-    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <footer>HanaMedia · Dashboard Giám đốc — báo cáo tổng quan, không hiển thị nội dung nhật ký chi tiết</footer>
   </main>
 </div>
 </body>
