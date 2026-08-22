@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
-  <link rel="stylesheet" href="~/css/design-system.css">
-  <link rel="stylesheet" href="~/css/layout.css">
-  <link rel="stylesheet" href="~/css/components.css">
+  <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components.css" asp-append-version="true">
+  @Html.AntiForgeryToken()
   <style>
     .flex-bar {
       display: flex;
@@ -20,10 +21,127 @@
       gap: 16px;
       flex-wrap: wrap;
     }
+    /* Khóa scroll nền khi modal mở */
+    body.modal-open { overflow: hidden; }
+
+    /* ====== MODAL — flex cổ điển, height cố định 90vh ====== */
+    .modal-backdrop {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(11, 37, 69, 0.45) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 10000 !important;
+      padding: 16px !important;
+      box-sizing: border-box !important;
+    }
+    .modal-backdrop.active { pointer-events: auto !important; }
+
+    /* Modal card có height cố định theo viewport, body phải scroll */
+    .modal-backdrop .modal-card {
+      display: flex !important;
+      flex-direction: column !important;
+      background: #fff !important;
+      border-radius: 12px !important;
+      width: 100% !important;
+      max-width: 720px !important;
+      height: auto !important;
+      max-height: calc(100vh - 32px) !important;  /* trừ padding backdrop */
+      min-height: 0 !important;
+      box-sizing: border-box !important;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2) !important;
+      overflow: hidden !important;
+    }
+
+    .modal-card .modal-header {
+      flex: 0 0 auto !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 14px 18px !important;
+      border-bottom: 1px solid #e5e7eb !important;
+      background: #fff !important;
+    }
+    .modal-title {
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      color: #0b2545 !important;
+      line-height: 1.2 !important;
+    }
+    .modal-close {
+      background: none !important;
+      border: 0 !important;
+      font-size: 20px !important;
+      cursor: pointer !important;
+      color: #6b7280 !important;
+      padding: 4px 8px !important;
+    }
+
+    /* Body: max-height cố định, scroll độc lập */
+    .modal-card .modal-body {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      overscroll-behavior: contain !important;
+      padding: 16px 18px !important;
+      background: #fff !important;
+      box-sizing: border-box !important;
+    }
+
+    .modal-card .modal-footer {
+      flex: 0 0 auto !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      gap: 8px !important;
+      padding: 12px 18px !important;
+      border-top: 1px solid #e5e7eb !important;
+      background: #fff !important;
+    }
+
     .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 20px;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      column-gap: 14px !important;
+      row-gap: 0 !important;
+    }
+    .form-group { margin-bottom: 12px !important; }
+    .form-control {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding: 8px 10px !important;
+      font-size: 14px !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 8px !important;
+      background: #fff !important;
+    }
+    input[type="file"].form-control {
+      padding: 6px 8px !important;
+      font-size: 13px !important;
+      text-overflow: ellipsis !important;
+      overflow: hidden !important;
+    }
+    .form-error {
+      max-height: 140px !important;
+      overflow-y: auto !important;
+      word-break: break-word !important;
+      color: #b91c1c !important;
+      font-size: 12px !important;
+      padding: 8px 10px !important;
+      background: #fef2f2 !important;
+      border: 1px solid #fecaca !important;
+      border-radius: 6px !important;
+      margin-top: 8px !important;
+    }
+
+    @@media (max-width: 760px) {
+      .form-grid { grid-template-columns: 1fr !important; }
+      .modal-card { max-width: 100% !important; }
     }
   </style>
 </head>
@@ -57,9 +175,9 @@
     <div class="card">
       <div class="flex-bar">
         <div style="width: 300px;">
-          <input type="text" class="form-control" placeholder="Tìm tên nhân viên, phòng ban...">
+          <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên nhân viên, phòng ban...">
         </div>
-        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openModal('addEmpModal')"><i class="ti ti-plus"></i> Thêm nhân viên mới</button>
+        <button class="btn-mini approve" style="padding: 10px 18px;" onclick="openAddModal()"><i class="ti ti-plus"></i> Thêm nhân viên mới</button>
       </div>
 
       <table>
@@ -75,33 +193,8 @@
             <th style="text-align: right;">Hành động</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td><strong>Phạm Thu Hà</strong></td>
-            <td><span class="dept-chip">Booking</span></td>
-            <td>Nhân viên</td>
-            <td>Hợp đồng chính thức</td>
-            <td>0912.xxx.xxx<br><span style="color:var(--muted); font-size:11.5px;">ha@hanamedia.vn</span></td>
-            <td>05/08/2026</td>
-            <td><span class="status-chip status-good">Đang làm việc</span></td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="openEditModal('Phạm Thu Hà', '1998-05-12', '0912.xxx.xxx', 'ha@hanamedia.vn', 'Hà Nội', '05/08/2026', 'Booking', 'Nhân viên', 'Nguyễn Anh Tuấn', 'Hợp đồng chính thức', 'Đang làm việc')">Sửa</button>
-              <button class="btn-mini reject" onclick="alert('Đã ngừng hoạt động nhân viên!')">Ngừng việc</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Nguyễn Anh Tuấn</strong></td>
-            <td><span class="dept-chip">Booking</span></td>
-            <td>Quản lý</td>
-            <td>Hợp đồng vô thời hạn</td>
-            <td>0988.xxx.xxx<br><span style="color:var(--muted); font-size:11.5px;">tuan@hanamedia.vn</span></td>
-            <td>15/03/2023</td>
-            <td><span class="status-chip status-warn">Đang chờ duyệt lương</span></td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="openEditModal('Nguyễn Anh Tuấn', '1990-09-20', '0988.xxx.xxx', 'tuan@hanamedia.vn', 'Hà Nội', '15/03/2023', 'Booking', 'Quản lý', 'Giám đốc Nguyễn Văn A', 'Hợp đồng vô thời hạn', 'Đang chờ duyệt lương')">Sửa</button>
-              <button class="btn-mini reject" onclick="alert('Đã ngừng hoạt động nhân viên!')">Ngừng việc</button>
-            </td>
-          </tr>
+        <tbody id="empTbody">
+          <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Đang tải dữ liệu...</td></tr>
         </tbody>
       </table>
     </div>
@@ -112,7 +205,7 @@
 
 <!-- MODAL THÊM NHÂN VIÊN MỚI -->
 <div class="modal-backdrop" id="addEmpModal">
-  <div class="modal-card" style="width:650px;">
+  <div class="modal-card">
     <div class="modal-header">
       <div class="modal-title">Thêm hồ sơ nhân viên mới</div>
       <button class="modal-close" onclick="closeModal('addEmpModal')">&times;</button>
@@ -120,168 +213,555 @@
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group">
-          <label>Họ và tên</label>
-          <input type="text" class="form-control" placeholder="Họ tên đầy đủ...">
+          <label>Họ và tên *</label>
+          <input type="text" id="addName" class="form-control" placeholder="Họ tên đầy đủ...">
         </div>
         <div class="form-group">
-          <label>Ngày sinh</label>
-          <input type="date" class="form-control">
+          <label>Ngày sinh *</label>
+          <input type="date" id="addDob" class="form-control">
         </div>
         <div class="form-group">
-          <label>Số điện thoại</label>
-          <input type="text" class="form-control" placeholder="Số điện thoại cá nhân...">
+          <label>Số điện thoại *</label>
+          <input type="text" id="addPhone" class="form-control" placeholder="Số điện thoại cá nhân...">
         </div>
         <div class="form-group">
-          <label>Email cá nhân</label>
-          <input type="email" class="form-control" placeholder="Địa chỉ email...">
+          <label>Email cá nhân *</label>
+          <input type="email" id="addEmail" class="form-control" placeholder="Địa chỉ email...">
         </div>
         <div class="form-group">
-          <label>Địa chỉ</label>
-          <input type="text" class="form-control" placeholder="Địa chỉ thường trú...">
+          <label>Địa chỉ *</label>
+          <input type="text" id="addAddress" class="form-control" placeholder="Địa chỉ thường trú...">
         </div>
         <div class="form-group">
-          <label>Ngày vào công ty</label>
-          <input type="date" class="form-control">
+          <label>Ngày vào công ty *</label>
+          <input type="date" id="addJoined" class="form-control">
         </div>
         <div class="form-group">
-          <label>Phòng ban</label>
-          <select class="form-control">
-            <option>Booking</option>
-            <option>Ý tưởng</option>
-            <option>HCNS</option>
-            <option>IT</option>
+          <label>Phòng ban *</label>
+          <select id="addDept" class="form-control">
+            <option value="">-- Chọn phòng ban --</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Chức vụ</label>
-          <input type="text" class="form-control" placeholder="Ví dụ: Nhân viên, Quản lý...">
+          <label>Chức vụ *</label>
+          <input type="text" id="addTitle" class="form-control" placeholder="Ví dụ: Nhân viên, Quản lý...">
         </div>
         <div class="form-group">
           <label>Người quản lý trực tiếp</label>
-          <input type="text" class="form-control" placeholder="Tên sếp trực tiếp...">
+          <select id="addManager" class="form-control">
+            <option value="">-- Không có --</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Loại hợp đồng</label>
-          <select class="form-control">
-            <option>Thử việc</option>
-            <option>Hợp đồng chính thức</option>
-            <option>Hợp đồng vô thời hạn</option>
+          <label>Loại hợp đồng *</label>
+          <select id="addContract" class="form-control">
+            <option value="thu_viec">Thử việc</option>
+            <option value="chinh_thuc_1_nam">Hợp đồng chính thức (1 năm)</option>
+            <option value="vo_thoi_han">Hợp đồng vô thời hạn</option>
           </select>
         </div>
       </div>
       <div class="form-group">
         <label>Trạng thái ban đầu</label>
-        <select class="form-control">
-          <option>Đang làm việc</option>
-          <option>Thử việc</option>
+        <select id="addStatus" class="form-control">
+          <option value="dang_lam_viec">Đang làm việc</option>
+          <option value="tam_ngung">Tạm ngừng</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="checkbox-label" style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--ink); text-transform:none; letter-spacing:0; font-size:13px; cursor:pointer;">
+          <input type="checkbox" id="addIsManager" style="width:16px; height:16px; cursor:pointer;">
+          <span>Chức vụ thuộc nhóm quản lý <span style="color:var(--muted); font-weight:400;">(có thể được chọn làm người quản lý trực tiếp)</span></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Ảnh đại diện (JPG/PNG/WEBP, tối đa 2MB)</label>
+        <input type="file" id="addAvatar" accept="image/jpeg,image/png,image/webp" class="form-control">
+      </div>
+      <div id="addErr" class="form-error" style="display:none;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn-mini" onclick="closeModal('addEmpModal')">Hủy</button>
-      <button class="btn-mini approve" onclick="alert('Thêm nhân sự mới thành công!'); closeModal('addEmpModal');">Thêm nhân viên</button>
+      <button class="btn-mini approve" id="addSaveBtn" onclick="submitAdd()">Thêm nhân viên</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL SỬA NHÂN VIÊN -->
 <div class="modal-backdrop" id="editEmpModal">
-  <div class="modal-card" style="width:650px;">
+  <div class="modal-card">
     <div class="modal-header">
       <div class="modal-title">Cập nhật hồ sơ nhân sự</div>
       <button class="modal-close" onclick="closeModal('editEmpModal')">&times;</button>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="editId" />
       <div class="form-grid">
         <div class="form-group">
-          <label>Họ và tên</label>
+          <label>Họ và tên *</label>
           <input type="text" id="editName" class="form-control">
         </div>
         <div class="form-group">
-          <label>Ngày sinh</label>
+          <label>Ngày sinh *</label>
           <input type="date" id="editDob" class="form-control">
         </div>
         <div class="form-group">
-          <label>Số điện thoại</label>
+          <label>Số điện thoại *</label>
           <input type="text" id="editPhone" class="form-control">
         </div>
         <div class="form-group">
-          <label>Email</label>
+          <label>Email *</label>
           <input type="email" id="editEmail" class="form-control">
         </div>
         <div class="form-group">
-          <label>Địa chỉ</label>
+          <label>Địa chỉ *</label>
           <input type="text" id="editAddress" class="form-control">
         </div>
         <div class="form-group">
-          <label>Ngày vào công ty</label>
+          <label>Ngày vào công ty *</label>
           <input type="date" id="editJoined" class="form-control">
         </div>
         <div class="form-group">
-          <label>Phòng ban</label>
+          <label>Phòng ban *</label>
           <select class="form-control" id="editDept">
-            <option value="Booking">Booking</option>
-            <option value="Ý tưởng">Ý tưởng</option>
-            <option value="HCNS">HCNS</option>
-            <option value="IT">IT</option>
+            <option value="">-- Chọn phòng ban --</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Chức vụ</label>
+          <label>Chức vụ *</label>
           <input type="text" id="editTitle" class="form-control">
         </div>
         <div class="form-group">
           <label>Người quản lý</label>
-          <input type="text" id="editManager" class="form-control">
+          <select id="editManager" class="form-control">
+            <option value="">-- Không có --</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Loại hợp đồng</label>
+          <label>Loại hợp đồng *</label>
           <select class="form-control" id="editContract">
-            <option value="Thử việc">Thử việc</option>
-            <option value="Hợp đồng chính thức">Hợp đồng chính thức</option>
-            <option value="Hợp đồng vô thời hạn">Hợp đồng vô thời hạn</option>
+            <option value="thu_viec">Thử việc</option>
+            <option value="chinh_thuc_1_nam">Hợp đồng chính thức (1 năm)</option>
+            <option value="vo_thoi_han">Hợp đồng vô thời hạn</option>
           </select>
         </div>
       </div>
       <div class="form-group">
         <label>Trạng thái hoạt động</label>
         <select class="form-control" id="editStatus">
-          <option value="Đang làm việc">Đang làm việc</option>
-          <option value="Đang chờ duyệt lương">Đang chờ duyệt lương</option>
-          <option value="Chờ duyệt nghỉ việc">Chờ duyệt nghỉ việc</option>
+          <option value="dang_lam_viec">Đang làm việc</option>
+          <option value="tam_ngung">Tạm ngừng</option>
+          <option value="da_nghi">Đã nghỉ việc</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="checkbox-label" style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--ink); text-transform:none; letter-spacing:0; font-size:13px; cursor:pointer;">
+          <input type="checkbox" id="editIsManager" style="width:16px; height:16px; cursor:pointer;">
+          <span>Chức vụ thuộc nhóm quản lý <span style="color:var(--muted); font-weight:400;">(có thể được chọn làm người quản lý trực tiếp)</span></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Ảnh đại diện hiện tại</label>
+        <div id="editAvatarPreview" style="margin-bottom: 8px;"></div>
+        <label>Thay ảnh đại diện (JPG/PNG/WEBP, tối đa 2MB) — để trống nếu giữ nguyên</label>
+        <input type="file" id="editAvatar" accept="image/jpeg,image/png,image/webp" class="form-control">
+      </div>
+      <div id="editErr" class="form-error" style="display:none;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn-mini" onclick="closeModal('editEmpModal')">Hủy</button>
-      <button class="btn-mini approve" onclick="alert('Đã cập nhật thay đổi thông tin nhân viên!'); closeModal('editEmpModal');">Lưu thay đổi</button>
+      <button class="btn-mini approve" id="editSaveBtn" onclick="submitEdit()">Lưu thay đổi</button>
     </div>
   </div>
 </div>
 
 <script>
+  // ==============================================================
+  // Module 5: Quản lý nhân sự - lấy dữ liệu thật từ database
+  // ==============================================================
+
+  const API_BASE = '/ManageHuman/ApiEmployee';
+  // Phân quyền FE: nv_hcns (staff) không được xóa / đổi phòng ban / đổi chức vụ / đổi trạng thái
+  const IS_STAFF = @(ViewBag.IsStaff == true ? "true" : "false");
+
+  function getAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+  }
+
+  // ---- Avatar helpers (file -> base64 dataURL) ----
+  function readFileAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function getAvatarBase64(inputId) {
+    const inp = document.getElementById(inputId);
+    if (!inp || !inp.files || inp.files.length === 0) return null;
+    const f = inp.files[0];
+    const MAX = 2 * 1024 * 1024;
+    if (f.size > MAX) throw new Error('Ảnh vượt quá 2 MB.');
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowed.indexOf(f.type) < 0) throw new Error('Định dạng ảnh không hỗ trợ (chỉ JPG, PNG, WEBP).');
+    return await readFileAsDataUrl(f);
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   function openModal(id) {
     document.getElementById(id).classList.add('active');
+    document.body.classList.add('modal-open');
   }
-
   function closeModal(id) {
     document.getElementById(id).classList.remove('active');
+    document.body.classList.remove('modal-open');
   }
 
-  function openEditModal(name, dob, phone, email, address, joined, dept, title, manager, contract, status) {
-    document.getElementById('editName').value = name;
-    document.getElementById('editDob').value = dob;
-    document.getElementById('editPhone').value = phone;
-    document.getElementById('editEmail').value = email;
-    document.getElementById('editAddress').value = address;
-    document.getElementById('editJoined').value = joined;
-    document.getElementById('editDept').value = dept;
-    document.getElementById('editTitle').value = title;
-    document.getElementById('editManager').value = manager;
-    document.getElementById('editContract').value = contract;
-    document.getElementById('editStatus').value = status;
-    openModal('editEmpModal');
+  function contractLabel(c) {
+    if (c === 'thu_viec') return 'Thử việc';
+    if (c === 'chinh_thuc_1_nam') return 'Hợp đồng chính thức';
+    if (c === 'vo_thoi_han') return 'Hợp đồng vô thời hạn';
+    return c || '';
   }
+
+  function statusBadgeHtml(s) {
+    if (s === 'dang_lam_viec') return '<span class="status-chip status-good">Đang làm việc</span>';
+    if (s === 'tam_ngung') return '<span class="status-chip status-warn">Tạm ngừng</span>';
+    if (s === 'da_nghi' || s === 'ngung_hoat_dong') return '<span class="status-chip status-bad">Đã nghỉ việc</span>';
+    if (s === 'thu_viec') return '<span class="status-chip status-warn">Thử việc</span>';
+    if (s === 'cho_duyet_nghi') return '<span class="status-chip status-warn">Chờ duyệt nghỉ</span>';
+    return '<span class="status-chip">' + escapeHtml(s) + '</span>';
+  }
+
+  function showFormErrors(elId, message, errors) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (errors && Array.isArray(errors) && errors.length > 0) {
+      el.innerHTML = errors.map(e => '• ' + escapeHtml(e)).join('<br>');
+      el.style.display = 'block';
+    } else if (message) {
+      el.textContent = message;
+      el.style.display = 'block';
+    } else {
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+  }
+
+  function clearFormErrors(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = '';
+    el.style.display = 'none';
+  }
+
+  async function fetchJson(url, opts = {}) {
+    const headers = Object.assign(
+      { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+      opts.headers || {}
+    );
+    const res = await fetch(url, Object.assign({}, opts, { headers, credentials: 'same-origin' }));
+    let json = null;
+    try { json = await res.json(); } catch { throw new Error('Phản hồi không hợp lệ (HTTP ' + res.status + ').'); }
+    return { ok: res.ok, status: res.status, json };
+  }
+
+  // --- Load danh sách ---
+  async function loadList() {
+    const q = (document.getElementById('searchInput').value || '').trim();
+    const url = API_BASE + '/ApiList' + (q ? '?q=' + encodeURIComponent(q) : '');
+    try {
+      const { ok, json } = await fetchJson(url);
+      if (!ok) { renderEmpty('Không tải được danh sách: ' + (json && json.message || '')); return; }
+      if (!json.success) { renderEmpty(json.message || 'Không tải được danh sách.'); return; }
+      renderTable(json.data || []);
+    } catch (e) { renderEmpty(e.message); }
+  }
+
+  function renderEmpty(msg) {
+    document.getElementById('empTbody').innerHTML =
+      '<tr><td colspan="8" style="text-align:center; padding:30px; color:#b91c1c;">' + escapeHtml(msg || 'Không tải được danh sách.') + '</td></tr>';
+  }
+
+  function renderTable(list) {
+    if (!list || list.length === 0) {
+      document.getElementById('empTbody').innerHTML =
+        '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--muted);">Chưa có nhân viên nào. Hãy bấm "Thêm nhân viên mới".</td></tr>';
+      return;
+    }
+    const html = list.map(e => {
+      return `
+        <tr>
+          <td><strong>${escapeHtml(e.fullName)}</strong></td>
+          <td><span class="dept-chip">${escapeHtml(e.departmentName || e.department)}</span></td>
+          <td>${escapeHtml(e.position)}</td>
+          <td>${escapeHtml(contractLabel(e.contractType))}</td>
+          <td>${escapeHtml(e.phone || '')}<br><span style="color:var(--muted); font-size:11.5px;">${escapeHtml(e.email || '')}</span></td>
+          <td>${escapeHtml(e.joinedDate || '')}</td>
+          <td>${statusBadgeHtml(e.status)}</td>
+          <td style="text-align: right;">
+            <button class="btn-mini approve" onclick="openEditModalById(${e.id})">Sửa</button>
+            ${IS_STAFF ? '' : `<button class="btn-mini reject" onclick="deactivateEmp(${e.id}, '${escapeHtml(e.fullName).replace(/'/g, "\\'")}')">Ngừng việc</button>`}
+          </td>
+        </tr>`;
+    }).join('');
+    document.getElementById('empTbody').innerHTML = html;
+  }
+
+  // --- Load dropdowns ---
+  async function loadDepartments() {
+    try {
+      const { ok, json } = await fetchJson(API_BASE + '/ApiDepartments');
+      if (!ok || !json.success) return;
+      const opts = '<option value="">-- Chọn phòng ban --</option>' +
+        (json.data || []).map(d => '<option value="' + escapeHtml(d.code) + '">' + escapeHtml(d.name) + '</option>').join('');
+      document.getElementById('addDept').innerHTML = opts;
+      document.getElementById('editDept').innerHTML = opts;
+    } catch (e) { console.error('loadDepartments', e); }
+  }
+
+  // Cache danh sách quản lý để tái sử dụng cho cả modal Add và Edit
+  // (không cần gọi lại API mỗi lần mở modal).
+  let __managersCache = null;
+
+  async function loadManagers() {
+    try {
+      const { ok, json } = await fetchJson(API_BASE + '/ApiManagers');
+      if (!ok || !json.success) { __managersCache = []; return; }
+      __managersCache = json.data || [];
+      renderManagerOptions('addManager', __managersCache, null);
+      renderManagerOptions('editManager', __managersCache, null);
+    } catch (e) { console.error('loadManagers', e); __managersCache = []; }
+  }
+
+  // Render option cho dropdown người quản lý.
+  // excludeId: id nhân sự đang sửa — sẽ bị loại khỏi list (không cho tự chọn chính mình).
+  function renderManagerOptions(selectId, managers, excludeId) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    const list = (managers || []).filter(m => !excludeId || m.id !== excludeId);
+    const opts = '<option value="">-- Không có --</option>' +
+      list.map(m => {
+        const position = m.position || 'Chức vụ chưa rõ';
+        const dept = m.department ? ' · ' + escapeHtml(m.department) : '';
+        return '<option value="' + m.id + '">' + escapeHtml(m.fullName) + ' — ' + escapeHtml(position) + dept + '</option>';
+      }).join('');
+    sel.innerHTML = opts;
+  }
+
+  // Khi mở modal sửa: gọi lại API với excludeId để backend trả về list đã loại trừ,
+  // và dùng renderManagerOptions cho dropdown edit (defense in-depth).
+  async function loadManagersForEdit(excludeId) {
+    try {
+      const url = API_BASE + '/ApiManagers?excludeId=' + encodeURIComponent(excludeId);
+      const { ok, json } = await fetchJson(url);
+      if (!ok || !json.success) return;
+      renderManagerOptions('editManager', json.data || [], excludeId);
+    } catch (e) { console.error('loadManagersForEdit', e); }
+  }
+
+  // --- Mở modal thêm ---
+  function openAddModal() {
+    document.getElementById('addName').value = '';
+    document.getElementById('addDob').value = '';
+    document.getElementById('addPhone').value = '';
+    document.getElementById('addEmail').value = '';
+    document.getElementById('addAddress').value = '';
+    document.getElementById('addJoined').value = '';
+    document.getElementById('addDept').value = '';
+    document.getElementById('addTitle').value = '';
+    document.getElementById('addManager').value = '';
+    document.getElementById('addContract').value = 'thu_viec';
+    document.getElementById('addStatus').value = 'dang_lam_viec';
+    document.getElementById('addIsManager').checked = false;
+
+    // Phân quyền FE: nv_hcns không được đổi phòng ban / chức vụ / người quản lý / trạng thái / cờ quản lý
+    ['addDept','addTitle','addManager','addStatus','addIsManager'].forEach(function (elId) {
+      const el = document.getElementById(elId);
+      if (el) { el.disabled = IS_STAFF; el.style.background = IS_STAFF ? 'var(--blue-50)' : ''; }
+    });
+
+    openModal('addEmpModal');
+    clearFormErrors('addErr');
+  }
+
+  // --- Submit thêm ---
+  async function submitAdd() {
+    document.getElementById('addErr').textContent = '';
+    let avatarBase64 = null;
+    try { avatarBase64 = await getAvatarBase64('addAvatar'); }
+    catch (e) { showFormErrors('addErr', e.message, null); return; }
+
+    const payload = {
+      fullName: document.getElementById('addName').value.trim(),
+      dob: document.getElementById('addDob').value || null,
+      phone: document.getElementById('addPhone').value.trim(),
+      email: document.getElementById('addEmail').value.trim(),
+      address: document.getElementById('addAddress').value.trim(),
+      joinedDate: document.getElementById('addJoined').value || null,
+      department: document.getElementById('addDept').value,
+      position: document.getElementById('addTitle').value.trim(),
+      managerId: document.getElementById('addManager').value ? parseInt(document.getElementById('addManager').value) : null,
+      isManager: document.getElementById('addIsManager').checked,
+      contractType: document.getElementById('addContract').value,
+      status: document.getElementById('addStatus').value
+    };
+    if (avatarBase64) payload.avatarBase64 = avatarBase64;
+
+    const btn = document.getElementById('addSaveBtn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+    try {
+      const csrf = getAntiForgeryToken();
+      const { ok, json } = await fetchJson(API_BASE + '/ApiCreate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrf },
+        body: JSON.stringify(payload)
+      });
+      if (!ok || !json.success) {
+        showFormErrors('addErr', json && json.message, json && json.errors);
+        return;
+      }
+      closeModal('addEmpModal');
+      await loadList();
+    } catch (e) {
+      document.getElementById('addErr').textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Thêm nhân viên';
+    }
+  }
+
+  // --- Mở modal sửa ---
+  async function openEditModalById(id) {
+    try {
+      const { ok, json } = await fetchJson(API_BASE + '/ApiGet/' + id);
+      if (!ok || !json.success) { alert((json && json.message) || 'Không tải được dữ liệu.'); return; }
+      const d = json.data;
+      document.getElementById('editId').value = d.id;
+      document.getElementById('editName').value = d.fullName || '';
+      document.getElementById('editDob').value = d.dob || '';
+      document.getElementById('editPhone').value = d.phone || '';
+      document.getElementById('editEmail').value = d.email || '';
+      document.getElementById('editAddress').value = d.address || '';
+      document.getElementById('editJoined').value = d.joinedDate || '';
+      document.getElementById('editDept').value = d.department || '';
+      document.getElementById('editTitle').value = d.position || '';
+
+      // Chỉ set danh sách manager SAU khi dropdown đã loại trừ chính nhân sự đang sửa
+      // (không cần đợi API: dùng cache + filter phía client cũng OK, nhưng gọi lại
+      // server để đảm bảo đồng bộ với trạng thái mới nhất)
+      await loadManagersForEdit(d.id);
+      document.getElementById('editManager').value = d.managerId || '';
+
+      document.getElementById('editContract').value = d.contractType || 'thu_viec';
+      document.getElementById('editStatus').value = d.status || 'dang_lam_viec';
+      document.getElementById('editIsManager').checked = !!d.isManager;
+
+      // Phân quyền FE: nv_hcns không được đổi phòng ban / chức vụ / người quản lý / ngày vào / trạng thái / cờ quản lý
+      ['editDept','editTitle','editManager','editJoined','editStatus','editIsManager'].forEach(function (elId) {
+        const el = document.getElementById(elId);
+        if (el) { el.disabled = IS_STAFF; el.style.background = IS_STAFF ? 'var(--blue-50)' : ''; }
+      });
+
+      // Preview avatar hiện tại
+      const previewEl = document.getElementById('editAvatarPreview');
+      if (previewEl) {
+        previewEl.innerHTML = d.avatarUrl
+          ? `<img src="${escapeHtml(d.avatarUrl)}" alt="avatar" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">`
+          : '<span style="color:var(--muted); font-size:12px;">Chưa có ảnh đại diện.</span>';
+      }
+      const fileInp = document.getElementById('editAvatar');
+      if (fileInp) fileInp.value = '';
+
+    openModal('editEmpModal');
+    clearFormErrors('editErr');
+  } catch (e) { alert(e.message); }
+  }
+
+  // --- Submit sửa ---
+  async function submitEdit() {
+    const id = document.getElementById('editId').value;
+    if (!id) { alert('Thiếu ID nhân viên.'); return; }
+    document.getElementById('editErr').textContent = '';
+    let avatarBase64 = null;
+    try { avatarBase64 = await getAvatarBase64('editAvatar'); }
+    catch (e) { showFormErrors('editErr', e.message, null); return; }
+
+    const payload = {
+      id: parseInt(id),
+      fullName: document.getElementById('editName').value.trim(),
+      dob: document.getElementById('editDob').value || null,
+      phone: document.getElementById('editPhone').value.trim(),
+      email: document.getElementById('editEmail').value.trim(),
+      address: document.getElementById('editAddress').value.trim(),
+      joinedDate: document.getElementById('editJoined').value || null,
+      department: document.getElementById('editDept').value,
+      position: document.getElementById('editTitle').value.trim(),
+      managerId: document.getElementById('editManager').value ? parseInt(document.getElementById('editManager').value) : null,
+      isManager: document.getElementById('editIsManager').checked,
+      contractType: document.getElementById('editContract').value,
+      status: document.getElementById('editStatus').value
+    };
+    if (avatarBase64) payload.avatarBase64 = avatarBase64;
+
+    const btn = document.getElementById('editSaveBtn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+    try {
+      const csrf = getAntiForgeryToken();
+      const { ok, json } = await fetchJson(API_BASE + '/ApiUpdate/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrf },
+        body: JSON.stringify(payload)
+      });
+      if (!ok || !json.success) {
+        showFormErrors('editErr', json && json.message, json && json.errors);
+        return;
+      }
+      closeModal('editEmpModal');
+      await loadList();
+    } catch (e) {
+      document.getElementById('editErr').textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+    }
+  }
+
+  // --- Soft delete: Ngừng việc ---
+  async function deactivateEmp(id, name) {
+    if (!confirm('Bạn có chắc muốn ngừng hoạt động nhân viên "' + name + '"?\n(Trạng thái sẽ chuyển thành "Đã nghỉ việc".)')) return;
+    try {
+      const csrf = getAntiForgeryToken();
+      const { ok, json } = await fetchJson(API_BASE + '/ApiDelete/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrf }
+      });
+      if (!ok || !json.success) { alert((json && json.message) || 'Thất bại.'); return; }
+      await loadList();
+    } catch (e) { alert(e.message); }
+  }
+
+  // --- Tìm kiếm ---
+  document.addEventListener('DOMContentLoaded', async function() {
+    await loadDepartments();
+    await loadManagers();
+    await loadList();
+
+    const search = document.getElementById('searchInput');
+    if (search) {
+      let timer = null;
+      search.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(loadList, 300);
+      });
+    }
+  });
 </script>
 </body>
 </html>

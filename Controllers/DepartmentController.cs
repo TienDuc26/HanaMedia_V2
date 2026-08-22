@@ -58,13 +58,15 @@ namespace HanaMedia.Controllers
                 .Select(g => new EmpCountByDept { DeptCode = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            // Tìm nhân viên cấp cao theo từng phòng (Position chứa "Trưởng phòng" / "Giám đốc")
+            // Tìm trưởng phòng / quản lý theo từng phòng dựa trên cờ IsManager = true
+            // (KHÔNG dựa vào chuỗi "Trưởng phòng" / "Giám đốc" trong Position nữa).
+            // Ưu tiên người đang làm việc (status = 'dang_lam_viec'), nếu không có thì
+            // lấy người is_manager=true còn lại để tránh cột "Trưởng phòng" trống.
             var managerByDept = await _db.Employees.AsNoTracking()
-                .Where(e => e.Position.ToLower().Contains("trưởng phòng")
-                         || e.Position.ToLower().Contains("giam doc")
-                         || e.Position.ToLower().Contains("giám đốc")
-                         || e.Position.ToLower().Contains("truong phong"))
-                .Select(e => new ManagerRow { Department = e.Department, FullName = e.FullName, Position = e.Position })
+                .Where(e => e.IsManager)
+                .OrderBy(e => e.Status == "dang_lam_viec" ? 0 : 1)
+                .ThenBy(e => e.FullName)
+                .Select(e => new ManagerRow { Department = e.Department, FullName = e.FullName, Position = e.Position, IsManager = e.IsManager, Status = e.Status })
                 .ToListAsync();
 
             var top = depts.Take(3).Select(d => BuildDeptRow(d, empByDept, managerByDept)).ToList();
@@ -84,11 +86,23 @@ namespace HanaMedia.Controllers
         {
             var count = empByDept.FirstOrDefault(x => x.DeptCode == d.Code)?.Count ?? 0;
 
-            // Lấy trưởng phòng (nếu có)
-            string manager = "Chưa bổ nhiệm";
-            var m = managerByDept.FirstOrDefault(x =>
-                string.Equals(x.Department, d.Code, StringComparison.OrdinalIgnoreCase));
-            if (m != null) manager = m.FullName;
+            // Lấy danh sách manager thuộc đúng phòng này, dựa trên cờ IsManager = true.
+            // Ưu tiên người đang làm việc, sau đó mới tới người đã ngừng hoạt động.
+            // Trả về "Họ tên — Chức vụ" cho FE hiển thị nếu có thể.
+            var managersInDept = managerByDept
+                .Where(x => string.Equals(x.Department, d.Code, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            string manager;
+            if (managersInDept.Count > 0)
+            {
+                // Trang Giám đốc chỉ hiển thị họ tên, không kèm chức vụ.
+                manager = managersInDept[0].FullName;
+            }
+            else
+            {
+                manager = "Chưa bổ nhiệm";
+            }
 
             // Hiệu suất: tạm thời sinh deterministic 70-95% dựa trên code để không nhảy số mỗi lần reload
             // Sẽ thay bằng query thật khi có bảng Performance
@@ -130,6 +144,8 @@ namespace HanaMedia.Controllers
             public string Department { get; set; } = "";
             public string FullName { get; set; } = "";
             public string Position { get; set; } = "";
+            public bool IsManager { get; set; }
+            public string? Status { get; set; }
         }
 
         // GET: /Director/Department/ApiGet/{id}
@@ -145,12 +161,20 @@ namespace HanaMedia.Controllers
             }
 
             var count = await _db.Employees.CountAsync(e => e.Department == dept.Code);
-            var manager = await _db.Employees
-                .Where(e => e.Department == dept.Code &&
-                       (e.Position.ToLower().Contains("trưởng phòng")
-                        || e.Position.ToLower().Contains("truong phong")))
-                .Select(e => e.FullName)
+
+            // Trưởng phòng / quản lý theo cờ IsManager = true. Ưu tiên người đang làm việc.
+            var managerRow = await _db.Employees
+                .Where(e => e.Department == dept.Code && e.IsManager)
+                .OrderBy(e => e.Status == "dang_lam_viec" ? 0 : 1)
+                .ThenBy(e => e.FullName)
+                .Select(e => new { e.FullName, e.Position })
                 .FirstOrDefaultAsync();
+
+            string manager;
+            if (managerRow == null)
+                manager = "Chưa bổ nhiệm";
+            else
+                manager = managerRow.FullName;
 
             return Ok(new
             {
@@ -162,7 +186,7 @@ namespace HanaMedia.Controllers
                     name = dept.Name,
                     description = dept.Description,
                     status = dept.Status,
-                    manager = manager ?? "Chưa bổ nhiệm",
+                    manager,
                     headcount = count
                 }
             });

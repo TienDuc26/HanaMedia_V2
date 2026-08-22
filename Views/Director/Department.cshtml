@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
   <link rel="stylesheet" href="~/css/components.css">
+  @Html.AntiForgeryToken()
   <style>
     /* ── Page header + nút thêm ── */
     .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
@@ -143,7 +144,9 @@
     <div class="nav-section">Quản trị</div>
     <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
     <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
-    <partial name="_UserMenuPartial" />
+    <div class="sidebar-footer">
+      <partial name="_UserMenuPartial" />
+    </div>
   </aside>
 
   <main class="main">
