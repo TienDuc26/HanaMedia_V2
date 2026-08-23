@@ -9,8 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
-  <link rel="stylesheet" href="~/css/layout.css">
-  <link rel="stylesheet" href="~/css/components.css">
+  <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components/modals.css" asp-append-version="true">
   <style>
     .flex-bar {
       display: flex;
@@ -183,7 +184,7 @@
       <div class="modal-title">Sáng tạo ý tưởng &amp; Kịch bản mới</div>
       <button class="modal-close" onclick="closeModal('addIdeaModal')">&times;</button>
     </div>
-    <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right:8px;">
+    <div class="modal-body" style="padding-right: 8px;">
       <div class="form-grid">
         <div class="form-group">
           <label>Tên ý tưởng</label>
@@ -243,7 +244,7 @@
       <div class="modal-title">Chỉnh sửa ý tưởng &amp; Kịch bản</div>
       <button class="modal-close" onclick="closeModal('editIdeaModal')">&times;</button>
     </div>
-    <div class="modal-body" style="max-height: 520px; overflow-y: auto; padding-right: 8px;">
+    <div class="modal-body" style="padding-right: 8px;">
 
       <!-- FEEDBACK FROM QUAN LY -->
       <div id="feedbackBoxQL" class="feedback-box-ql" style="display: none;">

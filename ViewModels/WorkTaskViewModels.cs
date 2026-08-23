@@ -16,6 +16,13 @@ public sealed class WorkTaskPageViewModel
     public IReadOnlyList<WorkTaskListItemViewModel> Tasks { get; init; } = [];
     public IReadOnlyList<WorkTaskEmployeeOptionViewModel> Employees { get; init; } = [];
     public IReadOnlyList<WorkTaskModuleOptionViewModel> AvailableModules { get; init; } = [];
+    /// <summary>Danh sách ý tưởng để chọn khi giao task gắn với ý tưởng. Chỉ có khi Module = Ideas.</summary>
+    public IReadOnlyList<WorkTaskIdeaOptionViewModel> IdeaOptions { get; init; } = [];
+    /// <summary>Danh sách hạng mục công việc cho dropdown (chỉ khi Module = Ideas).</summary>
+    public IReadOnlyList<string> WorkCategories { get; init; } = [];
+    /// <summary>Ý tưởng đang được chọn sẵn khi mở modal từ modal detail (để gợi ý tiêu đề).</summary>
+    public int? PrefillIdeaId { get; init; }
+    public string? PrefillIdeaTitle { get; init; }
 }
 
 public sealed class DirectorHumanResourcesViewModel
@@ -59,11 +66,19 @@ public sealed class WorkTaskListItemViewModel
     public string StatusLabel { get; init; } = null!;
     public string RowVersion { get; init; } = null!;
     public IReadOnlyList<WorkTaskTransitionViewModel> AllowedTransitions { get; init; } = [];
+    public int? IdeaId { get; init; }
+    public string? IdeaTitle { get; init; }
+    public string? IdeaStatusLabel { get; init; }
+    public string? WorkCategory { get; init; }
+    public string? WorkCategoryLabel { get; init; }
 }
 
 public sealed record WorkTaskEmployeeOptionViewModel(int Id, string Name, string Department);
 public sealed record WorkTaskModuleOptionViewModel(string Code, string Label);
 public sealed record WorkTaskTransitionViewModel(string Status, string Label, bool RequiresComment);
+
+/// <summary>Dùng cho dropdown 'Ý tưởng liên quan' trong form tạo task.</summary>
+public sealed record WorkTaskIdeaOptionViewModel(int Id, string Title, string Status, string StatusLabel);
 
 public sealed class CreateWorkTaskInputModel
 {
@@ -81,6 +96,18 @@ public sealed class CreateWorkTaskInputModel
 
     [Required]
     public DateTime Deadline { get; set; }
+
+    /// <summary>
+    /// Optional: liên kết task với một ý tưởng (Module 13). Khi QL Ý tưởng giao task
+    /// từ màn hình chi tiết ý tư�ng, cột này được set tự động.
+    /// </summary>
+    public int? IdeaId { get; set; }
+
+    /// <summary>
+    /// Hạng mục công việc trong ý tưởng (Module 13). Bắt buộc khi IdeaId có giá trị.
+    /// Xem <see cref="HanaMedia.Constants.IdeaTaskCategories"/>.
+    /// </summary>
+    public string? WorkCategory { get; set; }
 }
 
 public sealed class TransitionWorkTaskInputModel

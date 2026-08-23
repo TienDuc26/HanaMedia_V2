@@ -22,6 +22,7 @@ public sealed class WorkTaskService : IWorkTaskService
     public async Task<WorkTaskPageViewModel> GetPageAsync(
         int actorUserId, string actorRole, string? module, string? search, int page,
         int? employeeId = null, bool openCreate = false,
+        int? prefillIdeaId = null,
         CancellationToken cancellationToken = default)
     {
         var allowedModules = GetAllowedModules(actorRole);
@@ -40,6 +41,7 @@ public sealed class WorkTaskService : IWorkTaskService
             .Include(task => task.AssignedEmployee)
             .Include(task => task.CreatedByUser)
             .Include(task => task.ReviewerUser)
+            .Include(task => task.Idea)
             .Where(task => task.Module == selectedModule);
 
         if (!IsManagerRole(actorRole) && actorRole != AppRoles.Director)
@@ -70,11 +72,14 @@ public sealed class WorkTaskService : IWorkTaskService
         var activeEmployeesWithoutAccount = 0;
         if (CanCreate(actorRole))
         {
-            var departments = allowedModules.Select(WorkTaskModules.GetDepartment).ToArray();
+            // Chỉ lấy nhân sự của phân hệ đang chọn, không gộp của nhiều phân hệ (tránh dropdown
+            // bị trộn giữa HCNS/Booking/Y tưởng). Fix bug: trước đây filterEmployees() phải
+            // client-side ẩn option, dễ hiển thị nhầm; giờ server chỉ trả đúng phân hệ.
+            var selectedDepartment = WorkTaskModules.GetDepartment(selectedModule);
             employees = await _context.Employees.AsNoTracking()
                 .Where(employee =>
                     employee.UserId.HasValue &&
-                    departments.Contains(employee.Department) &&
+                    employee.Department == selectedDepartment &&
                     ActiveEmployeeStatuses.Contains(employee.Status!))
                 .OrderBy(employee => employee.FullName)
                 .Select(employee => new WorkTaskEmployeeOptionViewModel(employee.Id, employee.FullName, employee.Department))
@@ -91,6 +96,26 @@ public sealed class WorkTaskService : IWorkTaskService
             ? employeeId
             : null;
 
+        // Chỉ Module = Ideas mới cần dropdown ý tưởng + hạng mục.
+        var ideaOptions = new List<WorkTaskIdeaOptionViewModel>();
+        var workCategories = new List<string>();
+        string? prefillIdeaTitle = null;
+        if (selectedModule == WorkTaskModules.Ideas && CanCreate(actorRole))
+        {
+            ideaOptions = await _context.Ideas.AsNoTracking()
+                .OrderByDescending(i => i.UpdatedAt ?? i.CreatedAt)
+                .Take(200)
+                .Select(i => new WorkTaskIdeaOptionViewModel(i.Id, i.Title, i.Status ?? "y_tuong", i.Status ?? "y_tuong"))
+                .ToListAsync(cancellationToken);
+            // Bổ sung label cho trạng thái ý tưởng ở server side.
+            ideaOptions = ideaOptions.Select(i => i with { StatusLabel = IdeaStatuses.GetLabel(i.Status) }).ToList();
+            workCategories = IdeaTaskCategories.All.ToList();
+            if (prefillIdeaId.HasValue)
+            {
+                prefillIdeaTitle = ideaOptions.FirstOrDefault(i => i.Id == prefillIdeaId.Value)?.Title;
+            }
+        }
+
         return new WorkTaskPageViewModel
         {
             Module = selectedModule,
@@ -100,10 +125,15 @@ public sealed class WorkTaskService : IWorkTaskService
             Page = page,
             TotalPages = totalPages,
             SelectedEmployeeId = selectedEmployeeId,
-            OpenCreateModal = openCreate && selectedEmployeeId.HasValue,
+            // Mở modal khi có openCreate=true (kể cả khi chưa chọn nhân viên — chỉ QL mới truy cập).
+            OpenCreateModal = openCreate,
             ActiveEmployeesWithoutAccount = activeEmployeesWithoutAccount,
             Employees = employees,
             AvailableModules = allowedModules.Select(item => new WorkTaskModuleOptionViewModel(item, WorkTaskModules.GetLabel(item))).ToList(),
+            IdeaOptions = ideaOptions,
+            WorkCategories = workCategories,
+            PrefillIdeaId = prefillIdeaId,
+            PrefillIdeaTitle = prefillIdeaTitle,
             Tasks = entities.Select(task => new WorkTaskListItemViewModel
             {
                 Id = task.Id,
@@ -118,10 +148,17 @@ public sealed class WorkTaskService : IWorkTaskService
                 Status = task.Status,
                 StatusLabel = WorkTaskStatuses.GetLabel(task.Status),
                 RowVersion = Convert.ToBase64String(task.RowVersion),
-                AllowedTransitions = GetAllowedTransitions(task, actorUserId, actorRole)
+                AllowedTransitions = GetAllowedTransitions(task, actorUserId, actorRole),
+                IdeaId = task.IdeaId,
+                IdeaTitle = task.Idea?.Title,
+                IdeaStatusLabel = task.Idea?.Status is null ? null : IdeaStatuses.GetLabel(task.Idea.Status),
+                WorkCategory = task.WorkCategory,
+                WorkCategoryLabel = task.WorkCategory is null ? null : IdeaTaskCategories.GetLabel(task.WorkCategory)
             }).ToList()
         };
     }
+
+    private static bool HasPrefillIdeaId(int? employeeId) => false; // marker, không dùng — logic thực ở controller
 
     public async Task<WorkTaskOperationResult> CreateAsync(
         CreateWorkTaskInputModel input, int actorUserId, string actorRole,
@@ -151,6 +188,33 @@ public sealed class WorkTaskService : IWorkTaskService
             return WorkTaskOperationResult.Failure("Chưa có tài khoản đủ quyền duyệt công việc cho phân hệ này.");
         }
 
+        // Validate IdeaId nếu có: phải tồn tại thực sự.
+        if (input.IdeaId.HasValue)
+        {
+            var ideaExists = await _context.Ideas.AsNoTracking()
+                .AnyAsync(i => i.Id == input.IdeaId.Value, cancellationToken);
+            if (!ideaExists)
+            {
+                return WorkTaskOperationResult.Failure("Ý tưởng liên kết không tồn tại.");
+            }
+            // Khi gắn với ý tưởng → WorkCategory bắt buộc để NV biết đang làm phần nào.
+            var category = input.WorkCategory?.Trim();
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                return WorkTaskOperationResult.Failure("Vui lòng chọn hạng mục công việc cho task gắn với ý tưởng.");
+            }
+            if (!IdeaTaskCategories.All.Contains(category))
+            {
+                return WorkTaskOperationResult.Failure("Hạng mục công việc không hợp lệ.");
+            }
+            input.WorkCategory = category;
+        }
+        else
+        {
+            // Không gắn ý tưởng → reset về null để khỏi lưu giá trị rác.
+            input.WorkCategory = null;
+        }
+
         var now = DateTime.UtcNow;
         var task = new WorkTask
         {
@@ -162,6 +226,8 @@ public sealed class WorkTaskService : IWorkTaskService
             ReviewerUserId = reviewerId.Value,
             Deadline = input.Deadline,
             Status = WorkTaskStatuses.Todo,
+            IdeaId = input.IdeaId,
+            WorkCategory = input.WorkCategory,
             CreatedAt = now,
             UpdatedAt = now
         };

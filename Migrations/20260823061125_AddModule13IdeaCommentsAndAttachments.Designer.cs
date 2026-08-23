@@ -4,6 +4,7 @@ using HanaMedia.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HanaMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260823061125_AddModule13IdeaCommentsAndAttachments")]
+    partial class AddModule13IdeaCommentsAndAttachments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -435,6 +438,7 @@ namespace HanaMedia.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CampaignName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("campaign_name");
@@ -606,44 +610,6 @@ namespace HanaMedia.Migrations
                     b.HasIndex(new[] { "IdeaId", "CreatedAt" }, "idx_idea_comments_idea_created");
 
                     b.ToTable("idea_comments", (string)null);
-                });
-
-            modelBuilder.Entity("HanaMedia.Models.IdeaMoodboardImage", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<string>("FileUrl")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("file_url");
-
-                    b.Property<int>("IdeaId")
-                        .HasColumnType("int")
-                        .HasColumnName("idea_id");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.HasKey("Id")
-                        .HasName("PK_idea_moodboard_images");
-
-                    b.HasIndex(new[] { "IdeaId", "SortOrder" }, "idx_idea_moodboard_images_idea_sort");
-
-                    b.ToTable("idea_moodboard_images", (string)null);
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Kol", b =>
@@ -1028,12 +994,6 @@ namespace HanaMedia.Migrations
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("(sysutcdatetime())");
 
-                    b.Property<string>("WorkCategory")
-                        .HasMaxLength(30)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(30)")
-                        .HasColumnName("work_category");
-
                     b.HasKey("Id")
                         .HasName("PK_work_tasks");
 
@@ -1229,18 +1189,6 @@ namespace HanaMedia.Migrations
                     b.Navigation("Idea");
                 });
 
-            modelBuilder.Entity("HanaMedia.Models.IdeaMoodboardImage", b =>
-                {
-                    b.HasOne("HanaMedia.Models.Idea", "Idea")
-                        .WithMany("MoodboardImages")
-                        .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_idea_moodboard_images_ideas_idea_id");
-
-                    b.Navigation("Idea");
-                });
-
             modelBuilder.Entity("HanaMedia.Models.Kol", b =>
                 {
                     b.HasOne("HanaMedia.Models.Employee", "ResponsibleStaff")
@@ -1350,8 +1298,6 @@ namespace HanaMedia.Migrations
             modelBuilder.Entity("HanaMedia.Models.Idea", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("MoodboardImages");
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Kol", b =>

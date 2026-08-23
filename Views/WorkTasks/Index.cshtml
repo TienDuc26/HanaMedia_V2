@@ -17,10 +17,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
-  <link rel="stylesheet" href="~/css/layout.css">
-  <link rel="stylesheet" href="~/css/components.css">
+  <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components/modals.css" asp-append-version="true">
   <style>
-    .task-toolbar,.task-actions,.module-tabs{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.task-toolbar{justify-content:space-between;margin-bottom:18px}.module-tabs{margin-bottom:18px}.module-tab{padding:8px 14px;border:1px solid #d9e2ef;border-radius:8px;color:#334155;text-decoration:none}.module-tab.active{background:#3182e8;color:white;border-color:#3182e8}.message{padding:12px 16px;border-radius:8px;margin-bottom:16px}.message.success{background:#e8f8ef;color:#18794e}.message.error{background:#fff0f0;color:#c53030}.task-title{min-width:230px}.task-description{max-width:320px;white-space:normal}.deadline.overdue{color:#dc2626;font-weight:700}.empty{text-align:center;padding:36px;color:#64748b}.pagination{display:flex;justify-content:center;gap:8px;margin-top:18px}.pagination a{padding:7px 12px;border:1px solid #d9e2ef;border-radius:7px;text-decoration:none;color:#334155}.pagination a.active{background:#3182e8;color:#fff}.status-todo{background:#eef2f7;color:#475569}.status-in_progress{background:#e0f2fe;color:#0369a1}.status-review{background:#fff7d6;color:#9a6700}.status-need_revision{background:#fee2e2;color:#b91c1c}.status-approved,.status-done{background:#dcfce7;color:#15803d}.revision-comment{display:none;margin-top:8px;min-width:210px}.task-form-inline{display:inline}.modal-card{max-width:620px}
+    .task-toolbar,.task-actions,.module-tabs{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.task-toolbar{justify-content:space-between;margin-bottom:18px}.module-tabs{margin-bottom:18px}.module-tab{padding:8px 14px;border:1px solid #d9e2ef;border-radius:8px;color:#334155;text-decoration:none}.module-tab.active{background:#3182e8;color:white;border-color:#3182e8}.message{padding:12px 16px;border-radius:8px;margin-bottom:16px}.message.success{background:#e8f8ef;color:#18794e}.message.error{background:#fff0f0;color:#c53030}.task-title{min-width:230px}.task-description{max-width:320px;white-space:normal}.deadline.overdue{color:#dc2626;font-weight:700}.empty{text-align:center;padding:36px;color:#64748b}.pagination{display:flex;justify-content:center;gap:8px;margin-top:18px}.pagination a{padding:7px 12px;border:1px solid #d9e2ef;border-radius:7px;text-decoration:none;color:#334155}.pagination a.active{background:#3182e8;color:#fff}.status-todo{background:#eef2f7;color:#475569}.status-in_progress{background:#e0f2fe;color:#0369a1}.status-review{background:#fff7d6;color:#9a6700}.status-need_revision{background:#fee2e2;color:#b91c1c}.status-approved,.status-done{background:#dcfce7;color:#15803d}.revision-comment{display:none;margin-top:8px;min-width:210px}    .task-form-inline{display:inline}.modal-card{max-width:620px}
   </style>
 </head>
 <body>
@@ -55,22 +56,42 @@
       </div>
       <div style="overflow-x:auto">
       <table>
-        <thead><tr><th>Công việc</th><th>Nhân sự</th><th>Deadline</th><th>Người duyệt</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <thead><tr><th>Công việc</th><th>Nhân sự</th><th>Hạng mục</th><th>Deadline</th><th>Người duyệt</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
         <tbody>
         @if (Model.Tasks.Count == 0)
-        { <tr><td colspan="6" class="empty">Chưa có công việc nào trong phân hệ @Model.ModuleLabel.</td></tr> }
+        { <tr><td colspan="7" class="empty">Chưa có công việc nào trong phân hệ @Model.ModuleLabel.</td></tr> }
         @foreach (var task in Model.Tasks)
         {
           <tr>
-            <td class="task-title"><strong>@task.Title</strong><div class="task-description">@task.Description</div><small>Tạo bởi @task.CreatorName · @task.ModuleLabel</small></td>
+            <td class="task-title">
+              <strong>@task.Title</strong>
+              <div class="task-description">@task.Description</div>
+              <small>Tạo bởi @task.CreatorName · @task.ModuleLabel</small>
+              @if (task.IdeaId.HasValue)
+              {
+                <div style="margin-top:4px; font-size:11.5px;">
+                  <i class="ti ti-bulb" style="color:#0369a1;"></i>
+                  <a href="/ManageIdea/Idea?openDetail=@task.IdeaId.Value"
+                     data-idea-link="@task.IdeaId.Value"
+                     style="color:#0369a1; text-decoration:none; font-weight:600;">
+                    @task.IdeaTitle
+                  </a>
+                  @if (!string.IsNullOrEmpty(task.IdeaStatusLabel))
+                  {
+                    <span class="badge-task-open" style="margin-left:4px; background:#e0f2fe; color:#0369a1;">@task.IdeaStatusLabel</span>
+                  }
+                </div>
+              }
+            </td>
             <td>@task.EmployeeName</td>
+            <td>@(string.IsNullOrEmpty(task.WorkCategoryLabel) ? "—" : task.WorkCategoryLabel)</td>
             <td class="deadline @(task.Deadline.Date < DateTime.Today && task.Status != WorkTaskStatuses.Done ? "overdue" : "")">@task.Deadline.ToString("dd/MM/yyyy")</td>
             <td>@task.ReviewerName</td>
             <td><span class="status-chip status-@task.Status">@task.StatusLabel</span></td>
             <td><div class="task-actions">
               @foreach (var transition in task.AllowedTransitions)
               {
-                <form class="task-form-inline" method="post" action="/Tasks/Transition" onsubmit="return prepareTransition(this, @transition.RequiresComment.ToString().ToLowerInvariant())">
+                <form class="task-form-inline" method="post" action="/Tasks/Transition" onsubmit="return prepareTransition(this, @transition.RequiresComment.ToString().ToLowerInvariant(), '@transition.Status')">
                   @Html.AntiForgeryToken()
                   <input type="hidden" name="Id" value="@task.Id"><input type="hidden" name="TargetStatus" value="@transition.Status"><input type="hidden" name="RowVersion" value="@task.RowVersion"><input type="hidden" name="Module" value="@Model.Module">
                   <button class="btn-mini @(transition.Status == WorkTaskStatuses.Approved ? "approve" : "")" type="submit">@transition.Label</button>
@@ -93,15 +114,46 @@
 @if (Model.CanCreate)
 {
 <div class="modal-backdrop" id="createTaskModal"><div class="modal-card">
-  <form method="post" action="/Tasks/Create">
+  <form method="post" action="/Tasks/Create" id="createTaskForm">
     @Html.AntiForgeryToken()
+    <input type="hidden" name="IdeaId" id="taskIdeaId" value="@(Model.PrefillIdeaId?.ToString() ?? ViewData["PrefillIdeaId"]?.ToString() ?? "")" />
     <div class="modal-header"><div class="modal-title">Giao công việc mới</div><button type="button" class="modal-close" onclick="closeModal('createTaskModal')">&times;</button></div>
     <div class="modal-body">
       <div class="form-group"><label>Phân hệ</label><select class="form-control" name="Module" id="taskModule" onchange="filterEmployees()">@foreach (var item in Model.AvailableModules) { if (item.Code == Model.Module) { <option value="@item.Code" selected>@item.Label</option> } else { <option value="@item.Code">@item.Label</option> } }</select></div>
-      <div class="form-group"><label>Nhân sự thực hiện</label><select class="form-control" name="AssignedEmployeeId" id="taskEmployee" required><option value="">-- Chọn nhân sự thật --</option>@foreach (var employee in Model.Employees) { if (employee.Id == Model.SelectedEmployeeId) { <option value="@employee.Id" data-department="@employee.Department" selected>@employee.Name</option> } else { <option value="@employee.Id" data-department="@employee.Department">@employee.Name</option> } }</select></div>
-      <div class="form-group"><label>Tiêu đề công việc</label><input class="form-control" name="Title" minlength="3" maxlength="200" required></div>
+      <div class="form-group"><label>Nhân sự thực hiện <span style="color:#dc2626">*</span></label><select class="form-control" name="AssignedEmployeeId" id="taskEmployee" required><option value="">-- Chọn nhân sự thật --</option>@foreach (var employee in Model.Employees) { if (employee.Id == Model.SelectedEmployeeId) { <option value="@employee.Id" data-department="@employee.Department" selected>@employee.Name</option> } else { <option value="@employee.Id" data-department="@employee.Department">@employee.Name</option> } }</select></div>
+
+      @if (Model.Module == WorkTaskModules.Ideas)
+      {
+        <div class="form-group">
+          <label>Ý tưởng liên quan <span style="color:#dc2626">*</span></label>
+          <select class="form-control" name="IdeaIdSelect" id="taskIdeaSelect" required onchange="onIdeaChange(this)">
+            <option value="">-- Chọn ý tưởng --</option>
+            @foreach (var idea in Model.IdeaOptions)
+            {
+              if (Model.PrefillIdeaId == idea.Id) {
+                <option value="@idea.Id" data-title="@idea.Title" selected>@idea.Title — (@idea.StatusLabel)</option>
+              } else {
+                <option value="@idea.Id" data-title="@idea.Title">@idea.Title — (@idea.StatusLabel)</option>
+              }
+            }
+          </select>
+          <small style="color:#94a3b8; font-size:11.5px;">Task sẽ được gắn với ý tưởng đã chọn và hiển thị trong modal Chi tiết ý tưởng.</small>
+        </div>
+        <div class="form-group">
+          <label>Hạng mục công việc <span style="color:#dc2626">*</span></label>
+          <select class="form-control" name="WorkCategory" id="taskCategorySelect" onchange="onCategoryChange()" required>
+            @foreach (var cat in Model.WorkCategories)
+            {
+              <option value="@cat">@HanaMedia.Constants.IdeaTaskCategories.GetLabel(cat)</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="form-group"><label>Tiêu đề công việc <span style="color:#dc2626">*</span></label><input class="form-control" name="Title" id="taskTitle" minlength="3" maxlength="200" required value="@(string.IsNullOrEmpty(Model.PrefillIdeaTitle) ? "" : HanaMedia.Constants.IdeaTaskCategories.SuggestTitle(Model.PrefillIdeaTitle, null))"></div>
       <div class="form-group"><label>Yêu cầu chi tiết</label><textarea class="form-control" name="Description" rows="4" maxlength="2000"></textarea></div>
-      <div class="form-group"><label>Deadline</label><input type="date" class="form-control" name="Deadline" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@tomorrow" required></div>
+
+      <div class="form-group"><label>Deadline <span style="color:#dc2626">*</span></label><input type="date" class="form-control" name="Deadline" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@tomorrow" required></div>
     </div>
     <div class="modal-footer"><button type="button" class="btn-mini" onclick="closeModal('createTaskModal')">Hủy</button><button type="submit" class="btn-mini approve">Giao việc</button></div>
   </form>
@@ -111,7 +163,94 @@
 function openModal(id){document.getElementById(id)?.classList.add('active');filterEmployees()}
 function closeModal(id){document.getElementById(id)?.classList.remove('active')}
 function filterEmployees(){const module=document.getElementById('taskModule');const select=document.getElementById('taskEmployee');if(!module||!select)return;const map={Nhan_Su:'HCNS',Booking:'Booking',Y_Tuong:'Y_tuong'};for(const option of select.options){if(!option.dataset.department)continue;option.hidden=option.dataset.department!==map[module.value]}if(select.selectedOptions[0]?.hidden)select.value=''}
-function prepareTransition(form,requiresComment){if(!requiresComment)return true;const comment=prompt('Nhập nội dung cần nhân viên chỉnh sửa:');if(!comment||!comment.trim())return false;const input=document.createElement('input');input.type='hidden';input.name='Comment';input.value=comment.trim();form.appendChild(input);return true}
-document.addEventListener('DOMContentLoaded',function(){filterEmployees();@if (Model.OpenCreateModal) { <text>openModal('createTaskModal');</text> }})
+
+// Auto-gợi ý tiêu đề dựa trên ý tưởng + hạng mục (QL vẫn sửa lại được trước khi lưu).
+const SUGGEST_FULL = '@HanaMedia.Constants.IdeaTaskCategories.Full';
+function onIdeaChange(select){
+  const opt = select.options[select.selectedIndex];
+  const title = opt ? opt.getAttribute('data-title') : null;
+  window.__selectedIdeaTitle = title || null;
+  onCategoryChange();
+}
+function onCategoryChange(){
+  const titleInput = document.getElementById('taskTitle');
+  const catSelect = document.getElementById('taskCategorySelect');
+  if (!titleInput || !catSelect) return;
+  const categoryLabel = catSelect.options[catSelect.selectedIndex]?.text || '';
+  if (!categoryLabel) return;
+  const ideaTitle = window.__selectedIdeaTitle || '';
+  titleInput.value = ideaTitle ? `${categoryLabel} — ${ideaTitle}` : categoryLabel;
+}
+
+// Modal chuẩn thay popup prompt() của trình duyệt cho 'Yêu cầu sửa' (và các bước cần comment khác).
+let __pendingTransition = null; // { form, requiresComment, targetStatus }
+function prepareTransition(form, requiresComment, targetStatus){
+  if (!requiresComment) { return true; }
+  __pendingTransition = { form, requiresComment, targetStatus };
+  const reasonInput = document.getElementById('revisionReasonInput');
+  if (reasonInput) reasonInput.value = '';
+  openModal('revisionModal');
+  setTimeout(() => reasonInput?.focus(), 50);
+  return false;
+}
+function submitRevisionModal(){
+  const reasonInput = document.getElementById('revisionReasonInput');
+  const reason = (reasonInput?.value || '').trim();
+  if (!reason) { reasonInput?.focus(); return; }
+  if (!__pendingTransition) return;
+  const { form } = __pendingTransition;
+  const input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'Comment'; input.value = reason;
+  form.appendChild(input);
+  closeModal('revisionModal');
+  __pendingTransition = null;
+  form.submit();
+}
+function cancelRevisionModal(){
+  __pendingTransition = null;
+  closeModal('revisionModal');
+}
+
+// Tự mở modal khi controller truyền openCreate=true qua query string (dùng khi tạo task từ ý tưởng).
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('create') === '1') {
+    document.addEventListener('DOMContentLoaded', function(){ openModal('createTaskModal'); onCategoryChange(); });
+  } else {
+    document.addEventListener('DOMContentLoaded', function(){
+      filterEmployees();
+      // Khi mở modal từ ý tưởng, auto-fill ideaTitle để dùng cho gợi ý.
+      const ideaSelect = document.getElementById('taskIdeaSelect');
+      if (ideaSelect && ideaSelect.selectedIndex > 0) {
+        window.__selectedIdeaTitle = ideaSelect.options[ideaSelect.selectedIndex].getAttribute('data-title');
+      }
+      @if (Model.OpenCreateModal) { <text>openModal('createTaskModal'); onCategoryChange();</text> }
+    });
+  }
+})();
 </script>
+
+@if (Model.CanCreate)
+{
+<!-- MODAL 'YÊU CẦU SỬA' thay popup prompt() của trình duyệt — dùng cho cả WorkTasks và modal detail ý tưởng -->
+<div class="modal-backdrop" id="revisionModal">
+  <div class="modal-card" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ti ti-alert-circle" style="color:#dc2626;"></i> Yêu cầu chỉnh sửa</div>
+      <button type="button" class="modal-close" onclick="cancelRevisionModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nội dung cần chỉnh sửa <span style="color:#dc2626">*</span></label>
+        <textarea id="revisionReasonInput" class="form-control" rows="4" maxlength="1000" placeholder="Mô tả rõ phần cần sửa để NV biết và sửa lại..."></textarea>
+        <small style="color:#94a3b8; font-size:11.5px;">NV sẽ thấy nội dung này kèm theo task khi chuyển sang trạng thái 'Cần chỉnh sửa'.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-mini" onclick="cancelRevisionModal()">Hủy</button>
+      <button type="button" class="btn-mini approve" onclick="submitRevisionModal()">Xác nhận yêu cầu sửa</button>
+    </div>
+  </div>
+</div>
+}
 </body></html>

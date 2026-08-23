@@ -17,10 +17,20 @@ public sealed class WorkTasksController : Controller
     public WorkTasksController(IWorkTaskService service) => _service = service;
 
     [HttpGet("Tasks")]
-    public async Task<IActionResult> Index(string? module, string? search, int page = 1, int? employeeId = null, bool create = false, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(
+        string? module, string? search, int page = 1, int? employeeId = null,
+        bool create = false, int? ideaId = null,
+        CancellationToken cancellationToken = default)
     {
         if (!TryGetIdentity(out var userId, out var role)) return Challenge();
-        var model = await _service.GetPageAsync(userId, role, module, search, page, employeeId, create, cancellationToken);
+        var model = await _service.GetPageAsync(
+            userId, role, module, search, page, employeeId, create, ideaId, cancellationToken);
+        // Service đã gắn PrefillIdeaId/PrefillIdeaTitle trong ViewModel khi Module = Ideas; giữ
+        // đường vào ViewData để tương thích ngược với view cũ nếu có nhánh ngoài ý muốn.
+        if (ideaId.HasValue)
+        {
+            ViewData["PrefillIdeaId"] = ideaId.Value;
+        }
         return View(model);
     }
 
