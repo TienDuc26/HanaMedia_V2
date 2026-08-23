@@ -29,6 +29,8 @@ public partial class User
 
     public virtual ICollection<BookingWageAuditLog> BookingWageAuditLogs { get; set; } = new List<BookingWageAuditLog>();
 
+    public virtual ICollection<Campaign> CreatedCampaigns { get; set; } = new List<Campaign>();
+
     public virtual Employee? Employee { get; set; }
 
     public virtual ICollection<SystemAuditLog> SystemAuditLogs { get; set; } = new List<SystemAuditLog>();

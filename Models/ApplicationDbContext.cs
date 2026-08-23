@@ -23,6 +23,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<BusinessConfig> BusinessConfigs { get; set; }
 
+    public virtual DbSet<Campaign> Campaigns { get; set; }
+
     public virtual DbSet<Department> Departments { get; set; }
 
     public virtual DbSet<Employee> Employees { get; set; }
@@ -61,6 +63,7 @@ public partial class ApplicationDbContext : DbContext
                     "[status] IN ('dang_cho', 'thuong_luong', 'da_chot', 'dang_trien_khai', 'hoan_thanh', 'huy')"));
 
             entity.HasIndex(e => e.Status, "idx_bookings_status");
+            entity.HasIndex(e => e.CampaignId, "IX_bookings_campaign_id");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ActualCost)
@@ -72,6 +75,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CampaignName)
                 .HasMaxLength(100)
                 .HasColumnName("campaign_name");
+            entity.Property(e => e.CampaignId).HasColumnName("campaign_id");
             entity.Property(e => e.ClientName)
                 .HasMaxLength(100)
                 .HasColumnName("client_name");
@@ -115,6 +119,11 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.PrimaryManager).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.PrimaryManagerId)
                 .HasConstraintName("FK_bookings_employees_primary_manager_id");
+
+            entity.HasOne(d => d.Campaign).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.CampaignId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_bookings_campaigns_campaign_id");
         });
 
         modelBuilder.Entity<BookingWage>(entity =>
@@ -315,6 +324,42 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("(sysutcdatetime())");
         });
 
+        modelBuilder.Entity<Campaign>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_campaigns");
+
+            entity.ToTable("campaigns", table =>
+            {
+                table.HasCheckConstraint("chk_campaign_budget", "[budget] >= 0");
+                table.HasCheckConstraint("chk_campaign_dates", "[end_date] >= [start_date]");
+                table.HasCheckConstraint(
+                    "chk_campaign_status",
+                    "[status] IN ('draft', 'active', 'paused', 'completed', 'cancelled')");
+            });
+
+            entity.HasIndex(e => new { e.ClientName, e.Name }, "UX_campaigns_client_name").IsUnique();
+            entity.HasIndex(e => e.Status, "IX_campaigns_status");
+            entity.HasIndex(e => new { e.StartDate, e.EndDate }, "IX_campaigns_dates");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.ClientName).HasColumnName("client_name").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(2000);
+            entity.Property(e => e.Budget).HasColumnName("budget").HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).IsUnicode(false).HasDefaultValue("draft");
+            entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion().IsConcurrencyToken();
+
+            entity.HasOne(e => e.CreatedByUser).WithMany(e => e.CreatedCampaigns)
+                .HasForeignKey(e => e.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_campaigns_users_created_by_user_id");
+        });
+
         modelBuilder.Entity<Idea>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_ideas");
@@ -330,11 +375,13 @@ public partial class ApplicationDbContext : DbContext
             });
 
             entity.HasIndex(e => e.Status, "idx_ideas_status");
+            entity.HasIndex(e => e.CampaignId, "IX_ideas_campaign_id");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CampaignName)
                 .HasMaxLength(100)
                 .HasColumnName("campaign_name");
+            entity.Property(e => e.CampaignId).HasColumnName("campaign_id");
             entity.Property(e => e.Category)
                 .HasMaxLength(30)
                 .IsUnicode(false)
@@ -387,6 +434,11 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.ReviewerEmployee).WithMany(p => p.IdeaReviewerEmployees)
                 .HasForeignKey(d => d.ReviewerEmployeeId)
                 .HasConstraintName("FK_ideas_employees_reviewer_employee_id");
+
+            entity.HasOne(d => d.Campaign).WithMany(p => p.Ideas)
+                .HasForeignKey(d => d.CampaignId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ideas_campaigns_campaign_id");
         });
 
         modelBuilder.Entity<Kol>(entity =>

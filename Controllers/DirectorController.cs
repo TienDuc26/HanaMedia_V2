@@ -31,7 +31,7 @@ namespace HanaMedia.Controllers
 
         public IActionResult BookingCampaign()
         {
-            return View();
+            return RedirectToAction("Index", "Campaigns");
         }
 
         public IActionResult Config()

@@ -1,0 +1,48 @@
+@model HanaMedia.ViewModels.CampaignPageViewModel
+@using HanaMedia.Constants
+@{
+  Layout = null;
+  var today = DateTime.Today.ToString("yyyy-MM-dd");
+}
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HanaMedia — Quản lý chiến dịch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="~/css/design-system.css"><link rel="stylesheet" href="~/css/layout.css"><link rel="stylesheet" href="~/css/components.css">
+<style>
+.toolbar,.actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.toolbar{justify-content:space-between;margin-bottom:18px}.filters{display:flex;gap:8px;flex-wrap:wrap}.message{padding:12px 16px;border-radius:8px;margin-bottom:16px}.success{background:#e8f8ef;color:#18794e}.error{background:#fff0f0;color:#c53030}.empty{text-align:center;padding:40px;color:#64748b}.campaign-name{min-width:190px}.campaign-name small{display:block;color:#64748b;margin-top:4px;max-width:280px}.status-draft{background:#eef2f7;color:#475569}.status-active,.status-completed{background:#dcfce7;color:#15803d}.status-paused{background:#fff7d6;color:#9a6700}.status-cancelled{background:#fee2e2;color:#b91c1c}.pagination{display:flex;justify-content:center;gap:8px;margin-top:18px}.pagination a{padding:7px 12px;border:1px solid #d9e2ef;border-radius:7px;text-decoration:none;color:#334155}.pagination a.active{background:#3182e8;color:#fff}.modal-card{max-width:720px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-grid .full{grid-column:1/-1}.readonly{font-size:12px;color:#64748b}@@media(max-width:700px){.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}}
+</style></head><body><div class="layout">
+<partial name="_CampaignSidebarPartial" />
+<main class="main"><div class="topbar"><div><div class="page-title">Quản lý chiến dịch</div><div class="page-sub">Nguồn chiến dịch dùng chung cho Booking và Ý tưởng</div></div></div>
+@if (TempData["SuccessMessage"] is string success) { <div class="message success">@success</div> }
+@if (TempData["ErrorMessage"] is string error) { <div class="message error">@error</div> }
+<div class="card"><div class="toolbar">
+  <form method="get" action="/Campaigns" class="filters">
+    <input class="form-control" style="width:260px" name="search" value="@Model.Search" placeholder="Tìm chiến dịch, khách hàng...">
+    <select class="form-control" name="status"><option value="">Tất cả trạng thái</option>@foreach(var status in CampaignStatuses.All){if(status==Model.Status){<option value="@status" selected>@CampaignStatuses.GetLabel(status)</option>}else{<option value="@status">@CampaignStatuses.GetLabel(status)</option>}}</select>
+    <button class="btn-mini" type="submit"><i class="ti ti-search"></i> Lọc</button>
+  </form>
+  @if(Model.CanManage){<button class="btn-mini approve" type="button" onclick="openModal('createModal')"><i class="ti ti-plus"></i> Tạo chiến dịch</button>}
+</div><div style="overflow-x:auto"><table><thead><tr><th>Chiến dịch</th><th>Khách hàng</th><th>Ngân sách</th><th>Thời gian</th><th>Booking</th><th>Ý tưởng</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody>
+@if(Model.Campaigns.Count==0){<tr><td colspan="8" class="empty">Chưa có chiến dịch phù hợp.</td></tr>}
+@foreach(var item in Model.Campaigns){<tr>
+<td class="campaign-name"><strong>@item.Name</strong><small>@(string.IsNullOrWhiteSpace(item.Description) ? "Không có mô tả" : item.Description)</small></td><td>@item.ClientName</td><td>@item.Budget.ToString("N0") đ</td><td>@item.StartDate.ToString("dd/MM/yyyy")<br><small>đến @item.EndDate.ToString("dd/MM/yyyy")</small></td><td>@item.BookingCount</td><td>@item.IdeaCount</td><td><span class="status-chip status-@item.Status">@item.StatusLabel</span></td>
+<td><div class="actions">@if(Model.CanManage){<button type="button" class="btn-mini edit-campaign" data-id="@item.Id" data-name="@item.Name" data-client="@item.ClientName" data-description="@item.Description" data-budget="@item.Budget.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-start="@item.StartDate.ToString("yyyy-MM-dd")" data-end="@item.EndDate.ToString("yyyy-MM-dd")" data-status="@item.Status" data-version="@item.RowVersion">Sửa</button><form method="post" action="/Campaigns/Delete" onsubmit="return confirm('Xóa chiến dịch này?')">@Html.AntiForgeryToken()<input type="hidden" name="Id" value="@item.Id"><input type="hidden" name="RowVersion" value="@item.RowVersion"><button class="btn-mini reject" type="submit">Xóa</button></form>}else{<span class="readonly">Chỉ xem</span>}</div></td></tr>}
+</tbody></table></div>
+@if(Model.TotalPages>1){<div class="pagination">@for(var p=1;p<=Model.TotalPages;p++){<a class="@(p==Model.Page?"active":"")" href="/Campaigns?search=@Uri.EscapeDataString(Model.Search??"")&status=@Model.Status&page=@p">@p</a>}</div>}
+</div><footer>HanaMedia · Module 7 — Campaign dùng chung</footer></main></div>
+@if(Model.CanManage){
+<div class="modal-backdrop" id="createModal"><div class="modal-card"><form method="post" action="/Campaigns/Create">@Html.AntiForgeryToken()<div class="modal-header"><div class="modal-title">Tạo chiến dịch mới</div><button type="button" class="modal-close" onclick="closeModal('createModal')">&times;</button></div><div class="modal-body"><div class="form-grid">
+<div class="form-group"><label>Tên chiến dịch *</label><input class="form-control" name="Name" minlength="2" maxlength="150" required></div><div class="form-group"><label>Khách hàng *</label><input class="form-control" name="ClientName" minlength="2" maxlength="150" required></div><div class="form-group"><label>Ngân sách</label><input class="form-control" type="number" name="Budget" min="0" step="1000" value="0" required></div><div class="form-group"><label>Trạng thái</label><select class="form-control" name="Status">@foreach(var status in CampaignStatuses.All){<option value="@status">@CampaignStatuses.GetLabel(status)</option>}</select></div><div class="form-group"><label>Ngày bắt đầu *</label><input class="form-control" type="date" name="StartDate" value="@today" required></div><div class="form-group"><label>Ngày kết thúc *</label><input class="form-control" type="date" name="EndDate" value="@today" required></div><div class="form-group full"><label>Mô tả</label><textarea class="form-control" name="Description" rows="4" maxlength="2000"></textarea></div>
+</div></div><div class="modal-footer"><button class="btn-mini" type="button" onclick="closeModal('createModal')">Hủy</button><button class="btn-mini approve" type="submit">Tạo chiến dịch</button></div></form></div></div>
+<div class="modal-backdrop" id="editModal"><div class="modal-card"><form method="post" action="/Campaigns/Update">@Html.AntiForgeryToken()<input type="hidden" name="Id" id="editId"><input type="hidden" name="RowVersion" id="editVersion"><div class="modal-header"><div class="modal-title">Cập nhật chiến dịch</div><button type="button" class="modal-close" onclick="closeModal('editModal')">&times;</button></div><div class="modal-body"><div class="form-grid">
+<div class="form-group"><label>Tên chiến dịch *</label><input class="form-control" name="Name" id="editName" minlength="2" maxlength="150" required></div><div class="form-group"><label>Khách hàng *</label><input class="form-control" name="ClientName" id="editClient" minlength="2" maxlength="150" required></div><div class="form-group"><label>Ngân sách</label><input class="form-control" type="number" name="Budget" id="editBudget" min="0" step="1000" required></div><div class="form-group"><label>Trạng thái</label><select class="form-control" name="Status" id="editStatus">@foreach(var status in CampaignStatuses.All){<option value="@status">@CampaignStatuses.GetLabel(status)</option>}</select></div><div class="form-group"><label>Ngày bắt đầu *</label><input class="form-control" type="date" name="StartDate" id="editStart" required></div><div class="form-group"><label>Ngày kết thúc *</label><input class="form-control" type="date" name="EndDate" id="editEnd" required></div><div class="form-group full"><label>Mô tả</label><textarea class="form-control" name="Description" id="editDescription" rows="4" maxlength="2000"></textarea></div>
+</div></div><div class="modal-footer"><button class="btn-mini" type="button" onclick="closeModal('editModal')">Hủy</button><button class="btn-mini approve" type="submit">Lưu thay đổi</button></div></form></div></div>}
+<script>
+function openModal(id){document.getElementById(id)?.classList.add('active')}function closeModal(id){document.getElementById(id)?.classList.remove('active')}
+document.querySelectorAll('.edit-campaign').forEach(button=>button.addEventListener('click',()=>{for(const key of ['Id','Name','Client','Description','Budget','Start','End','Status','Version']){const input=document.getElementById('edit'+key);if(input)input.value=button.dataset[key.toLowerCase()]??''}openModal('editModal')}));
+document.querySelectorAll('.modal-backdrop').forEach(item=>item.addEventListener('click',event=>{if(event.target===item)item.classList.remove('active')}));
+</script></body></html>

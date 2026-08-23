@@ -15,6 +15,8 @@ public partial class Idea
 
     public string CampaignName { get; set; } = null!;
 
+    public int? CampaignId { get; set; }
+
     public string Industry { get; set; } = null!;
 
     public string Category { get; set; } = null!;
@@ -50,4 +52,6 @@ public partial class Idea
     public virtual Employee? PrimaryStaff { get; set; }
 
     public virtual Employee? ReviewerEmployee { get; set; }
+
+    public virtual Campaign? Campaign { get; set; }
 }

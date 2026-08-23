@@ -11,6 +11,8 @@ public partial class Booking
 
     public string CampaignName { get; set; } = null!;
 
+    public int? CampaignId { get; set; }
+
     public int? KolId { get; set; }
 
     public string? JobDescription { get; set; }
@@ -46,4 +48,6 @@ public partial class Booking
     public virtual Kol? Kol { get; set; }
 
     public virtual Employee? PrimaryManager { get; set; }
+
+    public virtual Campaign? Campaign { get; set; }
 }
