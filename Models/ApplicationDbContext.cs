@@ -456,11 +456,16 @@ public partial class ApplicationDbContext : DbContext
                 table.HasCheckConstraint(
                     "chk_kol_status",
                     "[status] IN ('tiem_nang', 'da_lien_he', 'dang_deal', 'da_chot', 'dang_chay', 'hoan_thanh')");
+                table.HasCheckConstraint("chk_kol_followers", "[followers_count] >= 0");
+                table.HasCheckConstraint("chk_kol_engagement", "[engagement_rate] BETWEEN 0 AND 100");
+                table.HasCheckConstraint("chk_kol_booking_price", "[booking_price] >= 0");
             });
 
             entity.HasIndex(e => e.Platform, "idx_kols_platform");
 
             entity.HasIndex(e => e.Status, "idx_kols_status");
+
+            entity.HasIndex(e => new { e.Platform, e.ProfileLink }, "UX_kols_platform_profile_link").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.BookingPrice)
@@ -505,6 +510,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.RowVersion)
+                .HasColumnName("row_version")
+                .IsRowVersion()
+                .IsConcurrencyToken();
 
             entity.HasOne(d => d.ResponsibleStaff).WithMany(p => p.Kols)
                 .HasForeignKey(d => d.ResponsibleStaffId)

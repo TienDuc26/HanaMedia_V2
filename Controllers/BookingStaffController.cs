@@ -14,7 +14,7 @@ namespace HanaMedia.Controllers
 
         public IActionResult KOL_KOC()
         {
-            return View();
+            return RedirectToAction("Index", "Kols");
         }
 
         public IActionResult Reported()

@@ -35,6 +35,8 @@ public partial class Kol
 
     public DateTime? UpdatedAt { get; set; }
 
+    public byte[] RowVersion { get; set; } = [];
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual Employee? ResponsibleStaff { get; set; }

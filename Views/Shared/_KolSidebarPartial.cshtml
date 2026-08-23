@@ -1,0 +1,46 @@
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+}
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">HM</div><div><div class="brand-name">HanaMedia</div><div class="brand-sub">Hệ thống Quản lý Nhân sự</div></div></div>
+  @if (role == AppRoles.Director)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a href="/Tasks" class="nav-item"><i class="fas fa-list-check"></i>Phân công &amp; Duyệt việc</a>
+    <a href="/Director/Report" class="nav-item"><i class="fas fa-chart-line"></i>Báo cáo</a>
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="fas fa-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="fas fa-building"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item active"><i class="fas fa-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="fas fa-lightbulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="fas fa-clipboard-check"></i>Phê duyệt</a>
+    <a href="/Director/SignContract" class="nav-item"><i class="fas fa-pen"></i>Ký Hợp Đồng</a>
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="fas fa-cog"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="fas fa-shield-alt"></i>Giám sát hệ thống</a>
+  }
+  else if (role == AppRoles.BookingManager)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/Campaigns" class="nav-item"><i class="ti ti-speakerphone"></i>Quản lý chiến dịch</a>
+    <a href="/ManageBooking/KOL_KOC" class="nav-item active"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="/ManageBooking/StaffHuman" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+  }
+  else
+  {
+    <div class="nav-section">Nghiệp vụ của tôi</div>
+    <a href="/Campaigns" class="nav-item"><i class="ti ti-speakerphone"></i>Chiến dịch</a>
+    <a href="/BookingStaff/KOL_KOC" class="nav-item active"><i class="ti ti-users-group"></i>Tìm KOL / KOC</a>
+    <a href="/BookingStaff/Booking" class="nav-item"><i class="ti ti-star"></i>Nhiệm vụ Booking</a>
+    <a href="/Tasks" class="nav-item"><i class="ti ti-checklist"></i>Công việc được giao</a>
+    <a href="/BookingStaff/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+  }
+  <partial name="_UserMenuPartial" />
+</aside>

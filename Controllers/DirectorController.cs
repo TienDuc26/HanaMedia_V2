@@ -34,6 +34,11 @@ namespace HanaMedia.Controllers
             return RedirectToAction("Index", "Campaigns");
         }
 
+        public IActionResult KOL_KOC()
+        {
+            return RedirectToAction("Index", "Kols");
+        }
+
         public IActionResult Config()
         {
             return View();

@@ -8,6 +8,7 @@ using HanaMedia.Services.Accounts;
 using HanaMedia.Services.Auditing;
 using HanaMedia.Services.Campaigns;
 using HanaMedia.Services.Dashboard;
+using HanaMedia.Services.Kols;
 using HanaMedia.Services.Security;
 using HanaMedia.Services.Tasks;
 
@@ -43,6 +44,7 @@ builder.Services.AddScoped<IDirectorMonitoringService, DirectorMonitoringService
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<IWorkTaskService, WorkTaskService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddScoped<IKolService, KolService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 
