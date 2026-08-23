@@ -120,6 +120,9 @@ public sealed class AccountController : Controller
                     $"Tài khoản {user.Username} đăng nhập thành công.",
                     cancellationToken);
 
+                var employee = await _context.Employees.AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.UserId == user.Id, cancellationToken);
+
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
@@ -128,6 +131,10 @@ public sealed class AccountController : Controller
                     new(ClaimTypes.Role, user.Role),
                     new(SecurityClaimTypes.SecurityStamp, user.SecurityStamp)
                 };
+                if (employee is not null)
+                {
+                    claims.Add(new Claim("employee_id", employee.Id.ToString(CultureInfo.InvariantCulture)));
+                }
                 var claimsIdentity = new ClaimsIdentity(
                     claims,
                     CookieAuthenticationDefaults.AuthenticationScheme);
@@ -183,6 +190,71 @@ public sealed class AccountController : Controller
     [ValidateAntiForgeryToken]
     public Task<IActionResult> Logout(CancellationToken cancellationToken)
         => SignOutCurrentUserAsync(cancellationToken);
+
+    /// <summary>
+    /// Endpoint CHỈ DÀNH CHO MÔI TRƯỜNG DEVELOPMENT phục vụ test tự động (Module 13 QA).
+    /// Reset mật khẩu của một user bất kỳ thành một giá trị cho trước — KHÔNG dùng ở production.
+    /// Bảo vệ bằng cờ config <c>Dev:EnablePasswordResetEndpoint=true</c>.
+    /// </summary>
+    [AllowAnonymous]
+    [Route("Dev/ResetPassword")]
+    [HttpPost]
+    public async Task<IActionResult> DevResetPassword(
+        [FromBody] DevResetPasswordRequest input,
+        CancellationToken cancellationToken)
+    {
+        var rawValue = _configuration["dev:enablePasswordResetEndpoint"];
+        var trimmedValue = rawValue?.Trim();
+        var enabled = string.Equals(
+            trimmedValue,
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+        _logger.LogWarning("[DevResetPassword] rawValue='{Raw}' (trimmed='{Trimmed}'), enabled={Enabled}, env={Env}",
+            rawValue ?? "<null>", trimmedValue ?? "<null>", enabled, Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+        if (!enabled)
+        {
+            return NotFound(new { success = false, message = "Endpoint không khả dụng." });
+        }
+
+        if (input is null
+            || string.IsNullOrWhiteSpace(input.Username)
+            || string.IsNullOrWhiteSpace(input.NewPassword))
+        {
+            return BadRequest(new { success = false, message = "Thiếu username hoặc newPassword." });
+        }
+
+        var username = input.Username.Trim();
+        var user = await _context.Users.FirstOrDefaultAsync(
+            u => u.Username == username, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { success = false, message = $"Không tìm thấy user '{username}'." });
+        }
+
+        user.PasswordHash = _passwordService.HashPassword(user, input.NewPassword);
+        user.FailedLoginAttempts = 0;
+        user.LockedUntil = null;
+        user.UpdatedAt = DateTime.Now;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogWarning(
+            "[DevResetPassword] Reset password for user '{Username}' (id={UserId}) to '{NewPassword}'.",
+            username, user.Id, input.NewPassword);
+
+        return Ok(new
+        {
+            success = true,
+            userId = user.Id,
+            username = user.Username,
+            role = user.Role
+        });
+    }
+
+    public sealed class DevResetPasswordRequest
+    {
+        public string? Username { get; set; }
+        public string? NewPassword { get; set; }
+    }
 
     // Giữ tương thích với các view cũ của develop đang dùng liên kết GET /Logout.
     [Authorize]

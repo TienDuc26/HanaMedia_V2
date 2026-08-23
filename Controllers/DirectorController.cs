@@ -2,23 +2,28 @@ using HanaMedia.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HanaMedia.Services.Dashboard;
+using HanaMedia.Services.Ideas;
 using HanaMedia.Models;
 using HanaMedia.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Security.Claims;
 
 namespace HanaMedia.Controllers
 {
     [Authorize(Roles = AppRoles.Director)]
     public class DirectorController : Controller
     {
-        private readonly IDirectorMonitoringService _monitoringService;
-        private readonly ApplicationDbContext _context;
+    private readonly IDirectorMonitoringService _monitoringService;
+    private readonly ApplicationDbContext _context;
+    private readonly IIdeaService _ideaService;
 
-        public DirectorController(IDirectorMonitoringService monitoringService, ApplicationDbContext context)
-        {
-            _monitoringService = monitoringService;
-            _context = context;
-        }
+    public DirectorController(IDirectorMonitoringService monitoringService, ApplicationDbContext context, IIdeaService ideaService)
+    {
+        _monitoringService = monitoringService;
+        _context = context;
+        _ideaService = ideaService;
+    }
         public IActionResult Dashboard()
         {
             return View();
@@ -91,9 +96,19 @@ namespace HanaMedia.Controllers
             });
         }
 
-        public IActionResult Idea()
+        [Authorize(Roles = AppRoles.Director + "," + AppRoles.BookingManager + "," + AppRoles.BookingStaff)]
+        public async Task<IActionResult> Idea(
+            string? search, string? status, string? client, int page = 1,
+            CancellationToken cancellationToken = default)
         {
-            return View();
+            // View-only cho Giám đốc / QL Booking / NV Booking — dùng chung IdeaService (chỉ đọc).
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0", CultureInfo.InvariantCulture);
+            int? employeeId = int.TryParse(User.FindFirstValue("employee_id"), NumberStyles.None,
+                CultureInfo.InvariantCulture, out var empId) ? empId : null;
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? AppRoles.Director;
+            var model = await _ideaService.GetPageAsync(
+                userId, role, employeeId, search, status, client, page, cancellationToken);
+            return View(model);
         }
 
         public async Task<IActionResult> MonitoringSystem(CancellationToken cancellationToken)

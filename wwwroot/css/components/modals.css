@@ -19,6 +19,25 @@
   pointer-events: auto;
 }
 
+/* Form chen giữa modal-card phải tự là flex column để giữ chain
+   header → form/body → footer; nếu không form (block) sẽ phá vỡ flex,
+   modal-body không có chiều cao giới hạn → overflow không hoạt động */
+.modal-card > form,
+.modal-card form.modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+}
+.modal-card > form > .modal-body,
+.modal-card form.modal-form > .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* Modal card: khung ngoài, max theo viewport để không tràn */
 .modal-card {
   background: #fff;

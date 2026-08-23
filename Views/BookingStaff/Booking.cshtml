@@ -9,8 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
-  <link rel="stylesheet" href="~/css/layout.css">
-  <link rel="stylesheet" href="~/css/components.css">
+  <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components.css" asp-append-version="true">
   <style>
     .idea-grid-detail {
       display: grid;
@@ -167,7 +167,7 @@
       <div class="modal-title"><i class="ti ti-file-text" style="color: var(--blue-500);"></i> Soạn hợp đồng Booking</div>
       <button class="modal-close" onclick="closeModal('contractModal')">&times;</button>
     </div>
-    <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+    <div class="modal-body" style="padding-right: 8px;">
       <div style="background: var(--blue-50); border: 1px solid var(--blue-100); padding: 14px; border-radius: 10px; margin-bottom: 16px;">
         <div class="idea-grid-detail">
           <div>

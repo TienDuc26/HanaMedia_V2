@@ -1,83 +1,51 @@
+@model HanaMedia.ViewModels.IdeaPageViewModel
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var isViewerOnly = role != AppRoles.IdeaManager && role != AppRoles.IdeaStaff;
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HanaMedia — Thư viện Ý tưởng (Giám đốc)</title>
+  <title>HanaMedia — Kho Ý tưởng (View-only)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
-  <link rel="stylesheet" href="~/css/layout.css">
-  <link rel="stylesheet" href="~/css/components.css">
+  <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components.css" asp-append-version="true">
   <style>
-    .idea-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .idea-grid-detail {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 20px;
-    }
-    .feedback-section {
-      border-top: 2px dashed var(--blue-200);
-      padding-top: 16px;
-      margin-top: 16px;
-    }
-    .feedback-director {
-      background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
-      border: 1px solid #F9A825;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-    .feedback-director .feedback-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .feedback-director .feedback-header i {
-      color: #F57F17;
-    }
-    .feedback-director .feedback-header .feedback-from {
-      font-weight: 700;
-      color: #E65100;
-    }
-    .feedback-director .feedback-header .feedback-time {
-      color: var(--muted);
-      font-size: 12px;
-      margin-left: auto;
-    }
-    .feedback-director .feedback-content {
-      color: #4E342E;
-      line-height: 1.6;
-    }
-    .director-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
-    }
-    .director-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-    .director-badge.pending { background: var(--amber-bg); color: var(--amber); }
-    .director-badge.approved { background: var(--green-bg); color: var(--green); }
-    .director-badge.rejected { background: var(--red-bg); color: var(--red); }
+    .filter-row { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+    .filter-item { flex:1; min-width:140px; }
+    .status-idea-y_tuong { background:#eef2f7; color:#475569; }
+    .status-idea-review { background:#fff7d6; color:#9a6700; }
+    .status-idea-need_revision { background:#fee2e2; color:#b91c1c; }
+    .status-idea-approved { background:#dcfce7; color:#15803d; }
+    .status-idea-in_production { background:#e0f2fe; color:#0369a1; }
+    .status-idea-done { background:#dcfce7; color:#15803d; }
+    .badge-task-open { background:#fef3c7; color:#92400e; padding:3px 7px; border-radius:5px; font-size:11px; font-weight:600; }
+    .idea-grid-detail { display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
+    .info-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px; }
+    .info-val { font-size:13px; color:var(--ink-2); font-weight:500; }
+    .script-block { font-family:monospace; padding:10px; background:#FAFBFD; border:1px solid var(--line); border-radius:8px; font-size:12.5px; white-space:pre-wrap; }
+    .feedback-block { background:linear-gradient(135deg,#E3F2FD 0%,#BBDEFB 100%); border:1px solid #2196F3; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+    .feedback-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-weight:700; font-size:12px; color:#1565C0; }
+    .feedback-time { margin-left:auto; font-size:11px; color:var(--muted); font-weight:400; }
+    .feedback-content { color:var(--ink-2); line-height:1.5; font-size:13px; white-space:pre-wrap; }
+    .modal-card-idea { width:780px; max-width:96%; }
+    .empty { text-align:center; padding:32px; color:#64748b; }
+    .pagination { display:flex; justify-content:center; gap:8px; margin-top:18px; }
+    .pagination a { padding:7px 12px; border:1px solid #d9e2ef; border-radius:7px; text-decoration:none; color:#334155; }
+    .pagination a.active { background:#3182e8; color:#fff; border-color:#3182e8; }
+    .attach-row { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#F8FAFC; border:1px solid var(--line); border-radius:7px; margin-bottom:6px; font-size:12.5px; }
+    .viewer-banner { background: linear-gradient(135deg,#FFF9C4 0%,#FFF59D 100%); border:1px solid #F9A825; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:13px; color:#4E342E; }
+    .viewer-banner i { color:#F57F17; margin-right:6px; }
   </style>
 </head>
 <body>
@@ -92,395 +60,288 @@
       </div>
     </div>
 
-    <div class="nav-section">Tổng quan</div>
-    <a href="/Director/Dashboard" class="nav-item"><i class="fas fa-th-large"></i>Dashboard</a>
-    <a href="/Tasks" class="nav-item"><i class="fas fa-list-check"></i>Phân công &amp; Duyệt việc</a>
-    <a href="/Director/Report" class="nav-item"><i class="fas fa-chart-line"></i>Báo cáo</a>
+@if (role == AppRoles.Director)
+    {
+      <div class="nav-section">Tổng quan</div>
+      <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+      <a href="/Tasks" class="nav-item"><i class="ti ti-checklist"></i>Phân công &amp; Duyệt việc</a>
+      <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
 
-    <div class="nav-section">Nghiệp vụ</div>
-    <a href="/Director/HumanResources" class="nav-item"><i class="fas fa-users"></i>Nhân sự</a>
-    <a href="/Director/Department" class="nav-item"><i class="fas fa-building"></i>Phòng ban</a>
-    <a href="/Director/BookingCampaign" class="nav-item"><i class="fas fa-star"></i>Booking / KOL</a>
-    <a href="/Director/Idea" class="nav-item active"><i class="fas fa-lightbulb"></i>Ý tưởng &amp; Chiến dịch</a>
-    <a href="/Director/Approve" class="nav-item"><i class="fas fa-clipboard-check"></i>Phê duyệt</a>
-    <a href="/Director/SignContract" class="nav-item"><i class="fas fa-pen"></i>Ký Hợp Đồng</a>
+      <div class="nav-section">Nghiệp vụ</div>
+      <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+      <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+      <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+      <a href="/Director/Idea" class="nav-item active"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+      <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+      <a href="/Director/SignContract" class="nav-item"><i class="ti ti-pen"></i>Ký Hợp Đồng</a>
 
-    <div class="nav-section">Quản trị</div>
-    <a href="/Director/Config" class="nav-item"><i class="fas fa-cog"></i>Cấu hình nghiệp vụ</a>
-    <a href="/Director/MonitoringSystem" class="nav-item"><i class="fas fa-shield-alt"></i>Giám sát hệ thống</a>
+      <div class="nav-section">Quản trị</div>
+      <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+      <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+    }
+    else if (role == AppRoles.BookingManager)
+    {
+      <div class="nav-section">Tổng quan</div>
+      <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+      <div class="nav-section">Nghiệp vụ Booking</div>
+      <a href="/ManageBooking/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+      <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+      <a href="/Tasks?module=@WorkTaskModules.Booking" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+      <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+      <a href="/Director/Idea" class="nav-item active"><i class="ti ti-bulb"></i>Xem Ý tưởng</a>
+    }
+    else if (role == AppRoles.BookingStaff)
+    {
+      <div class="nav-section">Nghiệp vụ của tôi</div>
+      <a href="/BookingStaff/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Tìm KOL / KOC</a>
+      <a href="/BookingStaff/Booking" class="nav-item"><i class="ti ti-star"></i>Nhiệm vụ Booking</a>
+      <a href="/Tasks?module=@WorkTaskModules.Booking" class="nav-item"><i class="ti ti-checklist"></i>Công việc được giao</a>
+      <a href="/BookingStaff/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+      <a href="/Director/Idea" class="nav-item active"><i class="ti ti-bulb"></i>Xem � tưởng</a>
+    }
     <partial name="_UserMenuPartial" />
   </aside>
 
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="page-title">Kho thư viện Ý tưởng &amp; Sáng tạo</div>
-        <div class="page-sub">Kho lưu trữ ý tưởng tiếp thị, kịch bản, concept sáng tạo của toàn công ty</div>
+        <div class="page-title">Kho Ý tưởng — @(isViewerOnly ? "Chỉ xem" : "Quản lý")</div>
+        <div class="page-sub">@(isViewerOnly ? "Bạn đang truy cập với quyền chỉ xem — không thể chỉnh sửa, duyệt hay tạo ý tưởng mới." : "Theo dõi và xem ý tưởng của phòng Ý tưởng.") · Quy trình 6 bư�c: Ý tưởng → Review → Chỉnh sửa → Duyệt → Triển khai → Hoàn thành</div>
       </div>
     </div>
 
+    @if (isViewerOnly)
+    {
+      <div class="viewer-banner"><i class="ti ti-eye"></i> Bạn đang truy cập với quyền <strong>chỉ xem</strong>. Quyền sửa/feedback/duyệt ý tưởng thuộc phạm vi Module 15 (chưa triển khai).</div>
+    }
+
     <div class="card">
-      <div class="card-head">
-        <div class="card-title">Ý tưởng sáng tạo gần đây</div>
+      <div class="filter-row">
+        <form method="get" action="/Director/Idea" style="display:flex; gap:8px; flex:1; flex-wrap:wrap;">
+          <div class="filter-item" style="flex:2;">
+            <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Tìm theo tên, client...">
+          </div>
+          <div class="filter-item">
+            <select class="form-control" name="status">
+              <option value="">Tất cả trạng thái</option>
+              @foreach (var s in Model.AvailableStatuses)
+              {
+                <option value="@s" selected="@(Model.StatusFilter == s)">@IdeaStatuses.GetLabel(s)</option>
+              }
+            </select>
+          </div>
+          <div class="filter-item">
+            <select class="form-control" name="client">
+              <option value="">Tất cả client</option>
+              @foreach (var c in Model.DistinctClients)
+              {
+                <option value="@c" selected="@(Model.ClientFilter == c)">@c</option>
+              }
+            </select>
+          </div>
+          <button class="btn-mini" type="submit"><i class="ti ti-search"></i> Lọc</button>
+        </form>
       </div>
+
+      <div style="overflow-x:auto">
       <table>
         <thead>
           <tr>
             <th>Tên ý tưởng</th>
             <th>Người tạo</th>
-            <th>Client &amp; Chiến dịch</th>
+            <th>Client &amp; Campaign</th>
+            <th>Người phụ trách</th>
             <th>Người review</th>
+            <th>Deadline</th>
             <th>Trạng thái</th>
-            <th>Giám đốc</th>
+            <th>Task</th>
             <th style="text-align: right;">Hành động</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><strong>Chiến dịch Tết Sum Vầy 2027</strong></td>
-            <td>Trần Thanh Hải</td>
-            <td>Vinamilk — Tết Sum Vầy 2027</td>
-            <td>Trần Thanh Hải (QL)</td>
-            <td><span class="status-chip status-good">Đang triển khai</span></td>
-            <td>
-              <span class="director-badge approved"><i class="ti ti-check"></i> Đã duyệt</span>
-            </td>
-            <td style="text-align: right;">
-              <button class="btn-mini" onclick="openIdeaModal('Chiến dịch Tết Sum Vầy 2027', 'Trần Thanh Hải', 'Vinamilk', 'Tết Sum Vầy 2027', 'Trải nghiệm sự sum vầy gia đình ngày tết', 'Quảng cáo gia đình xúc động', 'Kịch bản chi tiết truyền tải tình yêu gia đình', 'http://ref.example.com', 'Hình ảnh gia đình đầm ấm', 'Kịch bản truyền hình 30s', '20/12/2026', 'Phạm Thu Hà', 'Trần Thanh Hải', 'Đang triển khai', 'director_approved', '')">Chi tiết</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Hành trình Xanh cùng Cocoon</strong></td>
-            <td>Đỗ Minh Khôi</td>
-            <td>Cocoon — Glow Up Your Skin</td>
-            <td>Trần Thanh Hải (QL)</td>
-            <td><span class="status-chip status-warn">Review</span></td>
-            <td>
-              <span class="director-badge pending"><i class="ti ti-clock"></i> Chờ duyệt</span>
-            </td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="openIdeaModal('Hành trình Xanh cùng Cocoon', 'Đỗ Minh Khôi', 'Cocoon', 'Glow Up Your Skin', 'Người dùng quan tâm đến sản phẩm thuần chay', 'Chiến dịch xanh bảo vệ môi trường', 'KOL quay video unbox sản phẩm xanh', 'http://ref.cocoon.com', 'Tông màu xanh lá bảo vệ thiên nhiên', 'Kịch bản TikTok/Reels 60s', '15/09/2026', 'Đỗ Minh Khôi', 'Trần Thanh Hải', 'Review', 'director_pending', 'Campaign rất tiềm năng, cần xem lại concept có viral không.')">Duyệt / Từ chối</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Summer Vibes Traveloka</strong></td>
-            <td>Lê Văn C</td>
-            <td>Traveloka — Summer Vibes 2026</td>
-            <td>Trần Thanh Hải (QL)</td>
-            <td><span class="status-chip status-warn">Review</span></td>
-            <td>
-              <span class="director-badge pending"><i class="ti ti-clock"></i> Chờ duyệt</span>
-            </td>
-            <td style="text-align: right;">
-              <button class="btn-mini approve" onclick="openIdeaModal('Summer Vibes Traveloka', 'Lê Văn C', 'Traveloka', 'Summer Vibes 2026', 'Giới trẻ Việt Nam thích du lịch và trải nghiệm mới', 'Summer travel content với KOL du lịch', 'Kịch bản review địa điểm du lịch hot', 'http://ref.traveloka.com', 'Màu sắc tươi sáng, năng động', 'Kịch bản YouTube 10 phút', '01/07/2026', 'Lê Văn C', 'Trần Thanh Hải', 'Review', 'director_pending', '')">Duyệt / Từ chối</button>
-            </td>
-          </tr>
+          @if (Model.Items.Count == 0)
+          {
+            <tr><td colspan="9" class="empty">Chưa có ý tưởng nào.</td></tr>
+          }
+          @foreach (var item in Model.Items)
+          {
+            <tr>
+              <td>
+                <strong>@item.Title</strong>
+                @if (item.HasReferenceFile || item.HasMoodboardFile)
+                {
+                  <i class="ti ti-paperclip" style="color:var(--blue-500); margin-left:4px;" title="Có tệp đính kèm"></i>
+                }
+              </td>
+              <td>@item.CreatorName</td>
+              <td>@item.ClientName@(string.IsNullOrEmpty(item.CampaignName) ? "" : $" — {item.CampaignName}")</td>
+              <td>@item.PrimaryStaffName</td>
+              <td>@item.ReviewerName</td>
+              <td>@item.Deadline.ToString("dd/MM/yyyy")</td>
+              <td><span class="status-chip status-idea-@item.Status">@item.StatusLabel</span></td>
+              <td>
+                @if (item.OpenTasks > 0)
+                {
+                  <span class="badge-task-open">@item.OpenTasks task</span>
+                }
+                else
+                {
+                  <small style="color:#94a3b8;">—</small>
+                }
+              </td>
+              <td style="text-align: right;">
+                <button class="btn-mini" onclick="openDetail(@item.Id)" title="Xem chi tiết">
+                  <i class="ti ti-eye"></i> Xem chi tiết
+                </button>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
+      </div>
+
+      @if (Model.TotalPages > 1)
+      {
+        <div class="pagination">
+          @for (var p = 1; p <= Model.TotalPages; p++)
+          {
+            var query = new System.Collections.Generic.Dictionary<string, string?>
+            {
+              ["page"] = p.ToString(),
+              ["search"] = Model.Search,
+              ["status"] = Model.StatusFilter,
+              ["client"] = Model.ClientFilter
+            };
+            var qs = string.Join("&", query.Where(kv => !string.IsNullOrEmpty(kv.Value))
+              .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value!)}"));
+            var url = "/Director/Idea" + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
+            <a class="@(p == Model.Page ? "active" : "")" href="@url">@p</a>
+          }
+        </div>
+      }
     </div>
 
-    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <footer>HanaMedia · Kho Ý tưởng — @(isViewerOnly ? "Quyền xem" : "Quản lý")</footer>
   </main>
 </div>
 
-<!-- MODAL CHI TIẾT Ý TƯỞNG + SỬA/FEEDBACK/DUYỆT CHO GIÁM ĐỐC -->
-<div class="modal-backdrop" id="ideaModal">
-  <div class="modal-card" style="width: 800px; max-width: 98%;">
+<!-- MODAL CHI TIẾT (VIEW-ONLY) -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal-card modal-card-idea">
     <div class="modal-header">
-      <div class="modal-title">
-        <i class="ti ti-bulb" style="color: var(--amber);"></i> Chi tiết ý tưởng sáng tạo
-        <span id="directorBadgeInModal" class="director-badge" style="margin-left: 10px;"></span>
-      </div>
-      <button class="modal-close" onclick="closeModal('ideaModal')">&times;</button>
+      <div class="modal-title"><i class="ti ti-bulb" style="color:var(--amber);"></i> Chi tiết ý tưởng <span id="detailViewBadge" style="margin-left:8px;"></span></div>
+      <button type="button" class="modal-close" onclick="closeModal('detailModal')">&times;</button>
     </div>
-    <div class="modal-body" style="max-height: 520px; overflow-y: auto; padding-right: 8px;">
-
-      <div class="idea-grid" style="margin-bottom: 16px;">
-        <div>
-          <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Ý TƯỞNG</span>
-          <h3 id="ideaName" style="color: var(--navy); margin-top: 2px;">-</h3>
-        </div>
-        <div>
-          <span style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">TRẠNG THÁI</span>
-          <div style="margin-top: 4px;"><span id="ideaStatus" class="status-chip status-good">-</span></div>
-        </div>
-      </div>
-
-      <div class="idea-grid" style="background: var(--blue-50); padding: 14px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--blue-100);">
-        <div>
-          <div class="info-label">Người tạo</div>
-          <div class="info-val" id="ideaCreator">-</div>
-        </div>
-        <div>
-          <div class="info-label">Khách hàng &amp; Campaign</div>
-          <div class="info-val" id="ideaClientCampaign">-</div>
-        </div>
-        <div>
-          <div class="info-label">Người phụ trách</div>
-          <div class="info-val" id="ideaStaff">-</div>
-        </div>
-        <div>
-          <div class="info-label">Người Review (QL)</div>
-          <div class="info-val" id="ideaReviewer">-</div>
-        </div>
-        <div>
-          <div class="info-label">Hạn chót (Deadline)</div>
-          <div class="info-val" id="ideaDeadline">-</div>
-        </div>
-      </div>
-
-      <!-- NỘI DUNG Ý TƯỞNG - CÓ THỂ SỬA TRỰC TIẾP -->
-      <div style="margin-bottom: 12px;">
-        <div class="info-label">
-          <i class="ti ti-edit" style="color: var(--blue-500);"></i> Insight khách hàng
-          <button class="btn-mini" style="margin-left: 8px; padding: 2px 8px; font-size: 11px;" onclick="toggleEdit('insight')">
-            <i class="ti ti-pencil"></i> Sửa
-          </button>
-        </div>
-        <div id="viewInsight" class="info-val" style="margin-top: 4px; font-weight: 500;">-</div>
-        <textarea id="editInsight" class="form-control" rows="2" style="display: none; margin-top: 4px;"></textarea>
-      </div>
-
-      <div style="margin-bottom: 12px;">
-        <div class="info-label">
-          <i class="ti ti-edit" style="color: var(--blue-500);"></i> Concept cốt lõi
-          <button class="btn-mini" style="margin-left: 8px; padding: 2px 8px; font-size: 11px;" onclick="toggleEdit('concept')">
-            <i class="ti ti-pencil"></i> Sửa
-          </button>
-        </div>
-        <div id="viewConcept" class="info-val" style="margin-top: 4px; font-weight: 500;">-</div>
-        <textarea id="editConcept" class="form-control" rows="2" style="display: none; margin-top: 4px;"></textarea>
-      </div>
-
-      <div style="margin-bottom: 12px;">
-        <div class="info-label">
-          <i class="ti ti-edit" style="color: var(--blue-500);"></i> Nội dung chi tiết
-          <button class="btn-mini" style="margin-left: 8px; padding: 2px 8px; font-size: 11px;" onclick="toggleEdit('content')">
-            <i class="ti ti-pencil"></i> Sửa
-          </button>
-        </div>
-        <div id="viewContent" class="info-val" style="margin-top: 4px; font-weight: 500;">-</div>
-        <textarea id="editContent" class="form-control" rows="2" style="display: none; margin-top: 4px;"></textarea>
-      </div>
-
-      <div class="idea-grid" style="margin-bottom: 12px;">
-        <div>
-          <div class="info-label">
-            <i class="ti ti-edit" style="color: var(--blue-500);"></i> Reference Link
-          </div>
-          <div id="viewRef" class="info-val" style="margin-top: 4px;"><a href="#" target="_blank">-</a></div>
-        </div>
-        <div>
-          <div class="info-label">Moodboard hình ảnh</div>
-          <div id="viewMoodboard" class="info-val" style="margin-top: 4px;">-</div>
-        </div>
-      </div>
-
-      <div style="margin-bottom: 20px;">
-        <div class="info-label">
-          <i class="ti ti-edit" style="color: var(--blue-500);"></i> Script (Kịch bản chi tiết)
-          <button class="btn-mini" style="margin-left: 8px; padding: 2px 8px; font-size: 11px;" onclick="toggleEdit('script')">
-            <i class="ti ti-pencil"></i> Sửa
-          </button>
-        </div>
-        <div id="viewScript" style="font-family: monospace; padding: 10px; background: #FAFBFD; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px; font-size: 12.5px;">-</div>
-        <textarea id="editScript" class="form-control" rows="3" style="display: none; margin-top: 4px; font-family: monospace;"></textarea>
-      </div>
-
-      <!-- FEEDBACK TỪ GIÁM ĐỐC -->
-      <div class="feedback-section">
-        <div class="info-label" style="margin-bottom: 10px;">
-          <i class="ti ti-message-circle" style="color: #F57F17;"></i> Feedback của Giám đốc
-        </div>
-
-        <!-- Hiển thị feedback cũ (nếu có) -->
-        <div id="directorFeedbackDisplay" class="feedback-director" style="display: none;">
-          <div class="feedback-header">
-            <i class="ti ti-user"></i>
-            <span class="feedback-from">Nguyễn Văn A (Giám đốc)</span>
-            <span id="feedbackTime" class="feedback-time">-</span>
-          </div>
-          <div id="feedbackContent" class="feedback-content">-</div>
-        </div>
-
-        <!-- Form nhập feedback mới -->
-        <div class="form-group">
-          <textarea id="directorFeedbackInput" class="form-control" rows="3" placeholder="Nhập ý kiến phản hồi cho nhân viên chỉnh sửa theo feedback..."></textarea>
-        </div>
-      </div>
+    <div class="modal-body" id="detailBody">
+      <div class="empty">�ang tải...</div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn-mini" onclick="closeModal('ideaModal')">Đóng</button>
-      <button class="btn-mini" id="btnSaveEdits" onclick="saveDirectorEdits()">
-        <i class="ti ti-device-floppy"></i> Lưu chỉnh sửa
-      </button>
-      <button class="btn-mini" id="btnSendFeedback" onclick="sendDirectorFeedback()">
-        <i class="ti ti-send"></i> Gửi Feedback
-      </button>
-      <button class="btn-mini approve" id="btnDirectorApprove" onclick="directorApproveIdea()">
-        <i class="ti ti-check"></i> Duyệt ý tưởng
-      </button>
-      <button class="btn-mini reject" id="btnDirectorReject" onclick="directorRejectIdea()">
-        <i class="ti ti-x"></i> Từ chối
-      </button>
+      <button type="button" class="btn-mini" onclick="closeModal('detailModal')">Đóng</button>
     </div>
   </div>
 </div>
 
 <script>
-  let currentDirectorStatus = '';
-  let currentIdeaTitle = '';
+  const viewerOnly = @((isViewerOnly ? "true" : "false"));
 
-  function openIdeaModal(name, creator, client, campaign, insight, concept, content, ref, moodboard, script, deadline, staff, reviewer, status, directorStatus, directorFeedback) {
-    currentIdeaTitle = name;
-    currentDirectorStatus = directorStatus;
+  function openModal(id) { document.getElementById(id)?.classList.add('active'); }
+  function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
 
-    // Basic info
-    document.getElementById('ideaName').innerText = name;
-    document.getElementById('ideaCreator').innerText = creator;
-    document.getElementById('ideaClientCampaign').innerText = `${client} — ${campaign}`;
-    document.getElementById('ideaDeadline').innerText = deadline;
-    document.getElementById('ideaStaff').innerText = staff;
-    document.getElementById('ideaReviewer').innerText = reviewer;
-
-    // Set content to view mode
-    document.getElementById('viewInsight').innerText = insight || '-';
-    document.getElementById('viewConcept').innerText = concept || '-';
-    document.getElementById('viewContent').innerText = content || '-';
-    document.getElementById('viewRef').innerHTML = ref ? `<a href="${ref}" target="_blank" style="color: var(--blue-600); text-decoration: none;">${ref}</a>` : '-';
-    document.getElementById('viewMoodboard').innerText = moodboard || '-';
-
-    // Set edit fields
-    document.getElementById('editInsight').value = insight || '';
-    document.getElementById('editConcept').value = concept || '';
-    document.getElementById('editContent').value = content || '';
-    document.getElementById('editScript').value = script || '';
-
-    // Hide all edit fields
-    ['insight', 'concept', 'content', 'script'].forEach(f => {
-      document.getElementById('edit' + capitalize(f)).style.display = 'none';
-      document.getElementById('view' + capitalize(f)).style.display = 'block';
-    });
-
-    // Status badge
-    const statusChip = document.getElementById('ideaStatus');
-    if (status === 'Review') {
-      statusChip.className = 'status-chip status-warn';
-      statusChip.innerText = 'Review';
-    } else {
-      statusChip.className = 'status-chip status-good';
-      statusChip.innerText = status;
-    }
-
-    // Director status badge in modal header
-    const dirBadge = document.getElementById('directorBadgeInModal');
-    if (directorStatus === 'director_approved') {
-      dirBadge.className = 'director-badge approved';
-      dirBadge.innerHTML = '<i class="ti ti-check"></i> Đã duyệt';
-    } else if (directorStatus === 'director_rejected') {
-      dirBadge.className = 'director-badge rejected';
-      dirBadge.innerHTML = '<i class="ti ti-x"></i> Từ chối';
-    } else {
-      dirBadge.className = 'director-badge pending';
-      dirBadge.innerHTML = '<i class="ti ti-clock"></i> Chờ duyệt';
-    }
-
-    // Director feedback
-    const feedbackDisplay = document.getElementById('directorFeedbackDisplay');
-    if (directorFeedback && directorFeedback.trim()) {
-      feedbackDisplay.style.display = 'block';
-      document.getElementById('feedbackContent').innerText = directorFeedback;
-      document.getElementById('feedbackTime').innerText = '2 ngày trước';
-    } else {
-      feedbackDisplay.style.display = 'none';
-    }
-    document.getElementById('directorFeedbackInput').value = directorFeedback || '';
-
-    // Show/hide action buttons based on director status
-    const btnApprove = document.getElementById('btnDirectorApprove');
-    const btnReject = document.getElementById('btnDirectorReject');
-    const btnFeedback = document.getElementById('btnSendFeedback');
-    const btnSave = document.getElementById('btnSaveEdits');
-
-    if (directorStatus === 'director_approved' || directorStatus === 'director_rejected') {
-      btnApprove.style.display = 'none';
-      btnReject.style.display = 'none';
-      btnFeedback.style.display = 'none';
-      btnSave.style.display = 'none';
-    } else {
-      btnApprove.style.display = '';
-      btnReject.style.display = '';
-      btnFeedback.style.display = '';
-      btnSave.style.display = '';
-    }
-
-    document.getElementById('ideaModal').classList.add('active');
-  }
-
-  function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  function toggleEdit(field) {
-    const viewEl = document.getElementById('view' + capitalize(field));
-    const editEl = document.getElementById('edit' + capitalize(field));
-
-    if (editEl.style.display === 'none') {
-      viewEl.style.display = 'none';
-      editEl.style.display = 'block';
-      editEl.focus();
-    } else {
-      viewEl.style.display = 'block';
-      viewEl.innerText = editEl.value || '-';
-      editEl.style.display = 'none';
+  async function openDetail(id) {
+    openModal('detailModal');
+    const body = document.getElementById('detailBody');
+    body.innerHTML = '<div class="empty">Đang tải...</div>';
+    try {
+      const res = await fetch(`/Ideas/Detail/${id}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+      if (!res.ok) { body.innerHTML = `<div class="empty">Không tải được chi tiết (HTTP ${res.status}).</div>`; return; }
+      const data = await res.json();
+      if (!data.success) { body.innerHTML = `<div class="empty">${data.message || 'Lỗi.'}</div>`; return; }
+      renderDetail(data.idea);
+    } catch (err) {
+      body.innerHTML = `<div class="empty">Lỗi: ${err.message}</div>`;
     }
   }
 
-  function saveDirectorEdits() {
-    const insight = document.getElementById('editInsight').value;
-    const concept = document.getElementById('editConcept').value;
-    const content = document.getElementById('editContent').value;
-    const script = document.getElementById('editScript').value;
+  function renderDetail(idea) {
+    const body = document.getElementById('detailBody');
+    const statusChip = `<span class="status-chip status-idea-${idea.status}">${idea.statusLabel}</span>`;
+    let html = `
+      <div class="idea-grid-detail" style="margin-bottom:14px;">
+        <div>
+          <div class="info-label">Ý T�ỞNG</div>
+          <h3 style="color:var(--navy); margin-top:2px;">${escapeHtml(idea.title)}</h3>
+        </div>
+        <div>
+          <div class="info-label">TRẠNG THÁI</div>
+          <div style="margin-top:4px;">${statusChip}</div>
+        </div>
+      </div>
 
-    document.getElementById('viewInsight').innerText = insight || '-';
-    document.getElementById('viewConcept').innerText = concept || '-';
-    document.getElementById('viewContent').innerText = content || '-';
-    document.getElementById('viewScript').innerText = script || '-';
+      <div class="idea-grid-detail" style="background:var(--blue-50); padding:14px; border-radius:10px; margin-bottom:16px; border:1px solid var(--blue-100);">
+        <div><div class="info-label">Người tạo</div><div class="info-val">${escapeHtml(idea.creatorName)}</div></div>
+        <div><div class="info-label">Client</div><div class="info-val">${escapeHtml(idea.clientName)}</div></div>
+        <div><div class="info-label">Campaign</div><div class="info-val">${escapeHtml(idea.campaignName || '—')}</div></div>
+        <div><div class="info-label">Người phụ trách</div><div class="info-val">${escapeHtml(idea.primaryStaffName)}</div></div>
+        <div><div class="info-label">Người review</div><div class="info-val">${escapeHtml(idea.reviewerName)}</div></div>
+        <div><div class="info-label">Deadline</div><div class="info-val">${formatDate(idea.deadline)}</div></div>
+      </div>
 
-    alert(`Đã lưu chỉnh sửa cho ý tưởng "${currentIdeaTitle}".\n\nThay đổi đã được cập nhật và ghi nhận vào Audit log.`);
+      <div style="margin-bottom:12px;">
+        <div class="info-label">Insight khách hàng</div>
+        <div class="info-val" style="margin-top:4px; font-weight:500;">${escapeHtml(idea.insight || '—')}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="info-label">Concept cốt lõi</div>
+        <div class="info-val" style="margin-top:4px; font-weight:500;">${escapeHtml(idea.concept || '—')}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="info-label">Nội dung chi tiết</div>
+        <div class="info-val" style="margin-top:4px; font-weight:500;">${escapeHtml(idea.contentDetails || '—')}</div>
+      </div>
+
+      <div class="idea-grid-detail" style="margin-bottom:12px;">
+        <div>
+          <div class="info-label">Reference Link</div>
+          <div class="info-val" style="margin-top:4px;">
+            ${idea.referenceLink ? `<a href="${escapeAttr(idea.referenceLink)}" target="_blank" style="color:var(--blue-600); text-decoration:none;">${escapeHtml(idea.referenceLink)}</a>` : '—'}
+          </div>
+          ${idea.referenceFileUrl ? `<div class="attach-row"><i class="ti ti-file"></i><a href="${escapeAttr(idea.referenceFileUrl)}" target="_blank">Tải tệp tham khảo</a></div>` : ''}
+        </div>
+        <div>
+          <div class="info-label">Moodboard</div>
+          <div class="info-val" style="margin-top:4px;">${escapeHtml(idea.moodboardDesc || '—')}</div>
+          ${idea.moodboardFileUrl ? `<div class="attach-row"><i class="ti ti-photo"></i><a href="${escapeAttr(idea.moodboardFileUrl)}" target="_blank">Mở moodboard</a></div>` : ''}
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <div class="info-label">Script</div>
+        <div class="script-block" style="margin-top:4px;">${escapeHtml(idea.scriptText || '—')}</div>
+      </div>
+
+      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top:14px;">
+        <div class="info-label" style="margin-bottom:10px;"><i class="ti ti-message-circle"></i> Lịch sử thảo luận (${(idea.comments || []).length})</div>
+        ${(idea.comments || []).length === 0
+          ? '<div style="color:#94a3b8; font-size:13px; padding:8px 0;">Chưa có bình luận nào.</div>'
+          : (idea.comments || []).map(c => `
+              <div class="feedback-block">
+                <div class="feedback-header">
+                  <i class="ti ti-user"></i>
+                  <span>${escapeHtml(c.authorName)} <small style="font-weight:400; color:#475569;">(${escapeHtml(c.authorRole)})</small></span>
+                  <span class="feedback-time">${formatDateTime(c.createdAt)} · ${escapeHtml(c.commentTypeLabel || c.commentType)}</span>
+                </div>
+                <div class="feedback-content">${escapeHtml(c.content)}</div>
+              </div>
+            `).join('')}
+      </div>
+    `;
+    body.innerHTML = html;
   }
 
-  function sendDirectorFeedback() {
-    const feedback = document.getElementById('directorFeedbackInput').value.trim();
-    if (!feedback) {
-      alert('Vui lòng nhập nội dung feedback.');
-      return;
-    }
-    if (confirm(`Gửi feedback cho ý tưởng "${currentIdeaTitle}"?\n\nNV/NV sẽ nhận được thông báo và chỉnh sửa theo feedback.`)) {
-      alert(`Đã gửi feedback cho ý tưởng "${currentIdeaTitle}".\n\nTrạng thái: "Chờ NV chỉnh sửa và gửi lại".`);
-      closeModal('ideaModal');
-    }
-  }
-
-  function directorApproveIdea() {
-    if (confirm(`Phê duyệt ý tưởng "${currentIdeaTitle}"?\n\nÝ tưởng sẽ được chuyển sang trạng thái "Đã duyệt bởi Giám đốc".`)) {
-      alert(`Đã phê duyệt ý tưởng "${currentIdeaTitle}".\n\nGhi nhận vào Audit log.`);
-      closeModal('ideaModal');
-    }
-  }
-
-  function directorRejectIdea() {
-    const reason = prompt(`Lý do từ chối ý tưởng "${currentIdeaTitle}":`);
-    if (reason && reason.trim()) {
-      alert(`Đã từ chối ý tưởng "${currentIdeaTitle}".\n\nLý do: ${reason}\n\nGhi nhận vào Audit log.`);
-      closeModal('ideaModal');
-    }
-  }
-
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-  }
+  function escapeHtml(s) { return (s ?? '').toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+  function escapeAttr(s) { return escapeHtml(s); }
+  function formatDate(s) { if (!s) return '—'; const d = new Date(s); return isNaN(d) ? s : `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`; }
+  function formatDateTime(s) { if (!s) return ''; const d = new Date(s); return isNaN(d) ? s : `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; }
 </script>
 </body>
 </html>

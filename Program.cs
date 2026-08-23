@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using HanaMedia.Middlewares;
 using HanaMedia.Models;
 using HanaMedia.Services;
+using HanaMedia.Constants;
 using HanaMedia.Services.Accounts;
 using HanaMedia.Services.Auditing;
 using HanaMedia.Services.Campaigns;
 using HanaMedia.Services.Dashboard;
 using HanaMedia.Services.Kols;
+using HanaMedia.Services.Ideas;
 using HanaMedia.Services.Security;
 using HanaMedia.Services.Tasks;
 
@@ -34,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<EmployeeAvatarService>();
+builder.Services.AddScoped<IdeaAttachmentService>();
 // Read-only compatibility for existing Identity hashes. New/reset passwords stay SHA-256.
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();
@@ -45,6 +48,7 @@ builder.Services.AddScoped<IAccountManagementService, AccountManagementService>(
 builder.Services.AddScoped<IWorkTaskService, WorkTaskService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IKolService, KolService>();
+builder.Services.AddScoped<IIdeaService, IdeaService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 

@@ -4,6 +4,7 @@ using HanaMedia.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HanaMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260823063245_MakeCampaignNameNullableOnIdeas")]
+    partial class MakeCampaignNameNullableOnIdeas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,10 +41,6 @@ namespace HanaMedia.Migrations
                     b.Property<decimal>("BookingPrice")
                         .HasColumnType("decimal(15, 2)")
                         .HasColumnName("booking_price");
-
-                    b.Property<int?>("CampaignId")
-                        .HasColumnType("int")
-                        .HasColumnName("campaign_id");
 
                     b.Property<string>("CampaignName")
                         .IsRequired()
@@ -123,8 +122,6 @@ namespace HanaMedia.Migrations
                     b.HasIndex("KolId");
 
                     b.HasIndex("PrimaryManagerId");
-
-                    b.HasIndex(new[] { "CampaignId" }, "IX_bookings_campaign_id");
 
                     b.HasIndex(new[] { "Status" }, "idx_bookings_status");
 
@@ -237,98 +234,6 @@ namespace HanaMedia.Migrations
                         .HasName("PK_business_configs");
 
                     b.ToTable("business_configs", (string)null);
-                });
-
-            modelBuilder.Entity("HanaMedia.Models.Campaign", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Budget")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("budget");
-
-                    b.Property<string>("ClientName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)")
-                        .HasColumnName("client_name");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("created_by_user_id");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("description");
-
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date")
-                        .HasColumnName("end_date");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)")
-                        .HasColumnName("name");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion")
-                        .HasColumnName("row_version");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date")
-                        .HasColumnName("start_date");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("draft")
-                        .HasColumnName("status");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.HasKey("Id")
-                        .HasName("PK_campaigns");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex(new[] { "StartDate", "EndDate" }, "IX_campaigns_dates");
-
-                    b.HasIndex(new[] { "Status" }, "IX_campaigns_status");
-
-                    b.HasIndex(new[] { "ClientName", "Name" }, "UX_campaigns_client_name")
-                        .IsUnique();
-
-                    b.ToTable("campaigns", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_campaign_budget", "[budget] >= 0");
-
-                            t.HasCheckConstraint("chk_campaign_dates", "[end_date] >= [start_date]");
-
-                            t.HasCheckConstraint("chk_campaign_status", "[status] IN ('draft', 'active', 'paused', 'completed', 'cancelled')");
-                        });
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Department", b =>
@@ -532,10 +437,6 @@ namespace HanaMedia.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CampaignId")
-                        .HasColumnType("int")
-                        .HasColumnName("campaign_id");
-
                     b.Property<string>("CampaignName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
@@ -653,8 +554,6 @@ namespace HanaMedia.Migrations
 
                     b.HasIndex("ReviewerEmployeeId");
 
-                    b.HasIndex(new[] { "CampaignId" }, "IX_ideas_campaign_id");
-
                     b.HasIndex(new[] { "Status" }, "idx_ideas_status");
 
                     b.ToTable("ideas", null, t =>
@@ -710,44 +609,6 @@ namespace HanaMedia.Migrations
                     b.HasIndex(new[] { "IdeaId", "CreatedAt" }, "idx_idea_comments_idea_created");
 
                     b.ToTable("idea_comments", (string)null);
-                });
-
-            modelBuilder.Entity("HanaMedia.Models.IdeaMoodboardImage", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<string>("FileUrl")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("file_url");
-
-                    b.Property<int>("IdeaId")
-                        .HasColumnType("int")
-                        .HasColumnName("idea_id");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.HasKey("Id")
-                        .HasName("PK_idea_moodboard_images");
-
-                    b.HasIndex(new[] { "IdeaId", "SortOrder" }, "idx_idea_moodboard_images_idea_sort");
-
-                    b.ToTable("idea_moodboard_images", (string)null);
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Kol", b =>
@@ -823,13 +684,6 @@ namespace HanaMedia.Migrations
                         .HasColumnType("int")
                         .HasColumnName("responsible_staff_id");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion")
-                        .HasColumnName("row_version");
-
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(30)
@@ -849,21 +703,12 @@ namespace HanaMedia.Migrations
 
                     b.HasIndex("ResponsibleStaffId");
 
-                    b.HasIndex(new[] { "Platform", "ProfileLink" }, "UX_kols_platform_profile_link")
-                        .IsUnique();
-
                     b.HasIndex(new[] { "Platform" }, "idx_kols_platform");
 
                     b.HasIndex(new[] { "Status" }, "idx_kols_status");
 
                     b.ToTable("kols", null, t =>
                         {
-                            t.HasCheckConstraint("chk_kol_booking_price", "[booking_price] >= 0");
-
-                            t.HasCheckConstraint("chk_kol_engagement", "[engagement_rate] BETWEEN 0 AND 100");
-
-                            t.HasCheckConstraint("chk_kol_followers", "[followers_count] >= 0");
-
                             t.HasCheckConstraint("chk_kol_platform", "[platform] IN ('TikTok', 'Instagram', 'YouTube', 'Facebook')");
 
                             t.HasCheckConstraint("chk_kol_rating", "[rating_score] BETWEEN 1 AND 5");
@@ -1148,12 +993,6 @@ namespace HanaMedia.Migrations
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("(sysutcdatetime())");
 
-                    b.Property<string>("WorkCategory")
-                        .HasMaxLength(30)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(30)")
-                        .HasColumnName("work_category");
-
                     b.HasKey("Id")
                         .HasName("PK_work_tasks");
 
@@ -1231,12 +1070,6 @@ namespace HanaMedia.Migrations
 
             modelBuilder.Entity("HanaMedia.Models.Booking", b =>
                 {
-                    b.HasOne("HanaMedia.Models.Campaign", "Campaign")
-                        .WithMany("Bookings")
-                        .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_bookings_campaigns_campaign_id");
-
                     b.HasOne("HanaMedia.Models.Kol", "Kol")
                         .WithMany("Bookings")
                         .HasForeignKey("KolId")
@@ -1247,8 +1080,6 @@ namespace HanaMedia.Migrations
                         .WithMany("Bookings")
                         .HasForeignKey("PrimaryManagerId")
                         .HasConstraintName("FK_bookings_employees_primary_manager_id");
-
-                    b.Navigation("Campaign");
 
                     b.Navigation("Kol");
 
@@ -1295,18 +1126,6 @@ namespace HanaMedia.Migrations
                     b.Navigation("PerformedByUser");
                 });
 
-            modelBuilder.Entity("HanaMedia.Models.Campaign", b =>
-                {
-                    b.HasOne("HanaMedia.Models.User", "CreatedByUser")
-                        .WithMany("CreatedCampaigns")
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_campaigns_users_created_by_user_id");
-
-                    b.Navigation("CreatedByUser");
-                });
-
             modelBuilder.Entity("HanaMedia.Models.Employee", b =>
                 {
                     b.HasOne("HanaMedia.Models.Employee", "Manager")
@@ -1327,12 +1146,6 @@ namespace HanaMedia.Migrations
 
             modelBuilder.Entity("HanaMedia.Models.Idea", b =>
                 {
-                    b.HasOne("HanaMedia.Models.Campaign", "Campaign")
-                        .WithMany("Ideas")
-                        .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_ideas_campaigns_campaign_id");
-
                     b.HasOne("HanaMedia.Models.Employee", "CreatorEmployee")
                         .WithMany("IdeaCreatorEmployees")
                         .HasForeignKey("CreatorEmployeeId")
@@ -1347,8 +1160,6 @@ namespace HanaMedia.Migrations
                         .WithMany("IdeaReviewerEmployees")
                         .HasForeignKey("ReviewerEmployeeId")
                         .HasConstraintName("FK_ideas_employees_reviewer_employee_id");
-
-                    b.Navigation("Campaign");
 
                     b.Navigation("CreatorEmployee");
 
@@ -1373,18 +1184,6 @@ namespace HanaMedia.Migrations
                         .HasConstraintName("FK_idea_comments_ideas_idea_id");
 
                     b.Navigation("AuthorUser");
-
-                    b.Navigation("Idea");
-                });
-
-            modelBuilder.Entity("HanaMedia.Models.IdeaMoodboardImage", b =>
-                {
-                    b.HasOne("HanaMedia.Models.Idea", "Idea")
-                        .WithMany("MoodboardImages")
-                        .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_idea_moodboard_images_ideas_idea_id");
 
                     b.Navigation("Idea");
                 });
@@ -1476,13 +1275,6 @@ namespace HanaMedia.Migrations
                     b.Navigation("BookingWages");
                 });
 
-            modelBuilder.Entity("HanaMedia.Models.Campaign", b =>
-                {
-                    b.Navigation("Bookings");
-
-                    b.Navigation("Ideas");
-                });
-
             modelBuilder.Entity("HanaMedia.Models.Employee", b =>
                 {
                     b.Navigation("AssignedWorkTasks");
@@ -1505,8 +1297,6 @@ namespace HanaMedia.Migrations
             modelBuilder.Entity("HanaMedia.Models.Idea", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("MoodboardImages");
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Kol", b =>
@@ -1517,8 +1307,6 @@ namespace HanaMedia.Migrations
             modelBuilder.Entity("HanaMedia.Models.User", b =>
                 {
                     b.Navigation("BookingWageAuditLogs");
-
-                    b.Navigation("CreatedCampaigns");
 
                     b.Navigation("CreatedWorkTasks");
 

@@ -31,6 +31,10 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Idea> Ideas { get; set; }
 
+    public virtual DbSet<IdeaComment> IdeaComments { get; set; }
+
+    public virtual DbSet<IdeaMoodboardImage> IdeaMoodboardImages { get; set; }
+
     public virtual DbSet<Kol> Kols { get; set; }
 
     public virtual DbSet<SystemAuditLog> SystemAuditLogs { get; set; }
@@ -402,12 +406,20 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("industry");
             entity.Property(e => e.Insight).HasColumnName("insight");
+            entity.Property(e => e.MoodboardFileUrl)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("moodboard_file_url");
             entity.Property(e => e.MoodboardDesc).HasColumnName("moodboard_desc");
             entity.Property(e => e.PrimaryStaffId).HasColumnName("primary_staff_id");
             entity.Property(e => e.ReferenceLink)
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("reference_link");
+            entity.Property(e => e.ReferenceFileUrl)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("reference_file_url");
             entity.Property(e => e.ReviewerEmployeeId).HasColumnName("reviewer_employee_id");
             entity.Property(e => e.ScriptText).HasColumnName("script_text");
             entity.Property(e => e.Status)
@@ -439,6 +451,65 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.CampaignId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_ideas_campaigns_campaign_id");
+        });
+
+        modelBuilder.Entity<IdeaComment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_idea_comments");
+
+            entity.ToTable("idea_comments");
+
+            entity.HasIndex(e => new { e.IdeaId, e.CreatedAt }, "idx_idea_comments_idea_created");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IdeaId).HasColumnName("idea_id");
+            entity.Property(e => e.AuthorUserId).HasColumnName("author_user_id");
+            entity.Property(e => e.CommentType)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasDefaultValue("general")
+                .HasColumnName("comment_type");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnType("datetime2")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Idea).WithMany(p => p.Comments)
+                .HasForeignKey(d => d.IdeaId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_idea_comments_ideas_idea_id");
+
+            entity.HasOne(d => d.AuthorUser).WithMany()
+                .HasForeignKey(d => d.AuthorUserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_idea_comments_users_author_user_id");
+        });
+
+        modelBuilder.Entity<IdeaMoodboardImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_idea_moodboard_images");
+
+            entity.ToTable("idea_moodboard_images");
+
+            entity.HasIndex(e => new { e.IdeaId, e.SortOrder }, "idx_idea_moodboard_images_idea_sort");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IdeaId).HasColumnName("idea_id");
+            entity.Property(e => e.FileUrl)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("file_url");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnType("datetime2")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Idea).WithMany(p => p.MoodboardImages)
+                .HasForeignKey(d => d.IdeaId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_idea_moodboard_images_ideas_idea_id");
         });
 
         modelBuilder.Entity<Kol>(entity =>
@@ -682,6 +753,12 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
             entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
 
+            entity.Property(e => e.IdeaId).HasColumnName("idea_id");
+            entity.Property(e => e.WorkCategory)
+                .HasColumnName("work_category")
+                .HasMaxLength(30)
+                .IsUnicode(false);
+
             entity.HasOne(e => e.AssignedEmployee).WithMany(e => e.AssignedWorkTasks)
                 .HasForeignKey(e => e.AssignedEmployeeId).OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_work_tasks_employees_assigned_employee_id");
@@ -691,6 +768,9 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(e => e.ReviewerUser).WithMany(e => e.ReviewedWorkTasks)
                 .HasForeignKey(e => e.ReviewerUserId).OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_work_tasks_users_reviewer_user_id");
+            entity.HasOne(e => e.Idea).WithMany()
+                .HasForeignKey(e => e.IdeaId).OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_work_tasks_ideas_idea_id");
         });
 
         modelBuilder.Entity<WorkTaskHistory>(entity =>
