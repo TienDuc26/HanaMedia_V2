@@ -66,4 +66,6 @@ public partial class Employee
     public virtual Employee? Manager { get; set; }
 
     public virtual User? User { get; set; }
+
+    public virtual ICollection<WorkTask> AssignedWorkTasks { get; set; } = new List<WorkTask>();
 }

@@ -16,7 +16,7 @@ namespace HanaMedia.Controllers
 
         public IActionResult AssignTasks()
         {
-            return View();
+            return RedirectToAction("Index", "WorkTasks", new { module = WorkTaskModules.HumanResources });
         }
 
         public IActionResult Repoted()

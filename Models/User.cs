@@ -32,4 +32,10 @@ public partial class User
     public virtual Employee? Employee { get; set; }
 
     public virtual ICollection<SystemAuditLog> SystemAuditLogs { get; set; } = new List<SystemAuditLog>();
+
+    public virtual ICollection<WorkTask> CreatedWorkTasks { get; set; } = new List<WorkTask>();
+
+    public virtual ICollection<WorkTask> ReviewedWorkTasks { get; set; } = new List<WorkTask>();
+
+    public virtual ICollection<WorkTaskHistory> WorkTaskHistoryEntries { get; set; } = new List<WorkTaskHistory>();
 }

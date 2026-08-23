@@ -37,6 +37,10 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<WorkTask> WorkTasks { get; set; }
+
+    public virtual DbSet<WorkTaskHistory> WorkTaskHistory { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -591,6 +595,61 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("failed_login_attempts");
 
             entity.Property(e => e.LockedUntil).HasColumnName("locked_until");
+        });
+
+        modelBuilder.Entity<WorkTask>(entity =>
+        {
+            entity.ToTable("work_tasks", table =>
+            {
+                table.HasCheckConstraint("chk_work_task_module", "[module] IN ('Nhan_Su', 'Booking', 'Y_Tuong')");
+                table.HasCheckConstraint("chk_work_task_status", "[status] IN ('todo', 'in_progress', 'review', 'need_revision', 'approved', 'done')");
+            });
+            entity.HasKey(e => e.Id).HasName("PK_work_tasks");
+            entity.HasIndex(e => new { e.AssignedEmployeeId, e.Status }).HasDatabaseName("idx_work_tasks_assignee_status");
+            entity.HasIndex(e => new { e.Module, e.Deadline }).HasDatabaseName("idx_work_tasks_module_deadline");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(2000);
+            entity.Property(e => e.Module).HasColumnName("module").HasMaxLength(30).IsUnicode(false).IsRequired();
+            entity.Property(e => e.AssignedEmployeeId).HasColumnName("assigned_employee_id");
+            entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+            entity.Property(e => e.ReviewerUserId).HasColumnName("reviewer_user_id");
+            entity.Property(e => e.Deadline).HasColumnName("deadline").HasColumnType("datetime2");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(30).IsUnicode(false).HasDefaultValue("todo");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
+            entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
+
+            entity.HasOne(e => e.AssignedEmployee).WithMany(e => e.AssignedWorkTasks)
+                .HasForeignKey(e => e.AssignedEmployeeId).OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_work_tasks_employees_assigned_employee_id");
+            entity.HasOne(e => e.CreatedByUser).WithMany(e => e.CreatedWorkTasks)
+                .HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_work_tasks_users_created_by_user_id");
+            entity.HasOne(e => e.ReviewerUser).WithMany(e => e.ReviewedWorkTasks)
+                .HasForeignKey(e => e.ReviewerUserId).OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_work_tasks_users_reviewer_user_id");
+        });
+
+        modelBuilder.Entity<WorkTaskHistory>(entity =>
+        {
+            entity.ToTable("work_task_history");
+            entity.HasKey(e => e.Id).HasName("PK_work_task_history");
+            entity.HasIndex(e => new { e.WorkTaskId, e.CreatedAt }).HasDatabaseName("idx_work_task_history_task_created");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.WorkTaskId).HasColumnName("work_task_id");
+            entity.Property(e => e.ActorUserId).HasColumnName("actor_user_id");
+            entity.Property(e => e.FromStatus).HasColumnName("from_status").HasMaxLength(30).IsUnicode(false);
+            entity.Property(e => e.ToStatus).HasColumnName("to_status").HasMaxLength(30).IsUnicode(false).IsRequired();
+            entity.Property(e => e.Comment).HasColumnName("comment").HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("(sysutcdatetime())");
+            entity.HasOne(e => e.WorkTask).WithMany(e => e.History)
+                .HasForeignKey(e => e.WorkTaskId).OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_work_task_history_work_tasks_work_task_id");
+            entity.HasOne(e => e.ActorUser).WithMany(e => e.WorkTaskHistoryEntries)
+                .HasForeignKey(e => e.ActorUserId).OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_work_task_history_users_actor_user_id");
         });
 
         OnModelCreatingPartial(modelBuilder);
