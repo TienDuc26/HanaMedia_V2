@@ -2,6 +2,9 @@ using HanaMedia.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HanaMedia.Services.Dashboard;
+using HanaMedia.Models;
+using HanaMedia.ViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace HanaMedia.Controllers
 {
@@ -9,10 +12,12 @@ namespace HanaMedia.Controllers
     public class DirectorController : Controller
     {
         private readonly IDirectorMonitoringService _monitoringService;
+        private readonly ApplicationDbContext _context;
 
-        public DirectorController(IDirectorMonitoringService monitoringService)
+        public DirectorController(IDirectorMonitoringService monitoringService, ApplicationDbContext context)
         {
             _monitoringService = monitoringService;
+            _context = context;
         }
         public IActionResult Dashboard()
         {
@@ -39,9 +44,46 @@ namespace HanaMedia.Controllers
             return View();
         }
 
-        public IActionResult HumanResources()
+        public async Task<IActionResult> HumanResources(string? search, string? department, string? status, CancellationToken cancellationToken)
         {
-            return View();
+            var normalizedSearch = search?.Trim();
+            var query = _context.Employees.AsNoTracking().AsQueryable();
+            if (!string.IsNullOrWhiteSpace(normalizedSearch))
+            {
+                var pattern = $"%{normalizedSearch}%";
+                query = query.Where(employee => EF.Functions.Like(employee.FullName, pattern) || EF.Functions.Like(employee.Position, pattern) || EF.Functions.Like(employee.Email, pattern));
+            }
+            if (!string.IsNullOrWhiteSpace(department)) query = query.Where(employee => employee.Department == department);
+            if (!string.IsNullOrWhiteSpace(status)) query = query.Where(employee => employee.Status == status);
+
+            var departments = await _context.Departments.AsNoTracking()
+                .Where(item => item.Status == "active").OrderBy(item => item.Name)
+                .Select(item => new WorkTaskEmployeeDepartmentViewModel(item.Code, item.Name))
+                .ToListAsync(cancellationToken);
+            var departmentNames = departments.ToDictionary(item => item.Code, item => item.Name);
+            var employees = await query.OrderBy(employee => employee.FullName).ToListAsync(cancellationToken);
+
+            return View(new DirectorHumanResourcesViewModel
+            {
+                Search = normalizedSearch,
+                Department = department,
+                Status = status,
+                Departments = departments,
+                Employees = employees.Select(employee => new DirectorEmployeeListItemViewModel
+                {
+                    Id = employee.Id,
+                    FullName = employee.FullName,
+                    Department = employee.Department,
+                    DepartmentName = departmentNames.GetValueOrDefault(employee.Department) ?? employee.Department,
+                    Position = employee.Position,
+                    JoinedDate = employee.JoinedDate,
+                    SalaryAndAllowance = employee.BasicSalary + (employee.Allowance ?? 0),
+                    Status = employee.Status ?? "ngung_hoat_dong",
+                    StatusLabel = GetEmployeeStatusLabel(employee.Status),
+                    HasAccount = employee.UserId.HasValue,
+                    TaskModule = GetTaskModule(employee.Department)
+                }).ToList()
+            });
         }
 
         public IActionResult Idea()
@@ -63,5 +105,21 @@ namespace HanaMedia.Controllers
         {
             return View();
         }
+
+        private static string GetEmployeeStatusLabel(string? status) => status switch
+        {
+            "dang_lam_viec" => "Đang làm việc",
+            "thu_viec" => "Thử việc",
+            "cho_duyet_nghi" => "Chờ duyệt nghỉ",
+            _ => "Ngừng hoạt động"
+        };
+
+        private static string? GetTaskModule(string department) => department switch
+        {
+            "HCNS" => WorkTaskModules.HumanResources,
+            "Booking" => WorkTaskModules.Booking,
+            "Y_tuong" => WorkTaskModules.Ideas,
+            _ => null
+        };
     }
 }

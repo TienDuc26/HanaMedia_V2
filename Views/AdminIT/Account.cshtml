@@ -162,16 +162,27 @@
         {
           @foreach (var account in Model.Accounts)
           {
-            var isActive = string.Equals(account.Status, "active", StringComparison.OrdinalIgnoreCase);
-            var nextStatus = isActive ? "locked" : "active";
+            var isManuallyLocked = !string.Equals(account.Status, "active", StringComparison.OrdinalIgnoreCase);
+            var isEffectivelyLocked = isManuallyLocked || account.IsTemporarilyLocked;
+            var nextStatus = isEffectivelyLocked ? "active" : "locked";
             var securityStamp = account.SecurityStamp;
             <tr>
               <td><strong>@account.Username</strong></td>
               <td>@account.DisplayName</td>
               <td>@account.RoleName</td>
               <td>
-                <span class="status-chip @(isActive ? "status-good" : "status-bad")">
-                  @(isActive ? "Đang hoạt động" : "Đang khóa (Tạm thời)")
+                <span class="status-chip @(isEffectivelyLocked ? "status-bad" : "status-good")"
+                      title="@(account.IsTemporarilyLocked && account.LockedUntil.HasValue
+                        ? $"Tự động khóa đến {account.LockedUntil.Value.ToLocalTime():HH:mm dd/MM/yyyy} sau {account.FailedLoginAttempts} lần đăng nhập sai."
+                        : null)">
+                  @if (account.IsTemporarilyLocked)
+                  {
+                    <text>Tự động khóa (còn @account.TemporaryLockMinutesRemaining phút)</text>
+                  }
+                  else
+                  {
+                    <text>@(isManuallyLocked ? "Đang khóa" : "Đang hoạt động")</text>
+                  }
                 </span>
               </td>
               <td>@(string.IsNullOrWhiteSpace(account.LastLoginIp) ? "Chưa có" : account.LastLoginIp)</td>
@@ -236,9 +247,9 @@
                   <input type="hidden" name="Status" value="@nextStatus">
                   <input type="hidden" name="ExpectedSecurityStamp" value="@securityStamp">
                   <button type="submit"
-                          class="btn-mini @(isActive ? "reject" : "approve")"
-                          title="@(account.CanLock ? (isActive ? "Khóa tài khoản" : "Mở khóa tài khoản") : "Không thể tự khóa tài khoản đang đăng nhập")"
-                          @(!account.CanLock ? "disabled" : null)>@(isActive ? "Khóa" : "Mở khóa")</button>
+                          class="btn-mini @(isEffectivelyLocked ? "approve" : "reject")"
+                          title="@(account.CanLock ? (isEffectivelyLocked ? "Mở khóa tài khoản và xóa số lần đăng nhập sai" : "Khóa tài khoản") : "Không thể tự khóa tài khoản đang đăng nhập")"
+                          @(!account.CanLock ? "disabled" : null)>@(isEffectivelyLocked ? "Mở khóa" : "Khóa")</button>
                 </form>
               </td>
             </tr>

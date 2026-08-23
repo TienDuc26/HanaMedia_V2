@@ -29,7 +29,7 @@ namespace HanaMedia.Controllers
 
         public IActionResult StaffHuman()
         {
-            return View();
+            return RedirectToAction("Index", "WorkTasks", new { module = WorkTaskModules.Booking });
         }
     }
 }

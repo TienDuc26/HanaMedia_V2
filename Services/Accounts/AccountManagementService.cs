@@ -71,20 +71,32 @@ public sealed class AccountManagementService : IAccountManagementService
             .ToListAsync(cancellationToken);
 
         var lastLoginByUser = lastLoginRows.ToDictionary(log => log.UserId);
+        var nowUtc = DateTime.UtcNow;
         var activeAdminCount = await _context.Users
             .AsNoTracking()
             .CountAsync(
-                user => user.Role == AppRoles.AdminIT && user.Status == AccountStatuses.Active,
+                user =>
+                    user.Role == AppRoles.AdminIT &&
+                    user.Status == AccountStatuses.Active &&
+                    (!user.LockedUntil.HasValue || user.LockedUntil <= nowUtc),
                 cancellationToken);
 
         var accounts = users.Select(user =>
         {
             lastLoginByUser.TryGetValue(user.Id, out var lastLogin);
             var isCurrentAccount = currentUserId == user.Id;
+            var isTemporarilyLocked =
+                user.Status == AccountStatuses.Active &&
+                user.LockedUntil.HasValue &&
+                user.LockedUntil.Value > nowUtc;
             var isLastActiveAdmin =
                 user.Role == AppRoles.AdminIT &&
                 user.Status == AccountStatuses.Active &&
+                !isTemporarilyLocked &&
                 activeAdminCount <= 1;
+            var isEffectivelyLocked =
+                user.Status != AccountStatuses.Active ||
+                isTemporarilyLocked;
 
             return new AccountListItemViewModel
             {
@@ -95,11 +107,17 @@ public sealed class AccountManagementService : IAccountManagementService
                 RoleCode = user.Role,
                 RoleName = AppRoles.GetLabel(user.Role),
                 Status = user.Status ?? AccountStatuses.Locked,
+                FailedLoginAttempts = user.FailedLoginAttempts,
+                LockedUntil = user.LockedUntil,
+                IsTemporarilyLocked = isTemporarilyLocked,
+                TemporaryLockMinutesRemaining = isTemporarilyLocked
+                    ? Math.Max(1, (int)Math.Ceiling((user.LockedUntil!.Value - nowUtc).TotalMinutes))
+                    : 0,
                 SecurityStamp = user.SecurityStamp,
                 LastLoginAt = lastLogin?.CreatedAt,
                 LastLoginIp = lastLogin?.IpAddress,
                 IsCurrentAccount = isCurrentAccount,
-                CanLock = !isCurrentAccount && !isLastActiveAdmin,
+                CanLock = !isCurrentAccount && (isEffectivelyLocked || !isLastActiveAdmin),
                 CanChangeRole = !isCurrentAccount && !isLastActiveAdmin
             };
         }).ToList();
@@ -329,7 +347,10 @@ public sealed class AccountManagementService : IAccountManagementService
                 return StaleDataFailure();
             }
 
-            if (user.Status == targetStatus)
+            var isUnlocking = targetStatus == AccountStatuses.Active;
+            var hasAutomaticLockState = user.LockedUntil.HasValue || user.FailedLoginAttempts > 0;
+
+            if (user.Status == targetStatus && !(isUnlocking && hasAutomaticLockState))
             {
                 return Failure($"Tài khoản đã ở trạng thái {(targetStatus == AccountStatuses.Active ? "hoạt động" : "đã khóa")}.");
             }
@@ -348,6 +369,8 @@ public sealed class AccountManagementService : IAccountManagementService
             }
 
             user.Status = targetStatus;
+            user.FailedLoginAttempts = 0;
+            user.LockedUntil = null;
             TouchSecurityState(user);
             _auditService.AddAccountEvent(
                 actorUserId,
@@ -500,12 +523,16 @@ public sealed class AccountManagementService : IAccountManagementService
     }
 
     private async Task<bool> IsLastActiveAdminAsync(int userId, CancellationToken cancellationToken)
-        => !await _context.Users.AnyAsync(
+    {
+        var nowUtc = DateTime.UtcNow;
+        return !await _context.Users.AnyAsync(
             user =>
                 user.Id != userId &&
                 user.Role == AppRoles.AdminIT &&
-                user.Status == AccountStatuses.Active,
+                user.Status == AccountStatuses.Active &&
+                (!user.LockedUntil.HasValue || user.LockedUntil <= nowUtc),
             cancellationToken);
+    }
 
     private static void TouchSecurityState(User user)
     {

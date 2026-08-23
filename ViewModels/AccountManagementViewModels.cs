@@ -37,6 +37,14 @@ public sealed class AccountListItemViewModel
 
     public string Status { get; init; } = string.Empty;
 
+    public int FailedLoginAttempts { get; init; }
+
+    public DateTime? LockedUntil { get; init; }
+
+    public bool IsTemporarilyLocked { get; init; }
+
+    public int TemporaryLockMinutesRemaining { get; init; }
+
     public string SecurityStamp { get; init; } = string.Empty;
 
     public DateTime? LastLoginAt { get; init; }

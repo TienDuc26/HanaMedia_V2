@@ -8,6 +8,7 @@ using HanaMedia.Services.Accounts;
 using HanaMedia.Services.Auditing;
 using HanaMedia.Services.Dashboard;
 using HanaMedia.Services.Security;
+using HanaMedia.Services.Tasks;
 
 const string BootstrapAdminArgument = "--bootstrap-admin";
 var bootstrapAdminRequested = args.Any(argument =>
@@ -39,6 +40,7 @@ builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
 builder.Services.AddScoped<IAdminITDashboardService, AdminITDashboardService>();
 builder.Services.AddScoped<IDirectorMonitoringService, DirectorMonitoringService>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
+builder.Services.AddScoped<IWorkTaskService, WorkTaskService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 

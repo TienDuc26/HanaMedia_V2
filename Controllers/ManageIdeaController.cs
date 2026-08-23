@@ -14,7 +14,7 @@ namespace HanaMedia.Controllers
 
         public IActionResult HumanStaff()
         {
-            return View();
+            return RedirectToAction("Index", "WorkTasks", new { module = WorkTaskModules.Ideas });
         }
 
         public IActionResult Idea()

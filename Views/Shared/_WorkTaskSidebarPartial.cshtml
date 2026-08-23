@@ -1,0 +1,88 @@
+@model HanaMedia.ViewModels.WorkTaskPageViewModel
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var taskUrl = $"/Tasks?module={Uri.EscapeDataString(Model.Module)}";
+}
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">HM</div>
+    <div>
+      <div class="brand-name">HanaMedia</div>
+      <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+    </div>
+  </div>
+
+  @if (role == AppRoles.Director)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Phân công &amp; Duyệt việc</a>
+    <a href="/Director/Report" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+    <a href="/Director/SignContract" class="nav-item"><i class="ti ti-pen"></i>Ký Hợp Đồng</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+  }
+  else if (role is AppRoles.HumanResourcesManager or AppRoles.HumanResourcesStaff)
+  {
+    <div class="nav-section">Vận hành nhân sự</div>
+    <a href="/ManageHuman/HumanResources" class="nav-item"><i class="ti ti-users"></i>Hồ sơ nhân sự</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Giao việc &amp; Phân công</a>
+    <a href="/ManageHuman/Repoted" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
+  }
+  else if (role == AppRoles.BookingManager)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/ManageBooking/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+  }
+  else if (role == AppRoles.BookingStaff)
+  {
+    <div class="nav-section">Nghiệp vụ của tôi</div>
+    <a href="/BookingStaff/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Tìm KOL / KOC</a>
+    <a href="/BookingStaff/Booking" class="nav-item"><i class="ti ti-star"></i>Nhiệm vụ Booking</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Công việc được giao</a>
+    <a href="/BookingStaff/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+  }
+  else if (role == AppRoles.IdeaManager)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageIdea/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/ManageIdea/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageIdea/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+  }
+  else if (role == AppRoles.IdeaStaff)
+  {
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/IdeaStaff/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kịch bản &amp; Ý tưởng</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Công việc được giao</a>
+    <a href="/IdeaStaff/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+  }
+  else
+  {
+    <div class="nav-section">Điều hướng</div>
+    <a href="/" class="nav-item"><i class="ti ti-layout-dashboard"></i>Trang chủ</a>
+    <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Công việc</a>
+  }
+
+  <partial name="_UserMenuPartial" />
+</aside>
