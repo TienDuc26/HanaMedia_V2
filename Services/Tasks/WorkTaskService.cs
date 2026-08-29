@@ -46,6 +46,7 @@ public sealed class WorkTaskService : IWorkTaskService
             .Include(task => task.AssignedEmployee)
             .Include(task => task.CreatedByUser)
             .Include(task => task.ReviewerUser)
+            .Include(task => task.Campaign)
             .Where(task => task.Module == selectedModule);
 
         if (!IsManagerRole(actorRole) && actorRole != AppRoles.Director)
@@ -153,11 +154,11 @@ public sealed class WorkTaskService : IWorkTaskService
                 Status = task.Status,
                 StatusLabel = WorkTaskStatuses.GetLabel(task.Status),
                 RowVersion = Convert.ToBase64String(task.RowVersion),
-                RelatedType = task.RelatedType,
-                RelatedId = task.RelatedId,
-                RelatedLabel = task.RelatedType is null
-                    ? null
-                    : $"{WorkTaskRelatedTypes.GetLabel(task.RelatedType)} #{task.RelatedId}",
+                RelatedLabel = task.CampaignId.HasValue
+                    ? $"Campaign: {task.Campaign?.Name ?? task.CampaignId.Value.ToString()}"
+                    : (task.RelatedType is null
+                        ? null
+                        : $"{WorkTaskRelatedTypes.GetLabel(task.RelatedType)} #{task.RelatedId}"),
                 AllowedTransitions = GetAllowedTransitions(task, actorUserId, actorRole)
             }).ToList()
         };
@@ -225,6 +226,7 @@ public sealed class WorkTaskService : IWorkTaskService
             Status = WorkTaskStatuses.Todo,
             RelatedType = string.IsNullOrWhiteSpace(relatedType) ? null : relatedType,
             RelatedId = relatedType is not null && relatedType != WorkTaskRelatedTypes.None ? input.RelatedId : null,
+            CampaignId = input.CampaignId,
             CreatedAt = now,
             UpdatedAt = now
         };

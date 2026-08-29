@@ -1,0 +1,293 @@
+@model HanaMedia.Models.Campaign
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var relatedTasks = ViewBag.RelatedTasks as IEnumerable<HanaMedia.Models.WorkTask> ?? Enumerable.Empty<HanaMedia.Models.WorkTask>();
+    
+    var statusClass = Model.Status switch
+    {
+        "planning" => "status-planning",
+        "running" => "status-running",
+        "paused" => "status-paused",
+        "completed" => "status-completed",
+        "cancelled" => "status-cancelled",
+        _ => "status-planning"
+    };
+    var statusLabel = Model.Status switch
+    {
+        "planning" => "Lên kế hoạch",
+        "running" => "Đang chạy",
+        "paused" => "Tạm dừng",
+        "completed" => "Hoàn thành",
+        "cancelled" => "Đã hủy",
+        _ => Model.Status
+    };
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Chi tiết Chiến dịch @Model.Name</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-planning { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-running { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-paused { background: #fffbeb; color: var(--warning-color); border: 1px solid #fef3c7; }
+    .status-completed { background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
+    .status-cancelled { background: #fff5f5; color: var(--danger-color); border: 1px solid #fed7d7; }
+
+    .back-link {
+      color: var(--muted-text);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      transition: color 0.15s;
+    }
+    .back-link:hover {
+      color: var(--primary-blue);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .info-label {
+      font-size: 13px;
+      color: var(--muted-text);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-size: 15px;
+      color: var(--text-color);
+      font-weight: 550;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 16px;
+      border-left: 4px solid var(--secondary-blue);
+      padding-left: 8px;
+    }
+
+    .empty-placeholder {
+      padding: 30px;
+      text-align: center;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px dashed #d2ddec;
+      color: var(--muted-text);
+      font-style: italic;
+    }
+
+    .task-status-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-todo { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-in_progress { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-review { background: #fffbeb; color: var(--warning-color); border: 1px solid #fef3c7; }
+    .status-need_revision { background: #fff5f5; color: var(--danger-color); border: 1px solid #fed7d7; }
+    .status-approved { background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
+    .status-done { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <a href="/Campaigns" class="back-link"><i class="ti ti-arrow-narrow-left"></i> Quay lại danh sách chiến dịch</a>
+
+    <div class="topbar" style="margin-bottom: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <h1 class="page-title" style="margin:0;">@Model.Name</h1>
+          <span class="status-badge @statusClass">@statusLabel</span>
+        </div>
+        <div class="page-sub" style="margin-top: 6px;">Client: <strong style="color: var(--primary-blue);">@Model.Client</strong></div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Left side: Details and links -->
+      <div>
+        <!-- Campaign Details Card -->
+        <div class="card">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <div class="info-label">Khách hàng (Client)</div>
+              <div class="info-value">@Model.Client</div>
+            </div>
+            <div>
+              <div class="info-label">Ngân sách chiến dịch</div>
+              <div class="info-value" style="color: var(--primary-blue); font-size: 16px; font-weight: 700;">@Model.Budget.ToString("N0") VNĐ</div>
+            </div>
+            <div>
+              <div class="info-label">Thời gian triển khai</div>
+              <div class="info-value">Từ @Model.StartDate.ToString("dd/MM/yyyy") đến @Model.EndDate.ToString("dd/MM/yyyy")</div>
+            </div>
+            <div>
+              <div class="info-label">Người phụ trách</div>
+              <div class="info-value">
+                <span style="font-weight: 700;">@Model.ManagerEmployee?.FullName</span>
+                <span style="color: var(--muted-text); font-size:13px; font-weight:normal;"> (@Model.ManagerEmployee?.Position)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <div class="info-label">Mô tả / Mục tiêu</div>
+            <div style="font-size: 14.5px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; white-space: pre-line;">@(string.IsNullOrWhiteSpace(Model.Description) ? "Không có mô tả chi tiết." : Model.Description)</div>
+          </div>
+
+          @if (!string.IsNullOrWhiteSpace(Model.Notes))
+          {
+            <div>
+              <div class="info-label">Ghi chú</div>
+              <div style="font-size: 13.5px; line-height: 1.4; color: var(--muted-text); background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #cbd5e1; white-space: pre-line;">@Model.Notes</div>
+            </div>
+          }
+        </div>
+
+        <!-- Section 1: Related Tasks -->
+        <div class="card">
+          <div class="section-title">Công việc liên quan (Task engine Module 6)</div>
+          
+          @if (!relatedTasks.Any())
+          {
+            <div class="empty-placeholder">Chưa có công việc nào được gán trực tiếp cho chiến dịch này.</div>
+          }
+          else
+          {
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tên công việc</th>
+                  <th>Người thực hiện</th>
+                  <th>Hạn chót</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align: right;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var task in relatedTasks)
+                {
+                  var taskStatusClass = task.Status switch
+                  {
+                      "todo" => "status-todo",
+                      "in_progress" => "status-in_progress",
+                      "review" => "status-review",
+                      "need_revision" => "status-need_revision",
+                      "approved" => "status-approved",
+                      "done" => "status-done",
+                      _ => "status-todo"
+                  };
+                  var taskStatusLabel = task.Status switch
+                  {
+                      "todo" => "Cần làm",
+                      "in_progress" => "Đang chạy",
+                      "review" => "Chờ duyệt",
+                      "need_revision" => "Cần sửa",
+                      "approved" => "Đã duyệt",
+                      "done" => "Hoàn thành",
+                      _ => task.Status
+                  };
+
+                  <tr>
+                    <td style="font-weight: 600;">@task.Title</td>
+                    <td>@task.AssignedEmployee?.FullName</td>
+                    <td>@task.Deadline.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><span class="task-status-chip @taskStatusClass">@taskStatusLabel</span></td>
+                    <td style="text-align: right;">
+                      <a href="/Tasks/Workspace/@task.Id" class="btn-action btn-action-view" target="_blank"><i class="ti ti-arrow-up-right"></i> Vào Workspace</a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </div>
+
+      <!-- Right side: Placeholders for booking & ideas -->
+      <div>
+        <!-- Section 2: Bookings Placeholder -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="section-title">Booking liên quan (Module 9)</div>
+          <div class="empty-placeholder" style="padding: 24px 16px;">
+            <i class="ti ti-lock" style="font-size: 20px; display: block; margin-bottom: 6px; color: var(--muted-text);"></i>
+            Chưa có dữ liệu
+          </div>
+        </div>
+
+        <!-- Section 3: Ideas Placeholder -->
+        <div class="card">
+          <div class="section-title">Ý tưởng liên quan (Module 13)</div>
+          <div class="empty-placeholder" style="padding: 24px 16px;">
+            <i class="ti ti-lock" style="font-size: 20px; display: block; margin-bottom: 6px; color: var(--muted-text);"></i>
+            Chưa có dữ liệu
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

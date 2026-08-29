@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HanaMedia — Giám sát Booking &amp; Chiến dịch (Giám đốc)</title>
+  <title>HanaMedia — Giám sát Booking &amp; Thù lao (Giám đốc)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -60,18 +60,18 @@
 <main class="main">
     <div class="topbar">
       <div>
-        <div class="page-title">Quản lý Booking &amp; Chiến dịch</div>
-        <div class="page-sub">Giám sát các chiến dịch quảng cáo, trạng thái booking KOL và tình hình phân bổ thù lao</div>
+        <div class="page-title">Giám sát Booking &amp; Thù lao</div>
+        <div class="page-sub">Giám sát trạng thái booking KOL và tình hình phân bổ thù lao</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="/Campaigns" class="btn-primary-blue" style="text-decoration:none;"><i class="ti ti-rocket"></i> Xem quản lý Chiến dịch &rarr;</a>
       </div>
     </div>
 
     <!-- TAB NAVIGATION -->
     <div class="card" style="padding: 16px 20px 0 20px; margin-bottom: 0;">
       <div class="tab-headers">
-        <div class="tab-header active" onclick="switchTab(event, 'campaigns')">
-          <i class="ti ti-rocket"></i> Chiến dịch
-        </div>
-        <div class="tab-header" onclick="switchTab(event, 'bookings')">
+        <div class="tab-header active" onclick="switchTab(event, 'bookings')">
           <i class="ti ti-star"></i> Booking KOL
         </div>
         <div class="tab-header" onclick="switchTab(event, 'wage-overview')">
@@ -80,105 +80,8 @@
       </div>
     </div>
 
-    <!-- TAB 1: Chiến dịch -->
-    <div id="tab-campaigns" class="tab-content active">
-      <div class="card" style="margin-bottom: 22px;">
-        <div class="card-head">
-          <div class="card-title">Danh sách chiến dịch (Campaigns) đang chạy</div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Chiến dịch</th>
-              <th>Khách hàng (Client)</th>
-              <th>Ngân sách</th>
-              <th>Số lượng Booking</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Tết Sum Vầy 2027</strong></td>
-              <td>Vinamilk</td>
-              <td>1.2 tỷ đ</td>
-              <td>12 booking</td>
-              <td><span class="status-chip status-good">Đang chạy</span></td>
-            </tr>
-            <tr>
-              <td><strong>Mùa Hè Rực Rỡ</strong></td>
-              <td>Traveloka</td>
-              <td>850 triệu đ</td>
-              <td>8 booking</td>
-              <td><span class="status-chip status-good">Đang chạy</span></td>
-            </tr>
-            <tr>
-              <td><strong>Glow Up Your Skin</strong></td>
-              <td>Cocoon</td>
-              <td>450 triệu đ</td>
-              <td>5 booking</td>
-              <td><span class="status-chip status-warn">Đang thương lượng</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title">Danh sách Booking KOL/KOC</div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Client &amp; Chiến dịch</th>
-              <th>KOL/KOC</th>
-              <th>Giá Booking</th>
-              <th>Chi phí thực tế</th>
-              <th>Người phụ trách</th>
-              <th>Trạng thái</th>
-              <th style="text-align: right;">Thù lao nhân viên</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Nguyễn Thị H (KOL)</td>
-              <td>10,000,000 đ</td>
-              <td>4,000,000 đ</td>
-              <td>Phạm Thu Hà</td>
-              <td><span class="status-chip status-good">Đang chạy</span></td>
-              <td style="text-align: right;">
-                <button class="btn-mini" onclick="openSalaryModal('Nguyễn Thị H', 10000000, [{'name': 'Phạm Thu Hà', 'val': 3000000}, {'name': 'Đỗ Minh Khôi', 'val': 3000000}, {'name': 'Lê Văn C', 'val': 4000000}])">Xem chi tiết</button>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>Traveloka — Mùa Hè Rực Rỡ</strong></td>
-              <td>Trần Văn K (KOC)</td>
-              <td>25,000,000 đ</td>
-              <td>11,000,000 đ</td>
-              <td>Nguyễn Anh Tuấn</td>
-              <td><span class="status-chip status-good">Hoàn thành</span></td>
-              <td style="text-align: right;">
-                <button class="btn-mini" onclick="openSalaryModal('Trần Văn K', 25000000, [{'name': 'Phạm Thu Hà', 'val': 10000000}, {'name': 'Nguyễn Anh Tuấn', 'val': 15000000}])">Xem chi tiết</button>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Đặng Ngọc L (KOL lớn)</td>
-              <td>480,000,000 đ</td>
-              <td>220,000,000 đ</td>
-              <td>Nguyễn Anh Tuấn</td>
-              <td><span class="status-chip status-warn">Đang thương lượng</span></td>
-              <td style="text-align: right;">
-                <button class="btn-mini" onclick="openSalaryModal('Đặng Ngọc L', 480000000, [{'name': 'Nguyễn Anh Tuấn', 'val': 480000000}])">Xem chi tiết</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- TAB 2: Booking KOL (chi tiết) -->
-    <div id="tab-bookings" class="tab-content">
+    <div id="tab-bookings" class="tab-content active">
       <div class="card">
         <div class="card-head">
           <div class="card-title">Danh sách Booking KOL/KOC — Chi tiết</div>

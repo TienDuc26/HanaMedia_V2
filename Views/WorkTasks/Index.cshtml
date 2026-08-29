@@ -468,6 +468,20 @@
           <label>Mã đối tượng liên kết (ID)</label>
           <input type="number" class="form-control" name="RelatedId" min="1" placeholder="VD: 123">
         </div>
+        
+        <div class="form-group">
+          <label>Chiến dịch liên kết (Campaign)</label>
+          <select class="form-control" name="CampaignId">
+            <option value="">-- Không chọn chiến dịch --</option>
+            @if (ViewBag.Campaigns != null)
+            {
+              foreach (var c in (IEnumerable<HanaMedia.Models.Campaign>)ViewBag.Campaigns)
+              {
+                <option value="@c.Id">@c.Name (@c.Client)</option>
+              }
+            }
+          </select>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-mini" onclick="closeModal('createTaskModal')">Hủy</button>

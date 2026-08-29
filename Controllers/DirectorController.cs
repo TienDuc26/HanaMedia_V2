@@ -19,8 +19,9 @@ namespace HanaMedia.Controllers
             _monitoringService = monitoringService;
             _context = context;
         }
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
         {
+            ViewBag.RunningCampaignsCount = await _context.Campaigns.CountAsync(c => c.Status == "running", cancellationToken);
             return View();
         }
 

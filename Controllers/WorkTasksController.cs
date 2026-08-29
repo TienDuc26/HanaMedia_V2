@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using HanaMedia.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HanaMedia.Controllers;
 
@@ -20,11 +22,13 @@ public sealed class WorkTasksController : Controller
 {
     private readonly IWorkTaskService _service;
     private readonly IWebHostEnvironment _env;
+    private readonly ApplicationDbContext _context;
 
-    public WorkTasksController(IWorkTaskService service, IWebHostEnvironment env)
+    public WorkTasksController(IWorkTaskService service, IWebHostEnvironment env, ApplicationDbContext context)
     {
         _service = service;
         _env = env;
+        _context = context;
     }
 
     [HttpGet("Tasks")]
@@ -35,6 +39,12 @@ public sealed class WorkTasksController : Controller
     {
         if (!TryGetIdentity(out var userId, out var role)) return Challenge();
         var model = await _service.GetPageAsync(userId, role, module, search, page, employeeId, create, status, reviewerId, overdue, cancellationToken);
+        
+        ViewBag.Campaigns = await _context.Campaigns
+            .Where(c => c.Status != "cancelled")
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(cancellationToken);
+
         return View(model);
     }
 

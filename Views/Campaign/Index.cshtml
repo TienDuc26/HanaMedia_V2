@@ -1,0 +1,505 @@
+@model IEnumerable<HanaMedia.Models.Campaign>
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var isBookingManager = role == AppRoles.BookingManager;
+    var activeEmployees = ViewBag.Employees as IEnumerable<HanaMedia.Models.Employee> ?? Enumerable.Empty<HanaMedia.Models.Employee>();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý Chiến dịch (Campaign)</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .campaign-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .form-control-filter {
+      padding: 8px 12px;
+      border: 1px solid #d9e2ef;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-color);
+      background-color: var(--white);
+    }
+
+    .btn-primary-blue {
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-primary-blue:hover {
+      background: #092e59;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-planning { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-running { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-paused { background: #fffbeb; color: var(--warning-color); border: 1px solid #fef3c7; }
+    .status-completed { background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
+    .status-cancelled { background: #fff5f5; color: var(--danger-color); border: 1px solid #fed7d7; }
+
+    .btn-action {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 550;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+    .btn-action-view {
+      color: var(--primary-blue);
+      border-color: rgba(11, 58, 110, 0.15);
+      background: #f8fafc;
+    }
+    .btn-action-view:hover {
+      background: #f1f5f9;
+    }
+    .btn-action-edit {
+      color: var(--secondary-blue);
+      border-color: rgba(37, 99, 235, 0.15);
+      background: #eff6ff;
+    }
+    .btn-action-edit:hover {
+      background: #dbeafe;
+    }
+    .btn-action-delete {
+      color: var(--danger-color);
+      border-color: rgba(220, 38, 38, 0.15);
+      background: #fff5f5;
+    }
+    .btn-action-delete:hover {
+      background: #fee2e2;
+    }
+
+    /* Modal styling matching standard 3-part layout */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: var(--white);
+      width: 100%;
+      max-width: 600px;
+      border-radius: 14px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-blue);
+    }
+    .modal-close {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--muted-text);
+      transition: color 0.15s;
+    }
+    .modal-close:hover {
+      color: var(--danger-color);
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    #campaignForm {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d2ddec;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+    .form-control:focus {
+      border-color: var(--secondary-blue);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Quản lý Chiến dịch (Campaign)</div>
+        <div class="page-sub">Theo dõi và quản lý các chiến dịch quảng bá, đối tác và kết quả kinh doanh.</div>
+      </div>
+    </div>
+
+    <!-- Alert messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 550;">
+        <i class="ti ti-circle-check"></i> @TempData["SuccessMessage"]
+      </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+      <div style="background: #fff5f5; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 550;">
+        <i class="ti ti-alert-circle"></i> @TempData["ErrorMessage"]
+      </div>
+    }
+
+    <div class="card">
+      <div class="campaign-toolbar">
+        <form method="get" action="/Campaigns" class="filter-group">
+          <input type="text" name="search" value="@ViewBag.Search" placeholder="Tìm tên chiến dịch, client..." class="form-control-filter" style="width: 260px;">
+          <select name="status" class="form-control-filter">
+            <option value="">-- Tất cả trạng thái hoạt động --</option>
+            <option value="planning" selected="@(ViewBag.Status == "planning")">Lên kế hoạch</option>
+            <option value="running" selected="@(ViewBag.Status == "running")">Đang chạy</option>
+            <option value="paused" selected="@(ViewBag.Status == "paused")">Tạm dừng</option>
+            <option value="completed" selected="@(ViewBag.Status == "completed")">Hoàn thành</option>
+            <option value="cancelled" selected="@(ViewBag.Status == "cancelled")">Hủy / Lưu trữ</option>
+          </select>
+          <button type="submit" class="btn-primary-blue"><i class="ti ti-filter"></i>Lọc</button>
+          @if (!string.IsNullOrEmpty(ViewBag.Search) || !string.IsNullOrEmpty(ViewBag.Status))
+          {
+            <a href="/Campaigns" class="btn-secondary" style="text-decoration: none; padding: 8px 14px; font-size: 13.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-refresh"></i>Xóa bộ lọc</a>
+          }
+        </form>
+
+        @if (isBookingManager)
+        {
+          <button class="btn-primary-blue" onclick="openCreateModal()"><i class="ti ti-plus"></i>Tạo chiến dịch mới</button>
+        }
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Tên chiến dịch</th>
+            <th>Client</th>
+            <th>Thời gian</th>
+            <th>Ngân sách</th>
+            <th>Người phụ trách</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (!Model.Any())
+          {
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--muted-text); padding: 40px; font-style: italic;">Không tìm thấy chiến dịch nào.</td>
+            </tr>
+          }
+          else
+          {
+            foreach (var item in Model)
+            {
+              var statusClass = item.Status switch
+              {
+                "planning" => "status-planning",
+                "running" => "status-running",
+                "paused" => "status-paused",
+                "completed" => "status-completed",
+                "cancelled" => "status-cancelled",
+                _ => "status-planning"
+              };
+              var statusLabel = item.Status switch
+              {
+                "planning" => "Lên kế hoạch",
+                "running" => "Đang chạy",
+                "paused" => "Tạm dừng",
+                "completed" => "Hoàn thành",
+                "cancelled" => "Đã hủy",
+                _ => item.Status
+              };
+
+              <tr>
+                <td style="font-weight: 700; color: var(--primary-blue);"><a href="/Campaigns/Details/@item.Id" style="text-decoration: none; color: inherit;">@item.Name</a></td>
+                <td>@item.Client</td>
+                <td style="font-size: 13px;">
+                  <div>Bắt đầu: @item.StartDate.ToString("dd/MM/yyyy")</div>
+                  <div style="color: var(--muted-text);">Kết thúc: @item.EndDate.ToString("dd/MM/yyyy")</div>
+                </td>
+                <td style="font-weight: 600; color: var(--primary-blue);">@item.Budget.ToString("N0") VNĐ</td>
+                <td>
+                  <div style="font-weight: 550;">@item.ManagerEmployee?.FullName</div>
+                  <div style="font-size:12px; color:var(--muted-text);">@item.ManagerEmployee?.Position</div>
+                </td>
+                <td><span class="status-badge @statusClass">@statusLabel</span></td>
+                <td style="text-align: right;">
+                  <a href="/Campaigns/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Xem chi tiết</a>
+                  @if (isBookingManager)
+                  {
+                    <button class="btn-action btn-action-edit" onclick="openEditModal(@Json.Serialize(new { id = item.Id, name = item.Name, client = item.Client, budget = item.Budget, status = item.Status, managerEmployeeId = item.ManagerEmployeeId, description = item.Description, notes = item.Notes }), '@item.StartDate.ToString("yyyy-MM-dd")', '@item.EndDate.ToString("yyyy-MM-dd")')"><i class="ti ti-edit"></i>Sửa</button>
+                    <form method="post" action="/Campaigns/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy/ngừng hoạt động chiến dịch này?');">
+                      @Html.AntiForgeryToken()
+                      <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Hủy</button>
+                    </form>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Form Thêm / Sửa -->
+<div class="modal-overlay" id="campaignModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Tạo chiến dịch mới</span>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="campaignForm" method="post" action="/Campaigns/Create">
+      @Html.AntiForgeryToken()
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="campaignName">Tên chiến dịch *</label>
+          <input type="text" id="campaignName" name="Name" required placeholder="Nhập tên chiến dịch quảng bá..." class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campaignClient">Khách hàng (Client) *</label>
+          <input type="text" id="campaignClient" name="Client" required placeholder="Nhập tên đối tác/nhãn hàng..." class="form-control">
+        </div>
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" for="startDate">Ngày bắt đầu *</label>
+            <input type="date" id="startDate" name="startDateStr" required class="form-control">
+          </div>
+          <div>
+            <label class="form-label" for="endDate">Ngày kết thúc *</label>
+            <input type="date" id="endDate" name="endDateStr" required class="form-control">
+          </div>
+        </div>
+        <div class="form-group" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px;">
+          <div>
+            <label class="form-label" for="campaignBudget">Ngân sách dự kiến (VNĐ) *</label>
+            <input type="number" id="campaignBudget" name="Budget" required placeholder="Ví dụ: 100000000" class="form-control">
+          </div>
+          <div>
+            <label class="form-label" for="campaignStatus">Trạng thái</label>
+            <select id="campaignStatus" name="Status" class="form-control">
+              <option value="planning">Lên kế hoạch</option>
+              <option value="running">Đang chạy</option>
+              <option value="paused">Tạm dừng</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="cancelled">Hủy / Lưu trữ</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="managerId">Người phụ trách (Quản lý) *</label>
+          <select id="managerId" name="ManagerEmployeeId" required class="form-control">
+            <option value="">-- Chọn người phụ trách --</option>
+            @foreach (var emp in activeEmployees)
+            {
+              <option value="@emp.Id">@emp.FullName (@emp.Position)</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campaignDescription">Mô tả / Mục tiêu</label>
+          <textarea id="campaignDescription" name="Description" rows="3" placeholder="Nhập mục tiêu chiến dịch, KPI, đối tượng khách hàng mục tiêu..." class="form-control" style="resize: vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campaignNotes">Ghi chú thêm</label>
+          <textarea id="campaignNotes" name="Notes" rows="2" placeholder="Ghi chú khác..." class="form-control" style="resize: vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Hủy</button>
+        <button type="submit" class="btn-primary-blue" style="padding: 9px 20px;">Lưu lại</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCreateModal() {
+    var modal = document.getElementById('campaignModal');
+    var form = document.getElementById('campaignForm');
+    document.getElementById('modalTitle').textContent = 'Tạo chiến dịch mới';
+    form.action = '/Campaigns/Create';
+    form.reset();
+    
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = today;
+    document.getElementById('campaignStatus').value = 'planning';
+    
+    modal.classList.add('active');
+  }
+
+  function openEditModal(campaign, startDateStr, endDateStr) {
+    var modal = document.getElementById('campaignModal');
+    var form = document.getElementById('campaignForm');
+    document.getElementById('modalTitle').textContent = 'Cập nhật chiến dịch';
+    form.action = '/Campaigns/Edit/' + campaign.id;
+    
+    document.getElementById('campaignName').value = campaign.name;
+    document.getElementById('campaignClient').value = campaign.client;
+    document.getElementById('startDate').value = startDateStr;
+    document.getElementById('endDate').value = endDateStr;
+    document.getElementById('campaignBudget').value = campaign.budget;
+    document.getElementById('campaignStatus').value = campaign.status;
+    document.getElementById('managerId').value = campaign.managerEmployeeId;
+    document.getElementById('campaignDescription').value = campaign.description || '';
+    document.getElementById('campaignNotes').value = campaign.notes || '';
+    
+    modal.classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('campaignModal').classList.remove('active');
+  }
+
+  document.getElementById('campaignModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+</script>
+</body>
+</html>

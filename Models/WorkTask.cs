@@ -13,6 +13,7 @@ public sealed class WorkTask
     public string Status { get; set; } = "todo";
     public string? RelatedType { get; set; }
     public int? RelatedId { get; set; }
+    public int? CampaignId { get; set; }
     public string? DraftData { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -22,6 +23,7 @@ public sealed class WorkTask
     public Employee AssignedEmployee { get; set; } = null!;
     public User CreatedByUser { get; set; } = null!;
     public User ReviewerUser { get; set; } = null!;
+    public Campaign? Campaign { get; set; }
     public ICollection<WorkTaskHistory> History { get; set; } = new List<WorkTaskHistory>();
     public ICollection<WorkTaskSubmission> Submissions { get; set; } = new List<WorkTaskSubmission>();
 }

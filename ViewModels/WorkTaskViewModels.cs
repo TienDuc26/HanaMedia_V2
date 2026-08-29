@@ -97,6 +97,8 @@ public sealed class CreateWorkTaskInputModel
 
     [Required(ErrorMessage = "Vui lòng chọn người duyệt.")]
     public int ReviewerUserId { get; set; }
+
+    public int? CampaignId { get; set; }
 }
 
 public sealed class TransitionWorkTaskInputModel

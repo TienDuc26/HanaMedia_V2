@@ -23,10 +23,9 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<BusinessConfig> BusinessConfigs { get; set; }
 
+    public virtual DbSet<Campaign> Campaigns { get; set; }
     public virtual DbSet<Department> Departments { get; set; }
-
     public virtual DbSet<Employee> Employees { get; set; }
-
     public virtual DbSet<Idea> Ideas { get; set; }
 
     public virtual DbSet<Kol> Kols { get; set; }
@@ -623,6 +622,8 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
             entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
 
+            entity.Property(e => e.CampaignId).HasColumnName("campaign_id");
+
             entity.HasOne(e => e.AssignedEmployee).WithMany(e => e.AssignedWorkTasks)
                 .HasForeignKey(e => e.AssignedEmployeeId).OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_work_tasks_employees_assigned_employee_id");
@@ -632,6 +633,34 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(e => e.ReviewerUser).WithMany(e => e.ReviewedWorkTasks)
                 .HasForeignKey(e => e.ReviewerUserId).OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_work_tasks_users_reviewer_user_id");
+            entity.HasOne(e => e.Campaign).WithMany(e => e.WorkTasks)
+                .HasForeignKey(e => e.CampaignId).OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_work_tasks_campaigns_campaign_id");
+        });
+
+        modelBuilder.Entity<Campaign>(entity =>
+        {
+            entity.ToTable("campaigns", table =>
+            {
+                table.HasCheckConstraint("chk_campaign_status", "[status] IN ('planning', 'running', 'paused', 'completed', 'cancelled')");
+            });
+            entity.HasKey(e => e.Id).HasName("PK_campaigns");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Client).HasColumnName("client").HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.StartDate).HasColumnName("start_date").IsRequired();
+            entity.Property(e => e.EndDate).HasColumnName("end_date").IsRequired();
+            entity.Property(e => e.Budget).HasColumnName("budget").HasColumnType("decimal(18, 2)").IsRequired();
+            entity.Property(e => e.ManagerEmployeeId).HasColumnName("manager_employee_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(30).IsUnicode(false).HasDefaultValue("planning");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.ManagerEmployee).WithMany()
+                .HasForeignKey(d => d.ManagerEmployeeId).OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_campaigns_employees_manager_employee_id");
         });
 
         modelBuilder.Entity<WorkTaskHistory>(entity =>
