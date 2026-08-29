@@ -397,9 +397,6 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("kols", table =>
             {
                 table.HasCheckConstraint(
-                    "chk_kol_platform",
-                    "[platform] IN ('TikTok', 'Instagram', 'YouTube', 'Facebook')");
-                table.HasCheckConstraint(
                     "chk_kol_rating",
                     "[rating_score] BETWEEN 1 AND 5");
                 table.HasCheckConstraint(
@@ -426,6 +423,9 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("decimal(5, 2)")
                 .HasColumnName("engagement_rate");
             entity.Property(e => e.FollowersCount).HasColumnName("followers_count");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Location)
                 .HasMaxLength(100)
                 .HasColumnName("location");
@@ -433,10 +433,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("name");
             entity.Property(e => e.Niche)
-                .HasMaxLength(100)
+                .HasMaxLength(255)
                 .HasColumnName("niche");
             entity.Property(e => e.Platform)
-                .HasMaxLength(20)
+                .HasMaxLength(200)
                 .IsUnicode(false)
                 .HasColumnName("platform");
             entity.Property(e => e.ProfileLink)

@@ -1,0 +1,274 @@
+@model HanaMedia.Models.Kol
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var isBookingManager = role == AppRoles.BookingManager;
+    var isBookingStaff = role == AppRoles.BookingStaff;
+
+    var statusClass = Model.Status switch
+    {
+        "tiem_nang" => "status-tiem_nang",
+        "da_lien_he" => "status-da_lien_he",
+        "dang_deal" => "status-dang_deal",
+        "da_chot" => "status-da_chot",
+        "dang_chay" => "status-dang_chay",
+        "hoan_thanh" => "status-hoan_thanh",
+        _ => "status-tiem_nang"
+    };
+    var statusLabel = Model.Status switch
+    {
+        "tiem_nang" => "Tiềm năng",
+        "da_lien_he" => "Đã liên hệ",
+        "dang_deal" => "Đang deal",
+        "da_chot" => "Đã chốt",
+        "dang_chay" => "Đang chạy",
+        "hoan_thanh" => "Hoàn thành",
+        _ => Model.Status
+    };
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Chi tiết KOL @Model.Name</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-tiem_nang { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-da_lien_he { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-dang_deal { background: #fffbeb; color: var(--warning-color); border: 1px solid #fde68a; }
+    .status-da_chot { background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
+    .status-dang_chay { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
+    .status-hoan_thanh { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+    .tag {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 12.5px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .rating-stars {
+      color: #fbbf24;
+      font-size: 18px;
+    }
+
+    .back-link {
+      color: var(--muted-text);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      transition: color 0.15s;
+    }
+    .back-link:hover {
+      color: var(--primary-blue);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .info-label {
+      font-size: 13px;
+      color: var(--muted-text);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-size: 15px;
+      color: var(--text-color);
+      font-weight: 550;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 16px;
+      border-left: 4px solid var(--secondary-blue);
+      padding-left: 8px;
+    }
+
+    .empty-placeholder {
+      padding: 30px;
+      text-align: center;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px dashed #d2ddec;
+      color: var(--muted-text);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <a href="/Kols" class="back-link"><i class="ti ti-arrow-narrow-left"></i> Quay lại danh sách KOL</a>
+
+    <div class="topbar" style="margin-bottom: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <h1 class="page-title" style="margin:0;">@Model.Name</h1>
+          <span class="status-badge @statusClass">@statusLabel</span>
+          @if (Model.RatingScore.HasValue)
+          {
+            <div class="rating-stars">
+              @for (int i = 1; i <= 5; i++)
+              {
+                if (i <= Model.RatingScore.Value)
+                {
+                  <i class="ti ti-star-filled"></i>
+                }
+                else
+                {
+                  <i class="ti ti-star"></i>
+                }
+              }
+            </div>
+          }
+        </div>
+        <div class="page-sub" style="margin-top: 6px;">Khu vực hoạt động: <strong style="color: var(--primary-blue);">@Model.Location</strong></div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Left side: Details -->
+      <div>
+        <!-- KOL Profile Card -->
+        <div class="card">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <div class="info-label">Followers Count</div>
+              <div class="info-value" style="font-size: 18px; font-weight: 700; color: var(--primary-blue);">@Model.FollowersCount.ToString("N0")</div>
+            </div>
+            <div>
+              <div class="info-label">Tỷ lệ tương tác (Engagement)</div>
+              <div class="info-value" style="font-size: 18px; font-weight: 700; color: var(--secondary-blue);">@Model.EngagementRate.ToString("F1")%</div>
+            </div>
+            <div>
+              <div class="info-label">Giá booking tham khảo</div>
+              <div class="info-value" style="font-size: 17px; font-weight: 700; color: var(--success-color);">@Model.BookingPrice.ToString("N0") VNĐ</div>
+            </div>
+            <div>
+              <div class="info-label">Người phụ trách (Staff)</div>
+              <div class="info-value">
+                <span style="font-weight: 700;">@(Model.ResponsibleStaff?.FullName ?? "Chưa được gán")</span>
+                <span style="color: var(--muted-text); font-size:13px; font-weight:normal;"> (@Model.ResponsibleStaff?.Position)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <div class="info-label">Nền tảng hoạt động</div>
+            <div style="margin-bottom: 16px;">
+              @if (!string.IsNullOrEmpty(Model.Platform))
+              {
+                foreach (var plat in Model.Platform.Split(','))
+                {
+                  <span class="tag" style="background: #eff6ff; color: var(--secondary-blue);">@plat.Trim()</span>
+                }
+              }
+            </div>
+          </div>
+
+          <div>
+            <div class="info-label">Chủ đề (Niche / Tags)</div>
+            <div style="margin-bottom: 16px;">
+              @if (!string.IsNullOrEmpty(Model.Niche))
+              {
+                foreach (var tag in Model.Niche.Split(','))
+                {
+                  <span class="tag">@tag.Trim()</span>
+                }
+              }
+            </div>
+          </div>
+
+          <div>
+            <div class="info-label">Link tài khoản</div>
+            <div class="info-value">
+              <a href="@Model.ProfileLink" target="_blank" style="color: var(--secondary-blue); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                @Model.ProfileLink <i class="ti ti-external-link" style="font-size: 14px;"></i>
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <div class="info-label">Thông tin liên hệ</div>
+            <div class="info-value" style="background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #cbd5e1; font-weight: 600;">@Model.ContactInfo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Booking History Placeholder -->
+      <div>
+        <div class="card">
+          <div class="section-title">Lịch sử booking (Module 9)</div>
+          <div class="empty-placeholder" style="padding: 30px 16px;">
+            <i class="ti ti-lock" style="font-size: 24px; display: block; margin-bottom: 8px; color: var(--muted-text);"></i>
+            Chưa có dữ liệu (chờ Module 9 — Quản lý Booking)
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

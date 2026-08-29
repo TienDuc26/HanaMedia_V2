@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HanaMedia.Models;
@@ -9,7 +9,7 @@ public partial class Kol
 
     public string Name { get; set; } = null!;
 
-    public string Platform { get; set; } = null!;
+    public string? Platform { get; set; }
 
     public string ProfileLink { get; set; } = null!;
 
@@ -17,7 +17,7 @@ public partial class Kol
 
     public decimal EngagementRate { get; set; }
 
-    public string Niche { get; set; } = null!;
+    public string? Niche { get; set; }
 
     public decimal BookingPrice { get; set; }
 
@@ -30,6 +30,8 @@ public partial class Kol
     public byte? RatingScore { get; set; }
 
     public string? Status { get; set; }
+
+    public bool IsActive { get; set; } = true;
 
     public DateTime? CreatedAt { get; set; }
 

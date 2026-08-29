@@ -1,0 +1,663 @@
+@model IEnumerable<HanaMedia.Models.Kol>
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var isBookingManager = role == AppRoles.BookingManager;
+    var isBookingStaff = role == AppRoles.BookingStaff;
+    var isWritable = isBookingManager || isBookingStaff;
+
+    var selectedPlatform = ViewBag.Platform as string;
+    var selectedStatus = ViewBag.Status as string;
+    var searchKeyword = ViewBag.Search as string;
+
+    var employees = ViewBag.Employees as IEnumerable<HanaMedia.Models.Employee> ?? Enumerable.Empty<HanaMedia.Models.Employee>();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý KOL/KOC</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+      --line: #e2e8f0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-tiem_nang { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-da_lien_he { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-dang_deal { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+    .status-da_chot { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .status-dang_chay { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
+    .status-hoan_thanh { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+    .tag {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 4px;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .rating-stars {
+      color: #fbbf24;
+      font-size: 14px;
+    }
+
+    /* Modal styling matching standard 3-part layout */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: var(--white);
+      width: 100%;
+      max-width: 650px;
+      border-radius: 14px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-blue);
+    }
+    .modal-close {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--muted-text);
+    }
+    .modal-close:hover {
+      color: var(--danger-color);
+    }
+    #kolForm {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d2ddec;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+    .form-control:focus {
+      border-color: var(--secondary-blue);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 550;
+      cursor: pointer;
+    }
+    .niche-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      max-width: 150px;
+    }
+    .btn-primary-blue {
+      background-color: var(--primary-blue) !important;
+      color: var(--white) !important;
+      border: none !important;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-primary-blue:hover {
+      background-color: var(--secondary-blue) !important;
+    }
+    .btn-action {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 550;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+    .btn-action-view {
+      color: var(--primary-blue);
+      border-color: rgba(11, 58, 110, 0.15);
+      background: #f8fafc;
+    }
+    .btn-action-view:hover {
+      background: #f1f5f9;
+    }
+    .btn-action-edit {
+      color: var(--secondary-blue);
+      border-color: rgba(37, 99, 235, 0.15);
+      background: #eff6ff;
+    }
+    .btn-action-edit:hover {
+      background: #dbeafe;
+    }
+    .btn-action-delete {
+      color: var(--danger-color);
+      border-color: rgba(220, 38, 38, 0.15);
+      background: #fff5f5;
+    }
+    .btn-action-delete:hover {
+      background: #fee2e2;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Cơ sở dữ liệu KOL/KOC</h1>
+        <div class="page-sub">Lưu trữ, theo dõi và đánh giá danh sách KOL/KOC phục vụ cho hoạt động truyền thông và Booking</div>
+      </div>
+      @if (isWritable)
+      {
+        <button class="btn-primary-blue" onclick="openCreateModal()"><i class="ti ti-plus"></i> Thêm KOL mới</button>
+      }
+    </div>
+
+    <!-- Banner thông báo Success/Error -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+      <div class="alert alert-success" style="margin-bottom: 20px;">
+        <i class="ti ti-circle-check"></i> @TempData["SuccessMessage"]
+      </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+      <div class="alert alert-danger" style="margin-bottom: 20px;">
+        <i class="ti ti-alert-circle"></i> @TempData["ErrorMessage"]
+      </div>
+    }
+
+    <!-- BỘ LỌC TÌM KIẾM -->
+    <div class="card" style="padding: 16px 20px; margin-bottom: 24px;">
+      <form method="get" action="/Kols" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 2; min-width: 200px;">
+          <label class="form-label" style="margin-bottom: 4px;">Tìm kiếm</label>
+          <input class="form-control" name="search" value="@searchKeyword" placeholder="Nhập tên KOL, chủ đề/niche...">
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+          <label class="form-label" style="margin-bottom: 4px;">Nền tảng</label>
+          <select class="form-control" name="platform">
+            <option value="">-- Tất cả --</option>
+            <option value="TikTok" selected="@(selectedPlatform == "TikTok")">TikTok</option>
+            <option value="Instagram" selected="@(selectedPlatform == "Instagram")">Instagram</option>
+            <option value="YouTube" selected="@(selectedPlatform == "YouTube")">YouTube</option>
+            <option value="Facebook" selected="@(selectedPlatform == "Facebook")">Facebook</option>
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+          <label class="form-label" style="margin-bottom: 4px;">Trạng thái hợp tác</label>
+          <select class="form-control" name="status">
+            <option value="">-- Tất cả --</option>
+            <option value="tiem_nang" selected="@(selectedStatus == "tiem_nang")">Tiềm năng</option>
+            <option value="da_lien_he" selected="@(selectedStatus == "da_lien_he")">Đã liên hệ</option>
+            <option value="dang_deal" selected="@(selectedStatus == "dang_deal")">Đang deal</option>
+            <option value="da_chot" selected="@(selectedStatus == "da_chot")">Đã chốt</option>
+            <option value="dang_chay" selected="@(selectedStatus == "dang_chay")">Đang chạy</option>
+            <option value="hoan_thanh" selected="@(selectedStatus == "hoan_thanh")">Hoàn thành</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn-primary-blue" type="submit" style="padding: 9px 24px;"><i class="ti ti-filter"></i> Lọc</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- BẢNG DANH SÁCH -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>KOL/KOC</th>
+            <th>Nền tảng</th>
+            <th style="text-align: right;">Follower</th>
+            <th style="text-align: right;">Tương tác</th>
+            <th>Chủ đề (Niche)</th>
+            <th>Người phụ trách</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (!Model.Any())
+          {
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--muted-text); padding: 40px; font-style: italic;">Không tìm thấy KOL/KOC nào.</td>
+            </tr>
+          }
+          else
+          {
+            foreach (var item in Model)
+            {
+              var statusClass = item.Status switch
+              {
+                  "tiem_nang" => "status-tiem_nang",
+                  "da_lien_he" => "status-da_lien_he",
+                  "dang_deal" => "status-dang_deal",
+                  "da_chot" => "status-da_chot",
+                  "dang_chay" => "status-dang_chay",
+                  "hoan_thanh" => "status-hoan_thanh",
+                  _ => "status-tiem_nang"
+              };
+              var statusLabel = item.Status switch
+              {
+                  "tiem_nang" => "Tiềm năng",
+                  "da_lien_he" => "Đã liên hệ",
+                  "dang_deal" => "Đang deal",
+                  "da_chot" => "Đã chốt",
+                  "dang_chay" => "Đang chạy",
+                  "hoan_thanh" => "Hoàn thành",
+                  _ => item.Status
+              };
+
+              <tr>
+                <td style="font-weight: 700; color: var(--primary-blue);">
+                  <a href="/Kols/Details/@item.Id" style="text-decoration: none; color: inherit;">@item.Name</a>
+                  @if (item.RatingScore.HasValue)
+                  {
+                    <div class="rating-stars" style="margin-top: 4px;">
+                      @for (int i = 1; i <= 5; i++)
+                      {
+                        if (i <= item.RatingScore.Value)
+                        {
+                          <i class="ti ti-star-filled"></i>
+                        }
+                        else
+                        {
+                          <i class="ti ti-star"></i>
+                        }
+                      }
+                    </div>
+                  }
+                </td>
+                <td>
+                  @if (!string.IsNullOrEmpty(item.Platform))
+                  {
+                    foreach (var plat in item.Platform.Split(','))
+                    {
+                      <span class="tag">@plat.Trim()</span>
+                    }
+                  }
+                </td>
+                <td style="text-align: right; font-weight: 600;">@item.FollowersCount.ToString("N0")</td>
+                <td style="text-align: right; font-weight: 600; color: var(--secondary-blue);">@item.EngagementRate.ToString("F1")%</td>
+                <td>
+                  @if (!string.IsNullOrEmpty(item.Niche))
+                  {
+                    <div class="niche-grid">
+                      @foreach (var nc in item.Niche.Split(','))
+                      {
+                        <span class="tag" style="background: #eff6ff; color: var(--secondary-blue); margin: 0;">@nc.Trim()</span>
+                      }
+                    </div>
+                  }
+                </td>
+                <td style="font-weight: 550;">
+                  @(item.ResponsibleStaff?.FullName ?? "Chưa giao")
+                  <div style="font-size: 11px; color: var(--muted-text);">@item.ResponsibleStaff?.Position</div>
+                </td>
+                <td><span class="status-badge @statusClass">@statusLabel</span></td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
+                    <a href="/Kols/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Chi tiết</a>
+                    @if (isWritable)
+                    {
+                      <button class="btn-action btn-action-edit" data-kol='@Json.Serialize(new { id = item.Id, name = item.Name, profileLink = item.ProfileLink, followersCount = item.FollowersCount, engagementRate = item.EngagementRate, bookingPrice = item.BookingPrice, location = item.Location, contactInfo = item.ContactInfo, ratingScore = item.RatingScore, status = item.Status, responsibleStaffId = item.ResponsibleStaffId, platform = item.Platform, niche = item.Niche })' onclick="openEditModal(this)"><i class="ti ti-edit"></i>Sửa</button>
+                    }
+                    @if (isBookingManager)
+                    {
+                      <form method="post" action="/Kols/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn ngừng hợp tác và ẩn KOL này khỏi danh sách?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Xóa</button>
+                      </form>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Form Thêm / Sửa -->
+<div class="modal-overlay" id="kolModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Thêm KOL mới</span>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="kolForm" method="post" action="/Kols/Create">
+      @Html.AntiForgeryToken()
+      <div class="modal-body">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tên KOL/KOC *</label>
+            <input class="form-control" name="Name" id="kolName" required minlength="2" placeholder="Nhập tên nghệ danh/họ tên">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Thông tin liên hệ *</label>
+            <input class="form-control" name="ContactInfo" id="kolContactInfo" required placeholder="SĐT, Email hoặc Zalo">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nền tảng hoạt động (Có thể chọn nhiều) *</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-item"><input type="checkbox" name="platforms" value="TikTok"> TikTok</label>
+            <label class="checkbox-item"><input type="checkbox" name="platforms" value="Instagram"> Instagram</label>
+            <label class="checkbox-item"><input type="checkbox" name="platforms" value="YouTube"> YouTube</label>
+            <label class="checkbox-item"><input type="checkbox" name="platforms" value="Facebook"> Facebook</label>
+            <label class="checkbox-item"><input type="checkbox" name="platforms" value="Khác"> Khác</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Link tài khoản chính (Profile Link) *</label>
+          <input class="form-control" type="url" name="ProfileLink" id="kolProfileLink" required placeholder="https://tiktok.com/@@name">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Followers Count *</label>
+            <input class="form-control" type="number" name="FollowersCount" id="kolFollowersCount" min="0" required placeholder="Ví dụ: 150000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tương tác trung bình (%) *</label>
+            <input class="form-control" type="number" step="0.1" name="EngagementRate" id="kolEngagementRate" min="0" max="100" required placeholder="Ví dụ: 4.5">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Chủ đề / Niche (Có thể chọn nhiều) *</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Làm đẹp"> Làm đẹp</label>
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Thời trang"> Thời trang</label>
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Ẩm thực"> Ẩm thực</label>
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Du lịch"> Du lịch</label>
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Công nghệ"> Công nghệ</label>
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Giải trí"> Giải trí</label>
+            <label class="checkbox-item"><input type="checkbox" name="niches" value="Khác"> Khác</label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Giá booking tham khảo (VNĐ) *</label>
+            <input class="form-control" type="number" name="BookingPrice" id="kolBookingPrice" min="0" required placeholder="Ví dụ: 15000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Khu vực hoạt động (Địa bàn) *</label>
+            <input class="form-control" name="Location" id="kolLocation" required placeholder="Ví dụ: Hà Nội, TP.HCM">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Đánh giá ban đầu (1-5 sao)</label>
+            <select class="form-control" name="RatingScore" id="kolRatingScore">
+              <option value="">-- Chưa đánh giá --</option>
+              <option value="5">⭐⭐⭐⭐⭐ (Tốt)</option>
+              <option value="4">⭐⭐⭐⭐ (Khá)</option>
+              <option value="3">⭐⭐⭐ (Trung bình)</option>
+              <option value="2">⭐⭐ (Kém)</option>
+              <option value="1">⭐ (Rất kém)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trạng thái hợp tác</label>
+            <select class="form-control" name="Status" id="kolStatus">
+              <option value="tiem_nang">Tiềm năng</option>
+              <option value="da_lien_he">Đã liên hệ</option>
+              <option value="dang_deal">Đang deal</option>
+              <option value="da_chot">Đã chốt</option>
+              <option value="dang_chay">Đang chạy</option>
+              <option value="hoan_thanh">Hoàn thành</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Người phụ trách (Staff) *</label>
+          @if (isBookingManager)
+          {
+            <select class="form-control" name="ResponsibleStaffId" id="kolResponsibleStaffId" required>
+              <option value="">-- Chọn nhân viên phụ trách --</option>
+              @foreach (var emp in employees)
+              {
+                <option value="@emp.Id">@emp.FullName (@emp.Position)</option>
+              }
+            </select>
+          }
+          else
+          {
+            <select class="form-control" id="kolResponsibleStaffId" disabled>
+              <option value="">(Tự động gán cho tài khoản của bạn)</option>
+              @foreach (var emp in employees)
+              {
+                <option value="@emp.Id">@emp.FullName (@emp.Position)</option>
+              }
+            </select>
+          }
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Hủy</button>
+        <button type="submit" class="btn-primary-blue" style="padding: 9px 20px;">Lưu lại</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCreateModal() {
+    document.getElementById('modalTitle').innerText = 'Thêm KOL mới';
+    document.getElementById('kolForm').action = '/Kols/Create';
+    
+    // Clear all inputs
+    document.getElementById('kolName').value = '';
+    document.getElementById('kolContactInfo').value = '';
+    document.getElementById('kolProfileLink').value = '';
+    document.getElementById('kolFollowersCount').value = '';
+    document.getElementById('kolEngagementRate').value = '';
+    document.getElementById('kolBookingPrice').value = '';
+    document.getElementById('kolLocation').value = '';
+    document.getElementById('kolRatingScore').value = '';
+    document.getElementById('kolStatus').value = 'tiem_nang';
+    
+    const staffSelect = document.getElementById('kolResponsibleStaffId');
+    if (staffSelect && !staffSelect.disabled) {
+      staffSelect.value = '';
+    }
+
+    // Clear checkboxes
+    const checkboxes = document.querySelectorAll('#kolForm input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+
+    document.getElementById('kolModal').classList.add('active');
+  }
+
+  function openEditModal(btn) {
+    const kol = JSON.parse(btn.getAttribute('data-kol'));
+    const id = kol.id || kol.Id;
+    const name = kol.name || kol.Name;
+    const contactInfo = kol.contactInfo || kol.ContactInfo;
+    const profileLink = kol.profileLink || kol.ProfileLink;
+    const followersCount = kol.followersCount !== undefined ? kol.followersCount : kol.FollowersCount;
+    const engagementRate = kol.engagementRate !== undefined ? kol.engagementRate : kol.EngagementRate;
+    const bookingPrice = kol.bookingPrice !== undefined ? kol.bookingPrice : kol.BookingPrice;
+    const location = kol.location || kol.Location;
+    const ratingScore = kol.ratingScore !== undefined ? kol.ratingScore : kol.RatingScore;
+    const status = kol.status || kol.Status;
+    const responsibleStaffId = kol.responsibleStaffId !== undefined ? kol.responsibleStaffId : kol.ResponsibleStaffId;
+    const platform = kol.platform || kol.Platform;
+    const niche = kol.niche || kol.Niche;
+
+    document.getElementById('modalTitle').innerText = 'Sửa thông tin KOL: ' + name;
+    document.getElementById('kolForm').action = '/Kols/Edit/' + id;
+    
+    document.getElementById('kolName').value = name;
+    document.getElementById('kolContactInfo').value = contactInfo;
+    document.getElementById('kolProfileLink').value = profileLink;
+    document.getElementById('kolFollowersCount').value = followersCount;
+    document.getElementById('kolEngagementRate').value = engagementRate;
+    document.getElementById('kolBookingPrice').value = bookingPrice;
+    document.getElementById('kolLocation').value = location;
+    document.getElementById('kolRatingScore').value = ratingScore || '';
+    document.getElementById('kolStatus').value = status || 'tiem_nang';
+    
+    const staffSelect = document.getElementById('kolResponsibleStaffId');
+    if (staffSelect) {
+      staffSelect.value = responsibleStaffId || '';
+    }
+
+    // Set platforms checkboxes
+    const platformList = platform ? platform.split(',') : [];
+    const platCheckboxes = document.querySelectorAll('#kolForm input[name="platforms"]');
+    platCheckboxes.forEach(cb => {
+      cb.checked = platformList.map(p => p.trim()).includes(cb.value);
+    });
+
+    // Set niches checkboxes
+    const nicheList = niche ? niche.split(',') : [];
+    const nicheCheckboxes = document.querySelectorAll('#kolForm input[name="niches"]');
+    nicheCheckboxes.forEach(cb => {
+      cb.checked = nicheList.map(n => n.trim()).includes(cb.value);
+    });
+
+    document.getElementById('kolModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('kolModal').classList.remove('active');
+  }
+</script>
+</body>
+</html>
