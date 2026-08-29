@@ -29,15 +29,19 @@
   padding: 0;
 }
 
-body {
-  font-family: 'Inter', sans-serif;
+html, body {
   background: #F5F8FD;
   color: var(--ink);
-  -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, .brand {
-  font-family: 'Manrope', sans-serif;
+/* FORCE VIETNAMESE-CAPABLE SYSTEM FONT - bypass Google Fonts entirely */
+html, body, .layout, .sidebar, .main, .topbar, .kpi-card, .panel,
+.card, .table, .form, button, input, select, textarea, label, p, span, div,
+h1, h2, h3, h4, h5, h6, a, li, td, th, .nav-item, .nav-section, .brand-name,
+.brand-sub, .page-title, .page-sub, .kpi-label, .kpi-value, .icon-btn {
+  font-family: "Segoe UI", "Arial", "Helvetica", system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* FIX: Font Awesome Icons display */

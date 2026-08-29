@@ -25,7 +25,8 @@
   border-radius: var(--radius);
   width: 100%;
   max-width: 720px;
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);   /* dvh chính xác cả khi addressbar ẩn */
+  max-height: calc(100vh - 32px);    /* fallback cho browser cũ */
   padding: 0;
   box-shadow: 0 10px 30px rgba(11, 37, 69, 0.15);
   transform: translateY(-20px);
@@ -81,10 +82,11 @@
   overflow-y: auto !important;
   overflow-x: hidden;
   flex: 1 1 auto;
-  min-height: 0;
+  /* Giới hạn chiều cao cứng để scroll luôn hoạt động khi nội dung dài */
+  max-height: calc(100dvh - 160px);
+  box-sizing: border-box;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  box-sizing: border-box;
 }
 
 /* Scrollbar gọn cho modal body (Chrome/Edge/Safari) */

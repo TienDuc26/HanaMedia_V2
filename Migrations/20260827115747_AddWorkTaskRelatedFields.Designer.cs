@@ -4,6 +4,7 @@ using HanaMedia.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HanaMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827115747_AddWorkTaskRelatedFields")]
+    partial class AddWorkTaskRelatedFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -889,9 +892,6 @@ namespace HanaMedia.Migrations
                         .HasColumnType("nvarchar(2000)")
                         .HasColumnName("description");
 
-                    b.Property<string>("DraftData")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Module")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -1008,83 +1008,6 @@ namespace HanaMedia.Migrations
                         .HasDatabaseName("idx_work_task_history_task_created");
 
                     b.ToTable("work_task_history", (string)null);
-                });
-
-            modelBuilder.Entity("HanaMedia.Models.WorkTaskSubmission", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Feedback")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("feedback");
-
-                    b.Property<string>("FilesJson")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("files_json");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<string>("Result")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("result");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("reviewed_at");
-
-                    b.Property<int?>("ReviewedByUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("reviewed_by_user_id");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(30)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(30)")
-                        .HasDefaultValue("review")
-                        .HasColumnName("status");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("submitted_at")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<int>("SubmittedByUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("submitted_by_user_id");
-
-                    b.Property<int>("Version")
-                        .HasColumnType("int")
-                        .HasColumnName("version");
-
-                    b.Property<int>("WorkTaskId")
-                        .HasColumnType("int")
-                        .HasColumnName("work_task_id");
-
-                    b.HasKey("Id")
-                        .HasName("PK_work_task_submissions");
-
-                    b.HasIndex("ReviewedByUserId");
-
-                    b.HasIndex("SubmittedByUserId");
-
-                    b.HasIndex("WorkTaskId", "Version")
-                        .IsUnique()
-                        .HasDatabaseName("idx_work_task_submissions_task_version");
-
-                    b.ToTable("work_task_submissions", (string)null);
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Booking", b =>
@@ -1259,35 +1182,6 @@ namespace HanaMedia.Migrations
                     b.Navigation("WorkTask");
                 });
 
-            modelBuilder.Entity("HanaMedia.Models.WorkTaskSubmission", b =>
-                {
-                    b.HasOne("HanaMedia.Models.User", "ReviewedByUser")
-                        .WithMany()
-                        .HasForeignKey("ReviewedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_work_task_submissions_users_reviewed_by_user_id");
-
-                    b.HasOne("HanaMedia.Models.User", "SubmittedByUser")
-                        .WithMany()
-                        .HasForeignKey("SubmittedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_work_task_submissions_users_submitted_by_user_id");
-
-                    b.HasOne("HanaMedia.Models.WorkTask", "WorkTask")
-                        .WithMany("Submissions")
-                        .HasForeignKey("WorkTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_work_task_submissions_work_tasks_work_task_id");
-
-                    b.Navigation("ReviewedByUser");
-
-                    b.Navigation("SubmittedByUser");
-
-                    b.Navigation("WorkTask");
-                });
-
             modelBuilder.Entity("HanaMedia.Models.Booking", b =>
                 {
                     b.Navigation("BookingWageAuditLogs");
@@ -1337,8 +1231,6 @@ namespace HanaMedia.Migrations
             modelBuilder.Entity("HanaMedia.Models.WorkTask", b =>
                 {
                     b.Navigation("History");
-
-                    b.Navigation("Submissions");
                 });
 #pragma warning restore 612, 618
         }

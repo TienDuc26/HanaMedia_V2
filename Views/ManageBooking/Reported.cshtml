@@ -1,12 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HanaMedia — Báo cáo Booking (Quản lý Booking)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
@@ -15,25 +12,8 @@
 <body>
 <div class="layout">
 
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">HM</div>
-      <div>
-        <div class="brand-name">HanaMedia</div>
-        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
-      </div>
-    </div>
+  <partial name="_SidebarPartial" />
 
-    <div class="nav-section">Tổng quan</div>
-    <a href="/ManageBooking/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
-
-    <div class="nav-section">Nghiệp vụ Booking</div>
-    <a href="/ManageBooking/KOL_KOC" class="nav-item"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
-    <a href="/ManageBooking/Booking" class="nav-item"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
-    <a href="/ManageBooking/StaffHuman" class="nav-item"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
-    <a href="/ManageBooking/Reported" class="nav-item active"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
-    <partial name="_UserMenuPartial" />
-  </aside>
 
   <main class="main">
     <div class="topbar">

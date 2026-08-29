@@ -41,6 +41,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<WorkTaskHistory> WorkTaskHistory { get; set; }
 
+    public virtual DbSet<WorkTaskSubmission> WorkTaskSubmissions { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -650,6 +652,35 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(e => e.ActorUser).WithMany(e => e.WorkTaskHistoryEntries)
                 .HasForeignKey(e => e.ActorUserId).OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_work_task_history_users_actor_user_id");
+        });
+
+        modelBuilder.Entity<WorkTaskSubmission>(entity =>
+        {
+            entity.ToTable("work_task_submissions");
+            entity.HasKey(e => e.Id).HasName("PK_work_task_submissions");
+            entity.HasIndex(e => new { e.WorkTaskId, e.Version }).IsUnique().HasDatabaseName("idx_work_task_submissions_task_version");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.WorkTaskId).HasColumnName("work_task_id");
+            entity.Property(e => e.Version).HasColumnName("version");
+            entity.Property(e => e.SubmittedByUserId).HasColumnName("submitted_by_user_id");
+            entity.Property(e => e.SubmittedAt).HasColumnName("submitted_at").HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Result).HasColumnName("result").IsRequired();
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(2000);
+            entity.Property(e => e.FilesJson).HasColumnName("files_json");
+            entity.Property(e => e.Feedback).HasColumnName("feedback").HasMaxLength(2000);
+            entity.Property(e => e.ReviewedByUserId).HasColumnName("reviewed_by_user_id");
+            entity.Property(e => e.ReviewedAt).HasColumnName("reviewed_at");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(30).IsUnicode(false).HasDefaultValue("review");
+
+            entity.HasOne(e => e.WorkTask).WithMany(e => e.Submissions)
+                .HasForeignKey(e => e.WorkTaskId).OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_work_task_submissions_work_tasks_work_task_id");
+            entity.HasOne(e => e.SubmittedByUser).WithMany()
+                .HasForeignKey(e => e.SubmittedByUserId).OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_work_task_submissions_users_submitted_by_user_id");
+            entity.HasOne(e => e.ReviewedByUser).WithMany()
+                .HasForeignKey(e => e.ReviewedByUserId).OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_work_task_submissions_users_reviewed_by_user_id");
         });
 
         OnModelCreatingPartial(modelBuilder);

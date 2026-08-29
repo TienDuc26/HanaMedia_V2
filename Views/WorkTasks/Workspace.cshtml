@@ -1,0 +1,1183 @@
+@model HanaMedia.ViewModels.WorkTaskWorkspaceViewModel
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+    var username = User.FindFirstValue(ClaimTypes.Name) ?? "";
+    var isAssignee = Model.Task.EmployeeName == username || Model.Task.CreatorName == username; // simplified check
+    // Accurate assignee check:
+    var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    int.TryParse(userIdString, out var currentUserId);
+    
+    var isTaskAssignee = Model.Task.AllowedTransitions.Any(t => t.Status == WorkTaskStatuses.InProgress || t.Status == WorkTaskStatuses.Review);
+    // Let's check status to determine editability:
+    var canEdit = (Model.Task.Status == WorkTaskStatuses.Todo || 
+                   Model.Task.Status == WorkTaskStatuses.InProgress || 
+                   Model.Task.Status == WorkTaskStatuses.NeedRevision);
+                   
+    var isOverdue = Model.Task.Deadline.Date < DateTime.Today && Model.Task.Status != WorkTaskStatuses.Done;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Không gian làm việc — @Model.Task.Title</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+      --border-color: #E2E8F0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .main-workspace {
+      max-width: 1300px;
+      margin: 20px auto;
+      padding: 0 20px 100px 20px;
+    }
+
+    .header-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted-text);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .back-btn:hover {
+      color: var(--primary-blue);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+    .status-todo { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-in_progress { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-review { background: #fffbeb; color: var(--warning-color); border: 1px solid #fef3c7; }
+    .status-need_revision { background: #fff5f5; color: var(--danger-color); border: 1px solid #fed7d7; }
+    .status-approved { background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
+    .status-done { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 8fr 4fr;
+      gap: 20px;
+    }
+
+    @@media (max-width: 1024px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel-card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--light-blue);
+      padding-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      gap: 16px;
+    }
+    .tab-btn {
+      padding: 10px 4px;
+      border: none;
+      background: none;
+      font-weight: 600;
+      color: var(--muted-text);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: var(--primary-blue);
+      border-bottom-color: var(--primary-blue);
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @@media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--text-color);
+    }
+    .form-control-ws {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d9e2ef;
+      border-radius: 8px;
+      font-size: 14px;
+      background-color: var(--white);
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+    .form-control-ws:focus {
+      outline: none;
+      border-color: var(--secondary-blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .form-control-ws[readonly], .form-control-ws[disabled] {
+      background-color: #f8fafc;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    .context-field {
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .context-field strong {
+      display: inline-block;
+      width: 160px;
+      color: var(--muted-text);
+    }
+
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-actions button {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .sticky-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      padding: 16px 24px;
+      box-shadow: 0 -8px 20px rgba(11, 58, 110, 0.08);
+      border-top: 1px solid rgba(11, 58, 110, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+    .footer-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-ws {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .btn-ws.save {
+      background: #f1f5f9;
+      color: #475569;
+      border-color: #cbd5e1;
+    }
+    .btn-ws.save:hover {
+      background: #e2e8f0;
+    }
+    .btn-ws.submit {
+      background: var(--secondary-blue);
+      color: var(--white);
+    }
+    .btn-ws.submit:hover {
+      background: #1d4ed8;
+    }
+    .btn-ws.approve {
+      background: var(--success-color);
+      color: var(--white);
+    }
+    .btn-ws.approve:hover {
+      background: #15803d;
+    }
+    .btn-ws.revision {
+      background: var(--warning-color);
+      color: var(--white);
+    }
+    .btn-ws.revision:hover {
+      background: #b45309;
+    }
+
+    .submission-version-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      background: #fafbfc;
+      overflow: hidden;
+    }
+    .submission-version-header {
+      background: #f1f5f9;
+      padding: 10px 16px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .submission-version-body {
+      padding: 14px 16px;
+      font-size: 14px;
+    }
+
+    .overdue-banner {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      color: var(--danger-color);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .waiting-banner {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      color: var(--warning-color);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+
+    .feedback-box {
+      background: #fff7ed;
+      border-left: 4px solid var(--warning-color);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <partial name="_WorkTaskSidebarPartial" model="new HanaMedia.ViewModels.WorkTaskPageViewModel { Module = Model.Task.Module }" />
+  <main class="main">
+    <div class="main-workspace" style="max-width: 1400px; padding-bottom: 100px;">
+      <div class="header-card">
+        <a href="/Tasks" class="back-btn"><i class="ti ti-arrow-left"></i> Quay lại danh sách công việc</a>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div>
+            <h1 style="font-size: 24px; font-weight: 800; margin: 0 0 8px 0; color: var(--primary-blue);">@Model.Task.Title</h1>
+            <div style="font-size: 14px; color: var(--muted-text);">
+              Người giao: <strong>@Model.Task.CreatorName</strong> · 
+              Người thực hiện: <strong>@Model.Task.EmployeeName</strong> · 
+              Người duyệt: <strong>@Model.Task.ReviewerName</strong> · 
+              Hạn chót: <strong>@Model.Task.Deadline.ToString("dd/MM/yyyy")</strong>
+            </div>
+          </div>
+          <div>
+            <span class="status-badge status-@Model.Task.Status">@Model.Task.StatusLabel</span>
+          </div>
+        </div>
+      </div>
+
+    @if (TempData["SuccessMessage"] is string success) { <div class="message success">@success</div> }
+    @if (TempData["ErrorMessage"] is string error) { <div class="message error">@error</div> }
+
+    @if (isOverdue)
+    {
+      <div class="overdue-banner">
+        <i class="ti ti-alert-triangle"></i> CẢNH BÁO: CÔNG VIỆC ĐÃ QUÁ HẠN ĐƯỢC GIAO! (Hạn chót: @Model.Task.Deadline.ToString("dd/MM/yyyy"))
+      </div>
+    }
+
+    @if (Model.Task.Status == WorkTaskStatuses.Review)
+    {
+      <div class="waiting-banner">
+        <i class="ti ti-clock"></i> Đã gửi báo cáo kết quả. Đang chờ @Model.Task.ReviewerName phê duyệt.
+      </div>
+    }
+
+    @if (Model.Task.Status == WorkTaskStatuses.NeedRevision && Model.Submissions.Count > 0)
+    {
+      var latest = Model.Submissions.First();
+      if (!string.IsNullOrWhiteSpace(latest.Feedback))
+      {
+        <div class="feedback-box">
+          <div style="font-weight:700; color: var(--warning-color); margin-bottom: 4px; display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-message-2"></i> YÊU CẦU CHỈNH SỬA TỪ @latest.ReviewedByName:
+          </div>
+          <div>@latest.Feedback</div>
+          <small style="color:var(--muted-text); display:block; margin-top:6px;">Thời gian yêu cầu: @latest.ReviewedAt?.ToString("dd/MM/yyyy HH:mm")</small>
+        </div>
+      }
+    }
+
+    <div class="grid-container">
+      <div class="left-column">
+        <!-- Business Context Card -->
+        @if (Model.EmployeeContext != null || Model.BookingContext != null || Model.IdeaContext != null)
+        {
+          <div class="panel-card">
+            <div class="panel-title"><i class="ti ti-building-store"></i> Thông tin nghiệp vụ liên kết</div>
+            
+            @if (Model.EmployeeContext != null)
+            {
+              <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+                @if (!string.IsNullOrEmpty(Model.EmployeeContext.AvatarUrl))
+                {
+                  <img src="@Model.EmployeeContext.AvatarUrl" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border: 2px solid var(--primary-blue);" alt="avatar">
+                }
+                <div style="flex:1; min-width:240px;">
+                  <h3 style="margin: 0 0 10px 0; color:var(--primary-blue);">@Model.EmployeeContext.FullName</h3>
+                  <div class="form-grid">
+                    <div class="context-field"><strong>Phòng ban:</strong> @Model.EmployeeContext.Department</div>
+                    <div class="context-field"><strong>Chức vụ:</strong> @Model.EmployeeContext.Position</div>
+                    <div class="context-field"><strong>Email:</strong> @Model.EmployeeContext.Email</div>
+                    <div class="context-field"><strong>SĐT:</strong> @Model.EmployeeContext.Phone</div>
+                    <div class="context-field"><strong>Địa chỉ:</strong> @Model.EmployeeContext.Address</div>
+                    <div class="context-field"><strong>Ngày sinh:</strong> @Model.EmployeeContext.Dob</div>
+                    <div class="context-field"><strong>Ngày vào công ty:</strong> @Model.EmployeeContext.JoinedDate</div>
+                    <div class="context-field"><strong>Trạng thái hoạt động:</strong> @Model.EmployeeContext.Status</div>
+                    <div class="context-field"><strong>Loại hợp đồng:</strong> @Model.EmployeeContext.ContractType</div>
+                    @if (!string.IsNullOrEmpty(Model.EmployeeContext.ManagerName))
+                    {
+                      <div class="context-field"><strong>Người quản lý trực tiếp:</strong> @Model.EmployeeContext.ManagerName</div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (Model.BookingContext != null)
+            {
+              <div class="form-grid">
+                <div class="context-field"><strong>Đối tác khách hàng:</strong> @Model.BookingContext.ClientName</div>
+                <div class="context-field"><strong>Chiến dịch (Campaign):</strong> @Model.BookingContext.CampaignName</div>
+                <div class="context-field"><strong>KOL/KOC liên kết:</strong> @(Model.BookingContext.KolName ?? "Chưa chốt")</div>
+                <div class="context-field"><strong>Giá booking (Client):</strong> @Model.BookingContext.BookingPrice.ToString("N0") VNĐ</div>
+                <div class="context-field"><strong>Chi phí KOL:</strong> @Model.BookingContext.ActualCost.ToString("N0") VNĐ</div>
+                <div class="context-field"><strong>Trạng thái Booking:</strong> @Model.BookingContext.Status</div>
+                <div class="context-field"><strong>Thời gian đăng bài:</strong> @(Model.BookingContext.PostingDate ?? "Chưa có")</div>
+                <div class="context-field"><strong>Hạn chót chiến dịch:</strong> @Model.BookingContext.Deadline</div>
+                <div class="context-field"><strong>Người quản lý chính:</strong> @(Model.BookingContext.PrimaryManagerName ?? "Chưa gán")</div>
+                @if (!string.IsNullOrEmpty(Model.BookingContext.PostLink))
+                {
+                  <div class="context-field"><strong>Link bài đăng:</strong> <a href="@Model.BookingContext.PostLink" target="_blank">Xem bài đăng</a></div>
+                }
+              </div>
+              @if (!string.IsNullOrEmpty(Model.BookingContext.JobDescription))
+              {
+                <div style="margin-top:10px; font-size:14px;">
+                  <strong style="color:var(--muted-text)">Yêu cầu công việc Booking:</strong>
+                  <div style="background:#f8fafc; padding:8px 12px; border-radius:6px; margin-top:4px;">@Model.BookingContext.JobDescription</div>
+                </div>
+              }
+            }
+
+            @if (Model.IdeaContext != null)
+            {
+              <div class="form-grid">
+                <div class="context-field"><strong>Tên ý tưởng:</strong> @Model.IdeaContext.Title</div>
+                <div class="context-field"><strong>Khách hàng:</strong> @Model.IdeaContext.ClientName</div>
+                <div class="context-field"><strong>Chiến dịch:</strong> @Model.IdeaContext.CampaignName</div>
+                <div class="context-field"><strong>Ngành hàng:</strong> @Model.IdeaContext.Industry</div>
+                <div class="context-field"><strong>Phân loại:</strong> @Model.IdeaContext.Category</div>
+                <div class="context-field"><strong>Người tạo:</strong> @Model.IdeaContext.CreatorName</div>
+                <div class="context-field"><strong>Người chịu trách nhiệm chính:</strong> @Model.IdeaContext.PrimaryStaffName</div>
+                <div class="context-field"><strong>Hạn chót duyệt ý tưởng:</strong> @Model.IdeaContext.Deadline</div>
+                <div class="context-field"><strong>Trạng thái ý tưởng:</strong> @Model.IdeaContext.Status</div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Workspace Forms / Tabs -->
+        <div class="panel-card">
+          <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab(event, 'workWorkspaceTab')"><i class="ti ti-edit"></i> Workspace làm việc</button>
+            <button class="tab-btn" onclick="switchTab(event, 'submissionsHistoryTab')"><i class="ti ti-history"></i> Lịch sử gửi duyệt (@Model.Submissions.Count)</button>
+          </div>
+
+          <!-- Tab Content: Work Workspace -->
+          <div id="workWorkspaceTab" class="tab-content active">
+            
+            <!-- Dynamic Work Form depending on Module -->
+            @if (Model.Task.Module == "Nhan_Su")
+            {
+              <div>
+                <h3 style="color:var(--primary-blue); font-size:15px; margin-top:0;">PHÂN HỆ HÀNH CHÍNH NHÂN SỰ</h3>
+                
+                @if (Model.EmployeeContext != null)
+                {
+                  <div class="tab-nav" style="margin-top:15px;">
+                    <button class="tab-btn active" id="btnEmpProfileTab" onclick="switchSubTab(event, 'empProfileSubTab')">Hồ sơ nhân sự</button>
+                    <button class="tab-btn" id="btnEmpActionTab" onclick="switchSubTab(event, 'empActionSubTab')">Xử lý cập nhật</button>
+                  </div>
+                  
+                  <div id="empProfileSubTab" class="subtab-content">
+                    <p style="font-size:13px; color:var(--muted-text); margin-bottom:12px;">Đọc thông tin hồ sơ nhân viên được liên kết từ Module 5 bên trên.</p>
+                  </div>
+                }
+                
+                <div id="empActionSubTab" class="subtab-content" style="display:block;">
+                  <div class="form-group">
+                    <label>Nội dung cập nhật / Kết quả hồ sơ nhân sự</label>
+                    <textarea class="form-control-ws" id="hcns_result_notes" rows="6" placeholder="Nhập chi tiết thông tin cập nhật hồ sơ, theo dõi hợp đồng, bảo hiểm hoặc báo cáo..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Trạng thái xử lý giấy tờ</label>
+                    <select class="form-control-ws" id="hcns_document_status" @(canEdit ? "" : "disabled")>
+                      <option value="da_nhan">Đã nhận đủ hồ sơ giấy tờ</option>
+                      <option value="thieu_giay_to">Thiếu giấy tờ cần bổ sung</option>
+                      <option value="chuan_bi_hop_dong">Đang chuẩn bị hợp đồng</option>
+                      <option value="da_ky_xong">Đã hoàn tất ký hợp đồng</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            }
+            else if (Model.Task.Module == "Booking")
+            {
+              <div>
+                <h3 style="color:var(--primary-blue); font-size:15px; margin-top:0;">PHÂN HỆ BOOKING / DỊCH VỤ</h3>
+                
+                <div class="form-group">
+                  <label>Loại nghiệp vụ Booking đang xử lý</label>
+                  <select class="form-control-ws" id="booking_task_type" onchange="toggleBookingFields()" @(canEdit ? "" : "disabled")>
+                    <option value="FIND_KOL">Tìm KOL/KOC</option>
+                    <option value="CONTACT_KOL">Liên hệ KOL/KOC</option>
+                    <option value="QUOTE">Gửi báo giá</option>
+                    <option value="NEGOTIATION">Thương lượng giá</option>
+                    <option value="POST_TRACKING">Theo dõi bài đăng &amp; Minh chứng</option>
+                    <option value="CAMPAIGN_RESULT">Cập nhật kết quả Campaign</option>
+                    <option value="CONTRACT">Soạn hợp đồng Booking</option>
+                  </select>
+                </div>
+
+                <!-- FIND_KOL Fields -->
+                <div id="booking_find_kol" class="booking-subform" style="display:none;">
+                  <div class="form-grid">
+                    <div class="form-group"><label>KOL cần tìm</label><input type="text" class="form-control-ws" id="bk_find_kol_name" @(canEdit ? "" : "readonly")></div>
+                    <div class="form-group"><label>Tiêu chí/Yêu cầu</label><input type="text" class="form-control-ws" id="bk_find_criteria" @(canEdit ? "" : "readonly")></div>
+                  </div>
+                  <div class="form-group">
+                    <label>Kết quả tìm kiếm đề xuất</label>
+                    <textarea class="form-control-ws" id="bk_find_results" rows="3" placeholder="Danh sách link, follower..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <!-- CONTACT_KOL Fields -->
+                <div id="booking_contact_kol" class="booking-subform" style="display:none;">
+                  <div class="form-grid">
+                    <div class="form-group"><label>Ngày liên hệ</label><input type="date" class="form-control-ws" id="bk_contact_date" @(canEdit ? "" : "readonly")></div>
+                    <div class="form-group">
+                      <label>Kênh liên hệ</label>
+                      <select class="form-control-ws" id="bk_contact_channel" @(canEdit ? "" : "disabled")>
+                        <option value="Zalo">Zalo</option>
+                        <option value="Email">Email</option>
+                        <option value="Phone">Điện thoại</option>
+                        <option value="Messenger">Facebook Messenger</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Phản hồi từ KOL &amp; Trạng thái thương thảo</label>
+                    <textarea class="form-control-ws" id="bk_contact_feedback" rows="3" placeholder="Mức giá đề xuất, yêu cầu đặc biệt..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <!-- QUOTE Fields -->
+                <div id="booking_quote" class="booking-subform" style="display:none;">
+                  <div class="form-grid">
+                    <div class="form-group"><label>Giá trị Booking (VNĐ)</label><input type="number" class="form-control-ws" id="bk_quote_price" @(canEdit ? "" : "readonly")></div>
+                    <div class="form-group"><label>Chi phí thực tế KOL (VNĐ)</label><input type="number" class="form-control-ws" id="bk_quote_cost" @(canEdit ? "" : "readonly")></div>
+                  </div>
+                  <div class="form-group">
+                    <label>Nội dung báo giá chi tiết</label>
+                    <textarea class="form-control-ws" id="bk_quote_notes" rows="3" @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <!-- NEGOTIATION Fields -->
+                <div id="booking_negotiation" class="booking-subform" style="display:none;">
+                  <div class="form-grid">
+                    <div class="form-group"><label>Giá đề xuất ban đầu (VNĐ)</label><input type="number" class="form-control-ws" id="bk_neg_initial" @(canEdit ? "" : "readonly")></div>
+                    <div class="form-group"><label>Giá chốt cuối cùng (VNĐ)</label><input type="number" class="form-control-ws" id="bk_neg_final" @(canEdit ? "" : "readonly")></div>
+                  </div>
+                  <div class="form-group">
+                    <label>Nội dung đàm phán</label>
+                    <textarea class="form-control-ws" id="bk_neg_details" rows="3" placeholder="Các quyền lợi đi kèm, điều khoản thanh toán..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <!-- POST_TRACKING Fields -->
+                <div id="booking_post" class="booking-subform" style="display:none;">
+                  <div class="form-group"><label>Link bài đăng chính thức của KOL</label><input type="url" class="form-control-ws" id="bk_post_link" placeholder="https://..." @(canEdit ? "" : "readonly")></div>
+                  <div class="form-grid">
+                    <div class="form-group"><label>Ngày đăng thực tế</label><input type="date" class="form-control-ws" id="bk_post_date" @(canEdit ? "" : "readonly")></div>
+                    <div class="form-group">
+                      <label>Trạng thái kiểm duyệt bài đăng</label>
+                      <select class="form-control-ws" id="bk_post_status" @(canEdit ? "" : "disabled")>
+                        <option value="dung_tien_do">Đúng tiến độ &amp; nội dung</option>
+                        <option value="sai_noi_dung">Sai nội dung (Yêu cầu sửa)</option>
+                        <option value="tre_hen">Trễ hẹn đăng</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CAMPAIGN_RESULT Fields -->
+                <div id="booking_campaign" class="booking-subform" style="display:none;">
+                  <div class="form-grid">
+                    <div class="form-group"><label>Lượt xem (Views)</label><input type="number" class="form-control-ws" id="bk_camp_views" @(canEdit ? "" : "readonly")></div>
+                    <div class="form-group"><label>Tương tác (Engagement Rate %)</label><input type="text" class="form-control-ws" id="bk_camp_engagement" @(canEdit ? "" : "readonly")></div>
+                  </div>
+                  <div class="form-group">
+                    <label>Báo cáo hiệu suất chung của KOL trong Campaign</label>
+                    <textarea class="form-control-ws" id="bk_camp_summary" rows="3" @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <!-- CONTRACT Fields -->
+                <div id="booking_contract" class="booking-subform" style="display:none;">
+                  <p style="font-size:13px; color:var(--muted-text); margin-bottom:12px;">Soạn hợp đồng khi Booking đã được phê duyệt bởi Giám đốc.</p>
+                  <div class="form-group">
+                    <label>Chi tiết điều khoản soạn thảo hợp đồng</label>
+                    <textarea class="form-control-ws" id="bk_contract_details" rows="4" @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+              </div>
+            }
+            else if (Model.Task.Module == "Y_Tuong")
+            {
+              <div>
+                <h3 style="color:var(--primary-blue); font-size:15px; margin-top:0;">PHÂN HỆ Ý TƯỞNG SÁNG TẠO</h3>
+                
+                <div class="tab-nav" style="margin-top:15px;">
+                  <button class="tab-btn active" id="btnInsightTab" onclick="switchSubTab(event, 'insightSubTab')">Insight &amp; Concept</button>
+                  <button class="tab-btn" id="btnScriptTab" onclick="switchSubTab(event, 'scriptSubTab')">Nội dung &amp; Kịch bản</button>
+                  <button class="tab-btn" id="btnMoodboardTab" onclick="switchSubTab(event, 'moodboardSubTab')">Reference &amp; Moodboard</button>
+                </div>
+
+                <div id="insightSubTab" class="subtab-content" style="display:block;">
+                  <div class="form-group">
+                    <label>Insight khách hàng</label>
+                    <textarea class="form-control-ws" id="idea_insight" rows="3" placeholder="Nhập insight từ khách hàng..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Concept cốt lõi</label>
+                    <textarea class="form-control-ws" id="idea_concept" rows="4" placeholder="Nhập concept ý tưởng..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <div id="scriptSubTab" class="subtab-content" style="display:none;">
+                  <div class="form-group">
+                    <label>Nội dung chi tiết</label>
+                    <textarea class="form-control-ws" id="idea_content_details" rows="4" @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Kịch bản chi tiết (Script)</label>
+                    <textarea class="form-control-ws" id="idea_script_text" rows="6" placeholder="Kịch bản phân cảnh chi tiết..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+
+                <div id="moodboardSubTab" class="subtab-content" style="display:none;">
+                  <div class="form-group">
+                    <label>Reference Link (Link tài liệu tham khảo)</label>
+                    <input type="url" class="form-control-ws" id="idea_reference_link" placeholder="https://..." @(canEdit ? "" : "readonly")>
+                  </div>
+                  <div class="form-group">
+                    <label>Mô tả Moodboard</label>
+                    <textarea class="form-control-ws" id="idea_moodboard_desc" rows="4" placeholder="Màu sắc, tone, hình ảnh chủ đạo..." @(canEdit ? "" : "readonly")></textarea>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- General / Workspace Fields for Work Report (Generic Workspace) -->
+            <div style="margin-top:20px; border-top: 1px solid var(--border-color); padding-top:20px;">
+              <h3 style="font-size:15px; font-weight:700; color:var(--primary-blue); margin-bottom:12px;">KẾT QUẢ THỰC HIỆN CHUNG</h3>
+              <div class="form-group">
+                <label>Nội dung báo cáo kết quả thực tế (Bắt buộc để gửi duyệt)</label>
+                <textarea class="form-control-ws" id="general_result" rows="4" placeholder="Nhập kết quả xử lý công việc thực tế, báo cáo tiến độ..." required @(canEdit ? "" : "readonly")></textarea>
+              </div>
+              <div class="form-group">
+                <label>Ghi chú của nhân viên</label>
+                <textarea class="form-control-ws" id="general_notes" rows="3" placeholder="Ghi chú thêm gửi cho người duyệt..." @(canEdit ? "" : "readonly")></textarea>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tab Content: Submissions History -->
+          <div id="submissionsHistoryTab" class="tab-content">
+            @if (Model.Submissions.Count == 0)
+            {
+              <div class="empty">Chưa có phiên bản submission nào được gửi duyệt.</div>
+            }
+            else
+            {
+              @foreach (var sub in Model.Submissions)
+              {
+                <div class="submission-version-card">
+                  <div class="submission-version-header">
+                    <span>Phiên bản submission v@(sub.Version) · Gửi bởi @sub.SubmittedByName</span>
+                    <span style="font-size:12px; color:var(--muted-text)">@sub.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                  </div>
+                  <div class="submission-version-body">
+                    <div style="margin-bottom:8px;">
+                      <strong>Kết quả công việc thực hiện:</strong>
+                      <div style="background:#f8fafc; padding:8px 12px; border-radius:6px; margin-top:4px; white-space:pre-wrap;">@sub.Result</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(sub.Notes))
+                    {
+                      <div style="margin-bottom:8px;">
+                        <strong>Ghi chú:</strong>
+                        <div style="color:var(--muted-text); font-size:13px; margin-top:2px;">@sub.Notes</div>
+                      </div>
+                    }
+                    @if (sub.Files.Count > 0)
+                    {
+                      <div style="margin-bottom:8px;">
+                        <strong>Minh chứng đính kèm:</strong>
+                        <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+                          @foreach (var file in sub.Files)
+                          {
+                            <div class="file-item" style="padding: 6px 10px; margin:0;">
+                              <div class="file-info">
+                                <i class="ti ti-file-text" style="color:var(--secondary-blue)"></i>
+                                <a href="@file.Url" target="_blank" style="text-decoration:none; font-weight:600; color:var(--text-color);">@file.Name</a>
+                                <span style="color:var(--muted-text); font-size:11px;">(@(file.Size / 1024) KB)</span>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (!string.IsNullOrEmpty(sub.Feedback))
+                    {
+                      <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e2e8f0; background:#fff7ed; padding:8px 12px; border-radius:6px;">
+                        <strong>Người review (@sub.ReviewedByName) phản hồi:</strong>
+                        <div style="color:var(--warning-color); font-weight:bold; margin-top:2px;">@sub.Feedback</div>
+                        <small style="color:var(--muted-text); display:block; margin-top:4px;">Quyết định: @sub.StatusLabel · Lúc @sub.ReviewedAt?.ToString("dd/MM/yyyy HH:mm")</small>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <!-- Attachments Card -->
+        <div class="panel-card">
+          <div class="panel-title"><i class="ti ti-paperclip"></i> File báo cáo / Minh chứng</div>
+          <p style="font-size: 13px; color: var(--muted-text); margin-bottom: 12px;">Các file tài liệu đính kèm phục vụ minh chứng kết quả công việc.</p>
+          
+          <div id="draftFilesList">
+            <!-- Rendered by JavaScript -->
+          </div>
+
+          @if (canEdit)
+          {
+            <div style="margin-top: 16px; border: 2px dashed rgba(11, 58, 110, 0.15); padding: 16px; text-align:center; border-radius: 8px; background:var(--light-blue)">
+              <i class="ti ti-cloud-upload" style="font-size: 32px; color:var(--secondary-blue)"></i>
+              <div style="font-size:13px; font-weight:600; margin: 8px 0 4px 0;">Kéo thả hoặc click để upload file</div>
+              <div style="font-size:11px; color:var(--muted-text)">Hỗ trợ các định dạng (Tối đa 10MB)</div>
+              <input type="file" id="fileUploadInput" style="display:none;" onchange="handleFileUpload(event)">
+              <button class="btn-mini" style="margin-top:8px;" onclick="document.getElementById('fileUploadInput').click()"><i class="ti ti-plus"></i> Chọn File</button>
+            </div>
+          }
+        </div>
+        
+        <!-- Timeline Card -->
+        <div class="panel-card">
+          <div class="panel-title"><i class="ti ti-list"></i> Hoạt động của Task</div>
+          <div id="historyLogList" style="font-size: 13px;">
+            <!-- Timeline activities load from database if needed or basic display -->
+            <p style="color:var(--muted-text)">Xem lịch sử chuyển đổi trạng thái ở dưới.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Actions Footer -->
+  <div class="sticky-footer">
+    <div>
+      <a href="/Tasks" class="back-btn" style="margin-bottom:0;"><i class="ti ti-arrow-left"></i> Quay lại</a>
+    </div>
+    
+    <div class="footer-buttons">
+      @if (canEdit)
+      {
+        <button class="btn-ws save" onclick="saveDraftAction()"><i class="ti ti-device-floppy"></i> Lưu &amp; thoát</button>
+        <button class="btn-ws submit" onclick="submitReviewAction()"><i class="ti ti-send"></i> Gửi duyệt</button>
+      }
+
+      @if (Model.CanReview)
+      {
+        <button class="btn-ws approve" onclick="approveTask()"><i class="ti ti-check"></i> Duyệt Approved</button>
+        <button class="btn-ws revision" onclick="requestRevision()"><i class="ti ti-refresh"></i> Yêu cầu chỉnh sửa</button>
+      }
+    </div>
+  </div>
+
+  <!-- Review / Revision Modals -->
+  <div class="modal-backdrop" id="revisionModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Yêu cầu chỉnh sửa công việc</div>
+        <button type="button" class="modal-close" onclick="closeModal('revisionModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nhập phản hồi / Hướng dẫn chỉnh sửa bổ sung (Bắt buộc)</label>
+          <textarea class="form-control" id="revisionFeedback" rows="5" required placeholder="Nêu rõ nội dung thiếu sót hoặc cần chỉnh sửa bổ sung..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-mini" onclick="closeModal('revisionModal')">Hủy</button>
+        <button type="button" class="btn-mini approve" onclick="submitRevision()" style="background-color:var(--warning-color)">Gửi yêu cầu sửa</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="submitReviewForm" method="post" action="/Tasks/Submit" style="display:none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="taskId" value="@Model.Task.Id">
+    <input type="hidden" id="submitFormResult" name="result">
+    <input type="hidden" id="submitFormNotes" name="notes">
+  </form>
+
+  <form id="reviewTaskForm" method="post" action="/Tasks/Review" style="display:none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="taskId" value="@Model.Task.Id">
+    <input type="hidden" id="reviewFormStatus" name="targetStatus">
+    <input type="hidden" id="reviewFormFeedback" name="feedback">
+  </form>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Draft files state
+  let draftFiles = [];
+
+  // Parse draft data on page load
+  const draftDataRaw = '@Html.Raw(Model.DraftData ?? "{}")';
+  let draftData = {};
+  try {
+    draftData = JSON.parse(draftDataRaw);
+  } catch (e) {
+    draftData = {};
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Load general values
+    if (draftData.generalResult) {
+      document.getElementById('general_result').value = draftData.generalResult;
+    }
+    if (draftData.generalNotes) {
+      document.getElementById('general_notes').value = draftData.generalNotes;
+    }
+    
+    // Load files
+    if (draftData.files && Array.isArray(draftData.files)) {
+      draftFiles = draftData.files;
+    }
+    renderDraftFiles();
+
+    // Load HCNS fields if exist
+    if (document.getElementById('hcns_result_notes')) {
+      document.getElementById('hcns_result_notes').value = draftData.hcnsNotes || '';
+      document.getElementById('hcns_document_status').value = draftData.hcnsDocStatus || 'da_nhan';
+    }
+
+    // Load Booking fields if exist
+    if (document.getElementById('booking_task_type')) {
+      const detectedType = detectBookingTaskType('@Model.Task.Title');
+      document.getElementById('booking_task_type').value = draftData.bookingTaskType || detectedType;
+      toggleBookingFields();
+
+      // populate booking fields
+      setFieldVal('bk_find_kol_name', draftData.bkFindKolName);
+      setFieldVal('bk_find_criteria', draftData.bkFindCriteria);
+      setFieldVal('bk_find_results', draftData.bkFindResults);
+      setFieldVal('bk_contact_date', draftData.bkContactDate);
+      setFieldVal('bk_contact_channel', draftData.bkContactChannel || 'Zalo');
+      setFieldVal('bk_contact_feedback', draftData.bkContactFeedback);
+      setFieldVal('bk_quote_price', draftData.bkQuotePrice);
+      setFieldVal('bk_quote_cost', draftData.bkQuoteCost);
+      setFieldVal('bk_quote_notes', draftData.bkQuoteNotes);
+      setFieldVal('bk_neg_initial', draftData.bkNegInitial);
+      setFieldVal('bk_neg_final', draftData.bkNegFinal);
+      setFieldVal('bk_neg_details', draftData.bkNegDetails);
+      setFieldVal('bk_post_link', draftData.bkPostLink);
+      setFieldVal('bk_post_date', draftData.bkPostDate);
+      setFieldVal('bk_post_status', draftData.bkPostStatus || 'dung_tien_do');
+      setFieldVal('bk_camp_views', draftData.bkCampViews);
+      setFieldVal('bk_camp_engagement', draftData.bkCampEngagement);
+      setFieldVal('bk_camp_summary', draftData.bkCampSummary);
+      setFieldVal('bk_contract_details', draftData.bkContractDetails);
+    }
+
+    // Load Idea fields if exist
+    if (document.getElementById('idea_insight')) {
+      document.getElementById('idea_insight').value = draftData.ideaInsight || '';
+      document.getElementById('idea_concept').value = draftData.ideaConcept || '';
+      document.getElementById('idea_content_details').value = draftData.ideaContentDetails || '';
+      document.getElementById('idea_script_text').value = draftData.ideaScriptText || '';
+      document.getElementById('idea_reference_link').value = draftData.ideaReferenceLink || '';
+      document.getElementById('idea_moodboard_desc').value = draftData.ideaMoodboardDesc || '';
+    }
+  });
+
+  function setFieldVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  }
+
+  function detectBookingTaskType(title) {
+    title = title.toLowerCase();
+    if (title.includes('tìm') || title.includes('find')) return 'FIND_KOL';
+    if (title.includes('liên hệ') || title.includes('contact')) return 'CONTACT_KOL';
+    if (title.includes('báo giá') || title.includes('quote')) return 'QUOTE';
+    if (title.includes('thương lượng') || title.includes('đàm phán') || title.includes('negotiat') || title.includes('deal')) return 'NEGOTIATION';
+    if (title.includes('đăng') || title.includes('post') || title.includes('bài viết')) return 'POST_TRACKING';
+    if (title.includes('kết quả') || title.includes('hiệu suất') || title.includes('campaign') || title.includes('chiến dịch')) return 'CAMPAIGN_RESULT';
+    if (title.includes('hợp đồng') || title.includes('contract')) return 'CONTRACT';
+    return 'FIND_KOL';
+  }
+
+  function toggleBookingFields() {
+    const type = document.getElementById('booking_task_type').value;
+    document.querySelectorAll('.booking-subform').forEach(form => form.style.display = 'none');
+    if (type === 'FIND_KOL') document.getElementById('booking_find_kol').style.display = 'block';
+    else if (type === 'CONTACT_KOL') document.getElementById('booking_contact_kol').style.display = 'block';
+    else if (type === 'QUOTE') document.getElementById('booking_quote').style.display = 'block';
+    else if (type === 'NEGOTIATION') document.getElementById('booking_negotiation').style.display = 'block';
+    else if (type === 'POST_TRACKING') document.getElementById('booking_post').style.display = 'block';
+    else if (type === 'CAMPAIGN_RESULT') document.getElementById('booking_campaign').style.display = 'block';
+    else if (type === 'CONTRACT') document.getElementById('booking_contract').style.display = 'block';
+  }
+
+  // Switch workspace tabs
+  function switchTab(evt, tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    evt.currentTarget.classList.add('active');
+  }
+
+  // Switch sub tabs inside workspaces
+  function switchSubTab(evt, subTabId) {
+    const parent = evt.currentTarget.parentElement;
+    parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    evt.currentTarget.classList.add('active');
+    
+    document.querySelectorAll('.subtab-content').forEach(content => content.style.display = 'none');
+    document.getElementById(subTabId).style.display = 'block';
+  }
+
+  // Render draft files
+  function renderDraftFiles() {
+    const container = document.getElementById('draftFilesList');
+    if (!container) return;
+    
+    if (draftFiles.length === 0) {
+      container.innerHTML = '<div class="empty" style="padding:16px 0;">Không có file nháp.</div>';
+      return;
+    }
+
+    let html = '';
+    draftFiles.forEach((file, index) => {
+      html += `
+        <div class="file-item">
+          <div class="file-info">
+            <i class="ti ti-file-description" style="color:var(--secondary-blue)"></i>
+            <a href="${file.Url}" target="_blank" style="text-decoration:none; font-weight:600; color:var(--text-color);">${file.Name}</a>
+            <span style="color:var(--muted-text); font-size:11px;">(${(file.Size / 1024).toFixed(0)} KB)</span>
+          </div>
+          @if (canEdit)
+          {
+            <div class="file-actions">
+              <button type="button" onclick="deleteDraftFile(${index})"><i class="ti ti-trash"></i></button>
+            </div>
+          }
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  // Delete file from draft list
+  function deleteDraftFile(index) {
+    if (confirm('Bạn chắc chắn muốn xóa file này?')) {
+      draftFiles.splice(index, 1);
+      renderDraftFiles();
+    }
+  }
+
+  // AJAX file upload
+  async function handleFileUpload(evt) {
+    const file = evt.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('taskId', '@Model.Task.Id');
+
+    try {
+      const response = await fetch('/Tasks/UploadAttachment?taskId=@Model.Task.Id', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        draftFiles.push({
+          Name: data.name,
+          Url: data.url,
+          Size: data.size,
+          UploadedBy: '@username',
+          UploadedAt: new Date().toISOString()
+        });
+        renderDraftFiles();
+      } else {
+        alert(data.message || 'Lỗi khi upload file.');
+      }
+    } catch (e) {
+      alert('Lỗi kết nối khi tải file lên.');
+    }
+  }
+
+  // Gather current form data into draft JSON
+  function collectDraftJson() {
+    const data = {
+      files: draftFiles,
+      generalResult: document.getElementById('general_result').value,
+      generalNotes: document.getElementById('general_notes').value
+    };
+
+    // HCNS fields
+    if (document.getElementById('hcns_result_notes')) {
+      data.hcnsNotes = document.getElementById('hcns_result_notes').value;
+      data.hcnsDocStatus = document.getElementById('hcns_document_status').value;
+    }
+
+    // Booking fields
+    if (document.getElementById('booking_task_type')) {
+      data.bookingTaskType = document.getElementById('booking_task_type').value;
+      data.bkFindKolName = document.getElementById('bk_find_kol_name').value;
+      data.bkFindCriteria = document.getElementById('bk_find_criteria').value;
+      data.bkFindResults = document.getElementById('bk_find_results').value;
+      data.bkContactDate = document.getElementById('bk_contact_date').value;
+      data.bkContactChannel = document.getElementById('bk_contact_channel').value;
+      data.bkContactFeedback = document.getElementById('bk_contact_feedback').value;
+      data.bkQuotePrice = document.getElementById('bk_quote_price').value;
+      data.bkQuoteCost = document.getElementById('bk_quote_cost').value;
+      data.bkQuoteNotes = document.getElementById('bk_quote_notes').value;
+      data.bkNegInitial = document.getElementById('bk_neg_initial').value;
+      data.bkNegFinal = document.getElementById('bk_neg_final').value;
+      data.bkNegDetails = document.getElementById('bk_neg_details').value;
+      data.bkPostLink = document.getElementById('bk_post_link').value;
+      data.bkPostDate = document.getElementById('bk_post_date').value;
+      data.bkPostStatus = document.getElementById('bk_post_status').value;
+      data.bkCampViews = document.getElementById('bk_camp_views').value;
+      data.bkCampEngagement = document.getElementById('bk_camp_engagement').value;
+      data.bkCampSummary = document.getElementById('bk_camp_summary').value;
+      data.bkContractDetails = document.getElementById('bk_contract_details').value;
+    }
+
+    // Idea fields
+    if (document.getElementById('idea_insight')) {
+      data.ideaInsight = document.getElementById('idea_insight').value;
+      data.ideaConcept = document.getElementById('idea_concept').value;
+      data.ideaContentDetails = document.getElementById('idea_content_details').value;
+      data.ideaScriptText = document.getElementById('idea_script_text').value;
+      data.ideaReferenceLink = document.getElementById('idea_reference_link').value;
+      data.ideaMoodboardDesc = document.getElementById('idea_moodboard_desc').value;
+    }
+
+    return JSON.stringify(data);
+  }
+
+  // Save Draft
+  async function saveDraftAction() {
+    const draftJson = collectDraftJson();
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+    const fd = new FormData();
+    fd.append('taskId', '@Model.Task.Id');
+    fd.append('draftDataJson', draftJson);
+    fd.append('__RequestVerificationToken', token);
+
+    try {
+      const response = await fetch('/Tasks/SaveDraft', {
+        method: 'POST',
+        body: fd
+      });
+      const res = await response.json();
+      if (res.success) {
+        alert('Lưu bản nháp thành công!');
+        window.location.href = '/Tasks';
+      } else {
+        alert(res.message || 'Lưu bản nháp thất bại.');
+      }
+    } catch (e) {
+      alert('Lỗi kết nối khi lưu bản nháp.');
+    }
+  }
+
+  // Submit Submission
+  function submitReviewAction() {
+    const result = document.getElementById('general_result').value;
+    if (!result || !result.trim()) {
+      alert('Vui lòng nhập nội dung báo cáo kết quả thực hiện trước khi gửi duyệt.');
+      return;
+    }
+
+    const draftJson = collectDraftJson();
+    
+    // First, save the draft silently to sync data
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const fd = new FormData();
+    fd.append('taskId', '@Model.Task.Id');
+    fd.append('draftDataJson', draftJson);
+    fd.append('__RequestVerificationToken', token);
+
+    fetch('/Tasks/SaveDraft', {
+      method: 'POST',
+      body: fd
+    }).then(() => {
+      // Then show confirmation
+      if (confirm('Gửi kết quả công việc để review?\n\nSau khi gửi, bạn sẽ không thể chỉnh sửa kết quả cho đến khi người review phản hồi.')) {
+        document.getElementById('submitFormResult').value = result;
+        document.getElementById('submitFormNotes').value = document.getElementById('general_notes').value;
+        document.getElementById('submitReviewForm').submit();
+      }
+    });
+  }
+
+  // Approve Task
+  function approveTask() {
+    if (confirm('Bạn chắc chắn muốn duyệt Approved và hoàn thành công việc này?')) {
+      document.getElementById('reviewFormStatus').value = '@WorkTaskStatuses.Approved';
+      document.getElementById('reviewTaskForm').submit();
+    }
+  }
+
+  // Request Revision
+  function requestRevision() {
+    openModal('revisionModal');
+  }
+
+  function submitRevision() {
+    const feedback = document.getElementById('revisionFeedback').value;
+    if (!feedback || !feedback.trim()) {
+      alert('Vui lòng nhập nội dung yêu cầu chỉnh sửa.');
+      return;
+    }
+
+    document.getElementById('reviewFormStatus').value = '@WorkTaskStatuses.NeedRevision';
+    document.getElementById('reviewFormFeedback').value = feedback.trim();
+    document.getElementById('reviewTaskForm').submit();
+  }
+
+  function openModal(id){document.getElementById(id).classList.add('active')}
+  function closeModal(id){document.getElementById(id).classList.remove('active')}
+</script>
+</body>
+</html>

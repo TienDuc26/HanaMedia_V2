@@ -1,0 +1,113 @@
+@using System.Security.Claims
+@using HanaMedia.Constants
+@{
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var currentPath = (ViewContext?.HttpContext?.Request?.Path.Value ?? string.Empty).TrimEnd('/').ToLowerInvariant();
+
+    bool IsActive(string url)
+    {
+        var path = (url ?? string.Empty).TrimEnd('/').ToLowerInvariant();
+        if (string.IsNullOrEmpty(path)) return false;
+        if (string.Equals(currentPath, path, StringComparison.OrdinalIgnoreCase)) return true;
+        return currentPath.StartsWith(path + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    string ActiveClass(string url) => IsActive(url) ? "nav-item active" : "nav-item";
+}
+
+<link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css" />
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">HM</div>
+    <div>
+      <div class="brand-name">HanaMedia</div>
+      <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+    </div>
+  </div>
+
+  <div class="sidebar-nav">
+
+  @if (role == AppRoles.Director)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/Director/Dashboard" class="@ActiveClass("/Director/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Phân công &amp; Duyệt việc</a>
+    <a href="/Director/Report" class="@ActiveClass("/Director/Report")"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a href="/Director/HumanResources" class="@ActiveClass("/Director/HumanResources")"><i class="ti ti-users"></i>Nhân sự</a>
+    <a href="/Director/Department" class="@ActiveClass("/Director/Department")"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a href="/Director/BookingCampaign" class="@ActiveClass("/Director/BookingCampaign")"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a href="/Director/Idea" class="@ActiveClass("/Director/Idea")"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a href="/Director/Approve" class="@ActiveClass("/Director/Approve")"><i class="ti ti-clipboard-check"></i>Phê duyệt</a>
+    <a href="/Director/SignContract" class="@ActiveClass("/Director/SignContract")"><i class="ti ti-pen"></i>Ký Hợp Đồng</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a href="/Director/Config" class="@ActiveClass("/Director/Config")"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a href="/Director/MonitoringSystem" class="@ActiveClass("/Director/MonitoringSystem")"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+  }
+  else if (role == AppRoles.AdminIT)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/AdminIT/Dashboard" class="@ActiveClass("/AdminIT/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Quản trị hệ thống</div>
+    <a href="/AdminIT/Account" class="@ActiveClass("/AdminIT/Account")"><i class="ti ti-users"></i>Quản lý tài khoản</a>
+    <a href="/AdminIT/AuditLog" class="@ActiveClass("/AdminIT/AuditLog")"><i class="ti ti-shield-check"></i>Nhật ký hệ thống</a>
+    <a href="/AdminIT/ConfigSystem" class="@ActiveClass("/AdminIT/ConfigSystem")"><i class="ti ti-settings"></i>Cấu hình kỹ thuật</a>
+  }
+  else if (role is AppRoles.HumanResourcesManager or AppRoles.HumanResourcesStaff)
+  {
+    <div class="nav-section">Vận hành nhân sự</div>
+    <a href="/ManageHuman/HumanResources" class="@ActiveClass("/ManageHuman/HumanResources")"><i class="ti ti-users"></i>Hồ sơ nhân sự</a>
+    <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Giao việc &amp; Phân công</a>
+    <a href="/ManageHuman/Repoted" class="@ActiveClass("/ManageHuman/Repoted")"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
+  }
+  else if (role == AppRoles.BookingManager)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageBooking/Dashboard" class="@ActiveClass("/ManageBooking/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Booking</div>
+    <a href="/ManageBooking/KOL_KOC" class="@ActiveClass("/ManageBooking/KOL_KOC")"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
+    <a href="/ManageBooking/Booking" class="@ActiveClass("/ManageBooking/Booking")"><i class="ti ti-star"></i>Quản lý Booking &amp; Thù lao</a>
+    <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageBooking/Reported" class="@ActiveClass("/ManageBooking/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+  }
+  else if (role == AppRoles.BookingStaff)
+  {
+    <div class="nav-section">Nghiệp vụ của tôi</div>
+    <a href="/BookingStaff/KOL_KOC" class="@ActiveClass("/BookingStaff/KOL_KOC")"><i class="ti ti-users-group"></i>Tìm KOL / KOC</a>
+    <a href="/BookingStaff/Booking" class="@ActiveClass("/BookingStaff/Booking")"><i class="ti ti-star"></i>Nhiệm vụ Booking</a>
+    <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Công việc được giao</a>
+    <a href="/BookingStaff/Reported" class="@ActiveClass("/BookingStaff/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+  }
+  else if (role == AppRoles.IdeaManager)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/ManageIdea/Dashboard" class="@ActiveClass("/ManageIdea/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/ManageIdea/Idea" class="@ActiveClass("/ManageIdea/Idea")"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
+    <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
+    <a href="/ManageIdea/Reported" class="@ActiveClass("/ManageIdea/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+  }
+  else if (role == AppRoles.IdeaStaff)
+  {
+    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
+    <a href="/IdeaStaff/Idea" class="@ActiveClass("/IdeaStaff/Idea")"><i class="ti ti-bulb"></i>Kịch bản &amp; Ý tưởng</a>
+    <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Công việc được giao</a>
+    <a href="/IdeaStaff/Reported" class="@ActiveClass("/IdeaStaff/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+  }
+  else
+  {
+    <div class="nav-section">Điều hướng</div>
+    <a href="/" class="@ActiveClass("/")"><i class="ti ti-layout-dashboard"></i>Trang chủ</a>
+  }
+  </div>
+
+  <div class="sidebar-user">
+  <partial name="_UserMenuPartial" />
+  </div>
+</aside>

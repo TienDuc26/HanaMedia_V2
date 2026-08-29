@@ -1,12 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HanaMedia — Quản lý nhân sự phòng Ý tưởng</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
@@ -15,24 +12,8 @@
 <body>
 <div class="layout">
 
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">HM</div>
-      <div>
-        <div class="brand-name">HanaMedia</div>
-        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
-      </div>
-    </div>
+  <partial name="_SidebarPartial" />
 
-    <div class="nav-section">Tổng quan</div>
-    <a href="/ManageIdea/Dashboard" class="nav-item"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
-
-    <div class="nav-section">Nghiệp vụ Sáng tạo</div>
-    <a href="/ManageIdea/Idea" class="nav-item"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
-    <a href="/ManageIdea/HumanStaff" class="nav-item active"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
-    <a href="/ManageIdea/Reported" class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
-    <partial name="_UserMenuPartial" />
-  </aside>
 
   <main class="main">
     <div class="topbar">

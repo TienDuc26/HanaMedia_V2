@@ -1,0 +1,17 @@
+/* HanaMedia Fonts
+ *
+ * IMPORTANT: We rely on system fonts that ship with Windows and support
+ * Vietnamese precomposed glyphs (ổ, ể, ộ, ả, ữ, ậ...).
+ *
+ * Tested fallback stack (in order):
+ *   1. "Segoe UI"        - Windows Vista+, full Vietnamese support
+ *   2. "Arial"           - All Windows, full Vietnamese support
+ *   3. "Helvetica Neue"  - macOS
+ *   4. "Roboto"          - Android / Google
+ *   5. "Inter"           - Web font fallback (if Google Fonts loads)
+ *   6. sans-serif        - Final browser fallback
+ *
+ * We deliberately AVOID loading Google Fonts because:
+ *   - If the CDN is slow/blocked, browser shows FOUT with empty glyphs
+ *   - System fonts render instantly with no network dependency
+ */

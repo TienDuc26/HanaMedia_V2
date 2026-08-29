@@ -6,6 +6,8 @@
     var taskUrl = $"/Tasks?module={Uri.EscapeDataString(Model.Module)}";
 }
 
+<link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css" />
+
 <aside class="sidebar">
   <div class="brand">
     <div class="brand-mark">HM</div>
@@ -15,6 +17,7 @@
     </div>
   </div>
 
+  <div class="sidebar-nav">
   @if (role == AppRoles.Director)
   {
     <div class="nav-section">Tổng quan</div>
@@ -27,7 +30,7 @@
     <a href="/Director/Department" class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
     <a href="/Director/BookingCampaign" class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
     <a href="/Director/Idea" class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
-    <a href="/Director/Approve" class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+    <a href="/Director/Approve" class="nav-item"><i class="ti ti-clipboard-check"></i>Phê duyệt</a>
     <a href="/Director/SignContract" class="nav-item"><i class="ti ti-pen"></i>Ký Hợp Đồng</a>
 
     <div class="nav-section">Quản trị</div>
@@ -83,6 +86,9 @@
     <a href="/" class="nav-item"><i class="ti ti-layout-dashboard"></i>Trang chủ</a>
     <a href="@taskUrl" class="nav-item active"><i class="ti ti-checklist"></i>Công việc</a>
   }
+  </div>
 
-  <partial name="_UserMenuPartial" />
+  <div class="sidebar-user">
+    <partial name="_UserMenuPartial" />
+  </div>
 </aside>
