@@ -1,0 +1,319 @@
+@model HanaMedia.Models.Booking
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+
+    var statusClass = Model.Status switch
+    {
+        "dang_cho" => "status-dang_cho",
+        "thuong_luong" => "status-thuong_luong",
+        "da_chot" => "status-da_chot",
+        "dang_trien_khai" => "status-dang_trien_khai",
+        "hoan_thanh" => "status-hoan_thanh",
+        "huy" => "status-huy",
+        _ => "status-dang_cho"
+    };
+    var statusLabel = Model.Status switch
+    {
+        "dang_cho" => "Chờ",
+        "thuong_luong" => "Thương lượng",
+        "da_chot" => "Chốt",
+        "dang_trien_khai" => "Triển khai",
+        "hoan_thanh" => "Hoàn thành",
+        "huy" => "Hủy",
+        _ => Model.Status
+    };
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Chi tiết Booking ID @Model.Id</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-dang_cho { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-thuong_luong { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-da_chot { background: #fffbeb; color: var(--warning-color); border: 1px solid #fde68a; }
+    .status-dang_trien_khai { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
+    .status-hoan_thanh { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status-huy { background: #fee2e2; color: var(--danger-color); border: 1px solid #fca5a5; }
+
+    .back-link {
+      color: var(--muted-text);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      transition: color 0.15s;
+    }
+    .back-link:hover {
+      color: var(--primary-blue);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .info-label {
+      font-size: 13px;
+      color: var(--muted-text);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-size: 15px;
+      color: var(--text-color);
+      font-weight: 550;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 16px;
+      border-left: 4px solid var(--secondary-blue);
+      padding-left: 8px;
+    }
+
+    .file-download-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 12px;
+    }
+
+    .staff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .staff-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border-left: 3px solid var(--secondary-blue);
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <a href="/Bookings" class="back-link"><i class="ti ti-arrow-narrow-left"></i> Quay lại danh sách Booking</a>
+
+    <div class="topbar" style="margin-bottom: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <h1 class="page-title" style="margin:0;">Booking Client: @Model.ClientName</h1>
+          <span class="status-badge @statusClass">@statusLabel</span>
+        </div>
+        <div class="page-sub" style="margin-top: 6px;">Chiến dịch: <strong style="color: var(--primary-blue);">@(Model.Campaign?.Name ?? Model.CampaignName)</strong></div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Left side: Main details -->
+      <div>
+        <div class="card">
+          <div class="section-title">Chi tiết Booking</div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <div class="info-label">KOL/KOC Hợp tác</div>
+              <div class="info-value">
+                @if (Model.Kol != null)
+                {
+                  <a href="/Kols/Details/@Model.KolId" style="color: var(--secondary-blue); text-decoration: none; font-weight: 700;">
+                    @Model.Kol.Name (@Model.Kol.Platform)
+                  </a>
+                }
+                else
+                {
+                  <span>N/A</span>
+                }
+              </div>
+            </div>
+            <div>
+              <div class="info-label">Người phụ trách chính</div>
+              <div class="info-value">
+                <span style="font-weight: 700;">@(Model.PrimaryManager?.FullName ?? "Chưa được gán")</span>
+                <span style="color: var(--muted-text); font-size:13px; font-weight:normal;"> (@Model.PrimaryManager?.Position)</span>
+              </div>
+            </div>
+            <div>
+              <div class="info-label">Thời hạn hoàn thành (Deadline)</div>
+              <div class="info-value" style="font-size: 16px; font-weight: 700; color: var(--danger-color);">@Model.Deadline.ToString("dd/MM/yyyy")</div>
+            </div>
+            <div>
+              <div class="info-label">Ngày đăng tải thực tế (Posting Date)</div>
+              <div class="info-value" style="font-size: 16px; font-weight: 700; color: var(--success-color);">
+                @(Model.PostingDate.HasValue ? Model.PostingDate.Value.ToString("dd/MM/yyyy") : "Chưa đăng")
+              </div>
+            </div>
+            <div>
+              <div class="info-label">Giá Booking</div>
+              <div class="info-value" style="font-size: 17px; font-weight: 700; color: var(--primary-blue);">
+                @Model.BookingPrice.ToString("N0") VNĐ
+              </div>
+            </div>
+            <div>
+              <div class="info-label">Chi phí thực tế phát sinh</div>
+              <div class="info-value" style="font-size: 17px; font-weight: 700; color: var(--danger-color);">
+                @Model.ActualCost.ToString("N0") VNĐ
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <div class="info-label">Nội dung công việc (Job Description)</div>
+            <div class="info-value" style="background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;">
+              @(!string.IsNullOrEmpty(Model.JobDescription) ? Model.JobDescription : "Chưa có nội dung công việc chi tiết.")
+            </div>
+          </div>
+
+          @if (!string.IsNullOrEmpty(Model.PostLink))
+          {
+            <div>
+              <div class="info-label">Link bài viết / Video sản phẩm</div>
+              <div class="info-value">
+                <a href="@Model.PostLink" target="_blank" style="color: var(--secondary-blue); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  @Model.PostLink <i class="ti ti-external-link" style="font-size: 14px;"></i>
+                </a>
+              </div>
+            </div>
+          }
+
+          <div>
+            <div class="info-label">Ghi chú thêm</div>
+            <div class="info-value">@(!string.IsNullOrEmpty(Model.Notes) ? Model.Notes : "Không có ghi chú.")</div>
+          </div>
+        </div>
+
+        <!-- Files Section -->
+        <div class="card">
+          <div class="section-title">Hồ sơ tài liệu hợp tác</div>
+          
+          <div class="info-label">Hợp đồng pháp lý</div>
+          @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
+          {
+            <div class="file-download-box">
+              <i class="ti ti-file-text" style="font-size: 28px; color: var(--primary-blue);"></i>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 14px;">File Hợp đồng ký kết</div>
+                <a href="@Model.ContractFileUrl" download target="_blank" style="color: var(--secondary-blue); text-decoration: none; font-size: 13px;">Tải xuống tài liệu</a>
+              </div>
+            </div>
+          }
+          else
+          {
+            <div style="color: var(--muted-text); font-style: italic; margin-bottom: 16px; font-size: 13.5px;">Chưa đính kèm File Hợp đồng.</div>
+          }
+
+          <div class="info-label">Bảng báo giá &amp; Kế hoạch</div>
+          @if (!string.IsNullOrEmpty(Model.QuotationFileUrl))
+          {
+            <div class="file-download-box">
+              <i class="ti ti-file-analytics" style="font-size: 28px; color: var(--success-color);"></i>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 14px;">Báo giá dịch vụ &amp; Booking</div>
+                <a href="@Model.QuotationFileUrl" download target="_blank" style="color: var(--secondary-blue); text-decoration: none; font-size: 13px;">Tải xuống báo giá</a>
+              </div>
+            </div>
+          }
+          else
+          {
+            <div style="color: var(--muted-text); font-style: italic; font-size: 13.5px;">Chưa đính kèm File Báo giá.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Right side: Assigned team members -->
+      <div>
+        <div class="card">
+          <div class="section-title">Thành viên tham gia (Team)</div>
+          
+          @if (!Model.BookingWages.Any())
+          {
+            <div style="color: var(--muted-text); font-style: italic; text-align: center; padding: 20px 0;">
+              Chưa có nhân viên nào tham gia.
+            </div>
+          }
+          else
+          {
+            <div class="staff-list">
+              @foreach (var bw in Model.BookingWages)
+              {
+                <div class="staff-item">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 14.5px;">@bw.Employee.FullName</div>
+                    <div style="font-size: 12px; color: var(--muted-text);">@bw.Employee.Position (@bw.Employee.Department)</div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

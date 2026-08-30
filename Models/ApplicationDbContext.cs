@@ -108,6 +108,8 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
 
+            entity.Property(e => e.CampaignId).HasColumnName("campaign_id");
+
             entity.HasOne(d => d.Kol).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.KolId)
                 .OnDelete(DeleteBehavior.SetNull)
@@ -116,6 +118,11 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.PrimaryManager).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.PrimaryManagerId)
                 .HasConstraintName("FK_bookings_employees_primary_manager_id");
+
+            entity.HasOne(d => d.Campaign).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.CampaignId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_bookings_campaigns_campaign_id");
         });
 
         modelBuilder.Entity<BookingWage>(entity =>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HanaMedia — Dashboard Giám đốc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+:root{
+  --navy:#0B2545;
+  --navy-2:#123465;
+  --blue-900:#0C447C;
+  --blue-700:#185FA5;
+  --blue-600:#1D6FD6;
+  --blue-500:#2F80ED;
+  --blue-400:#5B9BF0;
+  --blue-100:#E4EEFD;
+  --blue-50:#F2F7FE;
+  --white:#FFFFFF;
+  --ink:#0B2545;
+  --ink-2:#40506B;
+  --muted:#8494AC;
+  --line:#E4EAF3;
+  --green:#1CA36B;
+  --green-bg:#E4F7EE;
+  --amber:#DA8A1B;
+  --amber-bg:#FCF0DC;
+  --red:#DC4E4E;
+  --red-bg:#FDEAEA;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(11,37,69,.04), 0 8px 24px rgba(11,37,69,.05);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  background:#F5F8FD;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.brand{font-family:'Manrope',sans-serif;}
+.layout{display:grid; grid-template-columns:248px 1fr; min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  background:linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%);
+  color:#fff;
+  padding:28px 20px;
+  display:flex;
+  flex-direction:column;
+  position:sticky; top:0; height:100vh;
+}
+.brand{display:flex; align-items:center; gap:10px; margin-bottom:36px;}
+.brand-mark{
+  width:36px; height:36px; border-radius:10px;
+  background:var(--blue-500);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:16px; color:#fff;
+}
+.brand-name{font-size:16px; font-weight:700; letter-spacing:.2px;}
+.brand-sub{font-size:11px; color:#9FB4D6; font-weight:500;}
+.nav-section{font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:#7B92B8; margin:18px 0 8px 10px; font-weight:600;}
+.nav-item{
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:10px;
+  color:#CBDBF3; font-size:14px; font-weight:500;
+  text-decoration:none; margin-bottom:2px;
+  cursor:default;
+}
+.nav-item i{font-size:18px;}
+.nav-item.active{background:rgba(255,255,255,.12); color:#fff;}
+.nav-item:not(.active):hover{background:rgba(255,255,255,.06);}
+.sidebar-footer{margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,.12);}
+.role-pill{
+  display:flex; align-items:center; gap:10px;
+  padding:10px; border-radius:12px; background:rgba(255,255,255,.08);
+}
+.avatar{
+  width:34px; height:34px; border-radius:50%;
+  background:var(--blue-500); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px; flex-shrink:0;
+}
+.role-name{font-size:13px; font-weight:600; color:#fff;}
+.role-title{font-size:11px; color:#9FB4D6;}
+
+/* MAIN */
+.main{padding:28px 36px 60px;}
+.topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; flex-wrap:wrap; gap:16px;}
+.page-title{font-size:24px; font-weight:800; color:var(--navy);}
+.page-sub{font-size:13.5px; color:var(--muted); margin-top:4px;}
+.topbar-actions{display:flex; align-items:center; gap:10px;}
+.period-tabs{display:flex; background:#fff; border:1px solid var(--line); border-radius:10px; padding:4px; box-shadow:var(--shadow);}
+.period-tab{
+  padding:7px 16px; border-radius:7px; font-size:13px; font-weight:600;
+  color:var(--ink-2); cursor:pointer; transition:.15s;
+}
+.period-tab.active{background:var(--blue-500); color:#fff;}
+.icon-btn{
+  width:38px; height:38px; border-radius:10px; background:#fff; border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; color:var(--ink-2); font-size:17px;
+  box-shadow:var(--shadow); position:relative;
+}
+.icon-btn .dot{position:absolute; top:8px; right:8px; width:7px; height:7px; border-radius:50%; background:var(--red); border:1.5px solid #fff;}
+
+/* KPI GRID */
+.kpi-grid{display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; margin-bottom:22px;}
+.kpi-card{
+  background:#fff; border-radius:var(--radius); padding:18px 18px 16px;
+  box-shadow:var(--shadow); border:1px solid var(--line);
+}
+.kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.kpi-icon{
+  width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.kpi-label{font-size:12.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.3px;}
+.kpi-value{font-size:26px; font-weight:800; color:var(--navy); margin-top:2px;}
+.kpi-delta{display:flex; align-items:center; gap:4px; font-size:12.5px; font-weight:600; margin-top:8px;}
+.kpi-delta.up{color:var(--green);}
+.kpi-delta.down{color:var(--red);}
+.kpi-delta.flat{color:var(--muted);}
+.kpi-note{font-size:11.5px; color:var(--muted); margin-top:8px;}
+
+/* GRID LAYOUT */
+.grid-2{display:grid; grid-template-columns:1.35fr 1fr; gap:16px; margin-bottom:16px;}
+.grid-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;}
+.card{
+  background:#fff; border-radius:var(--radius); padding:20px 22px;
+  box-shadow:var(--shadow); border:1px solid var(--line);
+}
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+.card-title{font-size:15px; font-weight:700; color:var(--navy);}
+.card-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+.link-btn{font-size:12.5px; color:var(--blue-600); font-weight:600; text-decoration:none;}
+
+.legend{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:6px; font-size:12.5px; color:var(--ink-2);}
+.legend span{display:flex; align-items:center; gap:6px;}
+.legend i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+
+/* Department bars (custom, not chart.js) */
+.dept-row{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+.dept-name{width:110px; font-size:13px; font-weight:600; color:var(--ink-2); flex-shrink:0;}
+.dept-bar-track{flex:1; height:10px; background:var(--blue-50); border-radius:6px; overflow:hidden;}
+.dept-bar-fill{height:100%; border-radius:6px; background:linear-gradient(90deg, var(--blue-500), var(--blue-400));}
+.dept-count{width:36px; text-align:right; font-size:13px; font-weight:700; color:var(--navy);}
+
+/* Approval list */
+.approval-item{
+  display:flex; align-items:flex-start; gap:12px; padding:13px 0;
+  border-bottom:1px solid var(--line);
+}
+.approval-item:last-child{border-bottom:none; padding-bottom:0;}
+.approval-tag{
+  font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:.3px; flex-shrink:0; margin-top:2px;
+}
+.tag-salary{background:var(--amber-bg); color:var(--amber);}
+.tag-offboard{background:var(--red-bg); color:var(--red);}
+.tag-booking{background:var(--blue-100); color:var(--blue-700);}
+.tag-idea{background:var(--green-bg); color:var(--green);}
+.approval-body{flex:1;}
+.approval-title{font-size:13.5px; font-weight:600; color:var(--ink);}
+.approval-meta{font-size:12px; color:var(--muted); margin-top:2px;}
+.approval-actions{display:flex; gap:6px; margin-top:8px;}
+.btn-mini{
+  font-size:12px; font-weight:600; padding:5px 12px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--ink-2);
+}
+.btn-mini.approve{background:var(--blue-500); color:#fff; border-color:var(--blue-500);}
+
+/* Table */
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th{
+  text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px;
+  color:var(--muted); font-weight:700; padding:0 10px 10px; border-bottom:1px solid var(--line);
+}
+td{padding:12px 10px; border-bottom:1px solid var(--line); color:var(--ink-2);}
+tr:last-child td{border-bottom:none;}
+.dept-chip{
+  display:inline-flex; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600;
+  background:var(--blue-100); color:var(--blue-700);
+}
+.status-chip{display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600;}
+.status-chip::before{content:''; width:7px; height:7px; border-radius:50%;}
+.status-good::before{background:var(--green);}
+.status-warn::before{background:var(--amber);}
+.status-bad::before{background:var(--red);}
+.bar-mini{width:70px; height:6px; background:var(--blue-50); border-radius:4px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:8px;}
+.bar-mini-fill{height:100%; background:var(--blue-500); border-radius:4px;}
+
+/* System monitor */
+.monitor-row{display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line);}
+.monitor-row:last-child{border-bottom:none;}
+.monitor-label{font-size:13px; color:var(--ink-2); display:flex; align-items:center; gap:9px;}
+.monitor-label i{font-size:16px; color:var(--blue-500);}
+.monitor-value{font-size:14px; font-weight:700; color:var(--navy);}
+.alert-box{
+  background:var(--amber-bg); border:1px solid #F3D9A6; border-radius:10px; padding:11px 13px;
+  display:flex; gap:10px; align-items:flex-start; margin-top:12px;
+}
+.alert-box i{color:var(--amber); font-size:17px; margin-top:1px;}
+.alert-title{font-size:12.5px; font-weight:700; color:#8A5A0B;}
+.alert-desc{font-size:12px; color:#8A5A0B; opacity:.85; margin-top:2px;}
+
+footer{text-align:center; font-size:12px; color:var(--muted); margin-top:24px;}
+
+@media (max-width:1200px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr);}
+  .grid-2, .grid-3{grid-template-columns:1fr;}
+}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HM</div>
+      <div>
+        <div class="brand-name">HanaMedia</div>
+        <div class="brand-sub">Hệ thống Quản lý Nhân sự</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Tổng quan</div>
+    <a class="nav-item active"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a class="nav-item"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+
+    <div class="nav-section">Nghiệp vụ</div>
+    <a class="nav-item"><i class="ti ti-users"></i>Nhân sự</a>
+    <a class="nav-item"><i class="ti ti-building-skyscraper"></i>Phòng ban</a>
+    <a class="nav-item"><i class="ti ti-star"></i>Booking / KOL</a>
+    <a class="nav-item"><i class="ti ti-bulb"></i>Ý tưởng &amp; Chiến dịch</a>
+    <a class="nav-item"><i class="ti ti-checklist"></i>Phê duyệt</a>
+
+    <div class="nav-section">Quản trị</div>
+    <a class="nav-item"><i class="ti ti-settings"></i>Cấu hình nghiệp vụ</a>
+    <a class="nav-item"><i class="ti ti-shield-check"></i>Giám sát hệ thống</a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill">
+        <div class="avatar">NV</div>
+        <div>
+          <div class="role-name">Nguyễn Văn A</div>
+          <div class="role-title">Giám đốc</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard tổng quan</div>
+        <div class="page-sub">Toàn cảnh nhân sự, booking, ý tưởng &amp; hệ thống — cập nhật 08:30, 12/08/2026</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="period-tabs">
+          <div class="period-tab">Ngày</div>
+          <div class="period-tab active">Tháng</div>
+          <div class="period-tab">Quý</div>
+        </div>
+        <div class="icon-btn"><i class="ti ti-bell"></i><span class="dot"></span></div>
+        <div class="icon-btn"><i class="ti ti-download"></i></div>
+      </div>
+    </div>
+
+    <!-- KPI ROW 1 -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Tổng nhân sự</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-users"></i></div>
+        </div>
+        <div class="kpi-value">128</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+6 nhân sự mới tháng này</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Biến động nhân sự</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-user-plus"></i></div>
+        </div>
+        <div class="kpi-value">+6 / -2</div>
+        <div class="kpi-note">Vào mới 6 · Nghỉ việc 2 (tháng 8)</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Booking đang triển khai</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-star"></i></div>
+        </div>
+        <div class="kpi-value">22</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+4 so với tháng trước</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Doanh thu booking</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-cash"></i></div>
+        </div>
+        <div class="kpi-value">2.4 tỷ</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+12% so với tháng trước</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Công việc quá hạn</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-alert-triangle"></i></div>
+        </div>
+        <div class="kpi-value">7</div>
+        <div class="kpi-delta down"><i class="ti ti-arrow-down-right"></i>Cần xử lý gấp</div>
+      </div>
+    </div>
+
+    <!-- KPI ROW 2 -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Chiến dịch đang chạy</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-rocket"></i></div>
+        </div>
+        <div class="kpi-value">9</div>
+        <div class="kpi-note">3 client lớn, 6 client vừa &amp; nhỏ</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Ý tưởng chờ duyệt</div>
+          <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-bulb"></i></div>
+        </div>
+        <div class="kpi-value">14</div>
+        <div class="kpi-note">5 ý tưởng ưu tiên cao</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Chi phí booking</div>
+          <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-receipt"></i></div>
+        </div>
+        <div class="kpi-value">980 tr</div>
+        <div class="kpi-note">Biên lợi nhuận ước tính 59%</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Hiệu suất trung bình</div>
+          <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-chart-bar"></i></div>
+        </div>
+        <div class="kpi-value">91%</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+2 điểm so với quý trước</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-label">Chờ Giám đốc phê duyệt</div>
+          <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-checklist"></i></div>
+        </div>
+        <div class="kpi-value">6</div>
+        <div class="kpi-note">2 lương · 1 nghỉ việc · 2 booking · 1 ý tưởng</div>
+      </div>
+    </div>
+
+    <!-- ROW: Doanh thu chart + Booking pipeline -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Doanh thu &amp; chi phí booking theo tháng</div>
+            <div class="card-sub">6 tháng gần nhất, đơn vị: triệu đồng</div>
+          </div>
+          <a class="link-btn">Xem báo cáo <i class="ti ti-arrow-right"></i></a>
+        </div>
+        <div class="legend">
+          <span><i style="background:#2F80ED"></i>Doanh thu</span>
+          <span><i style="background:#B7D3FA"></i>Chi phí</span>
+          <span><i style="background:#1CA36B"></i>Lợi nhuận</span>
+        </div>
+        <div style="position:relative; height:260px;">
+          <canvas id="revenueChart" role="img" aria-label="Biểu đồ doanh thu, chi phí và lợi nhuận booking theo tháng từ tháng 3 đến tháng 8">Doanh thu theo tháng (triệu đồng): T3 1650, T4 1820, T5 1900, T6 2050, T7 2150, T8 2400.</canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Trạng thái booking</div>
+            <div class="card-sub">Tổng 126 booking trong kỳ</div>
+          </div>
+        </div>
+        <div style="position:relative; height:190px; margin-bottom:12px;">
+          <canvas id="bookingChart" role="img" aria-label="Biểu đồ tròn phân bổ trạng thái booking: chờ 12, thương lượng 8, chốt 15, triển khai 22, hoàn thành 64, hủy 5">Booking: chờ 12, đang thương lượng 8, đã chốt 15, đang triển khai 22, hoàn thành 64, hủy 5.</canvas>
+        </div>
+        <div class="legend" style="justify-content:space-between; gap:10px 16px;">
+          <span><i style="background:#8AB8F2"></i>Đang chờ (12)</span>
+          <span><i style="background:#5B9BF0"></i>Thương lượng (8)</span>
+          <span><i style="background:#2F80ED"></i>Đã chốt (15)</span>
+          <span><i style="background:#185FA5"></i>Triển khai (22)</span>
+          <span><i style="background:#1CA36B"></i>Hoàn thành (64)</span>
+          <span><i style="background:#DC4E4E"></i>Hủy (5)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: Dept headcount + Dept performance + Approvals -->
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Nhân sự theo phòng ban</div>
+            <div class="card-sub">128 nhân sự hiện tại</div>
+          </div>
+        </div>
+        <div class="dept-row"><div class="dept-name">Booking</div><div class="dept-bar-track"><div class="dept-bar-fill" style="width:36%"></div></div><div class="dept-count">46</div></div>
+        <div class="dept-row"><div class="dept-name">Ý tưởng</div><div class="dept-bar-track"><div class="dept-bar-fill" style="width:30%"></div></div><div class="dept-count">38</div></div>
+        <div class="dept-row"><div class="dept-name">HCNS</div><div class="dept-bar-track"><div class="dept-bar-fill" style="width:11%"></div></div><div class="dept-count">14</div></div>
+        <div class="dept-row"><div class="dept-name">Kế toán</div><div class="dept-bar-track"><div class="dept-bar-fill" style="width:9%"></div></div><div class="dept-count">12</div></div>
+        <div class="dept-row"><div class="dept-name">IT</div><div class="dept-bar-track"><div class="dept-bar-fill" style="width:6%"></div></div><div class="dept-count">8</div></div>
+        <div class="dept-row" style="margin-bottom:0;"><div class="dept-name">Khác</div><div class="dept-bar-track"><div class="dept-bar-fill" style="width:8%"></div></div><div class="dept-count">10</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Hiệu suất phòng ban</div>
+            <div class="card-sub">% hoàn thành mục tiêu tháng 8</div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Phòng ban</th><th>Hiệu suất</th><th>Đánh giá</th></tr></thead>
+          <tbody>
+            <tr><td>HCNS</td><td><span class="bar-mini"><span class="bar-mini-fill" style="width:95%"></span></span>95%</td><td><span class="status-chip status-good">Tốt</span></td></tr>
+            <tr><td>Booking</td><td><span class="bar-mini"><span class="bar-mini-fill" style="width:92%"></span></span>92%</td><td><span class="status-chip status-good">Tốt</span></td></tr>
+            <tr><td>Ý tưởng</td><td><span class="bar-mini"><span class="bar-mini-fill" style="width:87%"></span></span>87%</td><td><span class="status-chip status-good">Tốt</span></td></tr>
+            <tr><td>IT</td><td><span class="bar-mini"><span class="bar-mini-fill" style="width:90%"></span></span>90%</td><td><span class="status-chip status-good">Tốt</span></td></tr>
+            <tr><td>Kế toán</td><td><span class="bar-mini"><span class="bar-mini-fill" style="width:74%"></span></span>74%</td><td><span class="status-chip status-warn">Theo dõi</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Chờ Giám đốc phê duyệt</div>
+            <div class="card-sub">6 mục cần xử lý</div>
+          </div>
+          <a class="link-btn">Tất cả</a>
+        </div>
+
+        <div class="approval-item">
+          <span class="approval-tag tag-salary">Lương</span>
+          <div class="approval-body">
+            <div class="approval-title">Đề xuất tăng lương — Trần Thị B (Booking)</div>
+            <div class="approval-meta">Gửi bởi QL Booking · 2 giờ trước</div>
+            <div class="approval-actions"><button class="btn-mini approve">Duyệt</button><button class="btn-mini">Xem chi tiết</button></div>
+          </div>
+        </div>
+
+        <div class="approval-item">
+          <span class="approval-tag tag-offboard">Nghỉ việc</span>
+          <div class="approval-body">
+            <div class="approval-title">Đơn nghỉ việc — Lê Văn C (Ý tưởng)</div>
+            <div class="approval-meta">Gửi bởi QL Ý tưởng · Hôm qua</div>
+            <div class="approval-actions"><button class="btn-mini approve">Duyệt</button><button class="btn-mini">Xem chi tiết</button></div>
+          </div>
+        </div>
+
+        <div class="approval-item">
+          <span class="approval-tag tag-booking">Booking</span>
+          <div class="approval-body">
+            <div class="approval-title">Booking KOL lớn — Client Vinamilk, 480 triệu</div>
+            <div class="approval-meta">Gửi bởi QL Booking · Hôm qua</div>
+            <div class="approval-actions"><button class="btn-mini approve">Duyệt</button><button class="btn-mini">Xem chi tiết</button></div>
+          </div>
+        </div>
+
+        <div class="approval-item">
+          <span class="approval-tag tag-idea">Ý tưởng</span>
+          <div class="approval-body">
+            <div class="approval-title">Campaign "Tết Sum Vầy" — chờ duyệt triển khai</div>
+            <div class="approval-meta">Gửi bởi QL Ý tưởng · 2 ngày trước</div>
+            <div class="approval-actions"><button class="btn-mini approve">Duyệt</button><button class="btn-mini">Xem chi tiết</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: Employee list + System monitoring -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Hồ sơ nhân sự nổi bật</div>
+            <div class="card-sub">Nhân sự mới &amp; cần chú ý gần đây</div>
+          </div>
+          <a class="link-btn">Xem toàn bộ hồ sơ</a>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Nhân viên</th><th>Phòng ban</th><th>Chức vụ</th><th>Ngày vào</th><th>Trạng thái</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Phạm Thu Hà</td><td><span class="dept-chip">Booking</span></td><td>Nhân viên</td><td>05/08/2026</td><td><span class="status-chip status-good">Đang làm việc</span></td></tr>
+            <tr><td>Đỗ Minh Khôi</td><td><span class="dept-chip">Ý tưởng</span></td><td>Nhân viên</td><td>03/08/2026</td><td><span class="status-chip status-good">Đang làm việc</span></td></tr>
+            <tr><td>Vũ Ngọc Lan</td><td><span class="dept-chip">HCNS</span></td><td>Nhân viên</td><td>29/07/2026</td><td><span class="status-chip status-good">Đang làm việc</span></td></tr>
+            <tr><td>Nguyễn Anh Tuấn</td><td><span class="dept-chip">Booking</span></td><td>Quản lý</td><td>15/03/2023</td><td><span class="status-chip status-warn">Đang chờ duyệt lương</span></td></tr>
+            <tr><td>Lê Văn C</td><td><span class="dept-chip">Ý tưởng</span></td><td>Nhân viên</td><td>10/01/2024</td><td><span class="status-chip status-bad">Chờ duyệt nghỉ việc</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Giám sát hệ thống</div>
+            <div class="card-sub">Tổng quan do AdminIT cung cấp</div>
+          </div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-login-2"></i>Lượt đăng nhập hôm nay</div>
+          <div class="monitor-value">47</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-users-group"></i>Người dùng đang hoạt động</div>
+          <div class="monitor-value">31</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-wifi-off"></i>Truy cập ngoài mạng nội bộ bị chặn</div>
+          <div class="monitor-value">3</div>
+        </div>
+        <div class="monitor-row">
+          <div class="monitor-label"><i class="ti ti-shield-x"></i>Cảnh báo bất thường</div>
+          <div class="monitor-value">2</div>
+        </div>
+        <div class="alert-box">
+          <i class="ti ti-alert-triangle"></i>
+          <div>
+            <div class="alert-title">2 cảnh báo cần AdminIT xem xét</div>
+            <div class="alert-desc">Đăng nhập thất bại nhiều lần (1 tài khoản) · Truy cập từ ngoài mạng nội bộ bị từ chối (3 lần, cùng 1 IP)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const revenueCtx = document.getElementById('revenueChart');
+new Chart(revenueCtx, {
+  type: 'bar',
+  data: {
+    labels: ['T3','T4','T5','T6','T7','T8'],
+    datasets: [
+      { label:'Doanh thu', data:[1650,1820,1900,2050,2150,2400], backgroundColor:'#2F80ED', borderRadius:4, barPercentage:0.6 },
+      { label:'Chi phí', data:[720,780,810,860,900,980], backgroundColor:'#B7D3FA', borderRadius:4, barPercentage:0.6 },
+      { label:'Lợi nhuận', data:[930,1040,1090,1190,1250,1420], type:'line', borderColor:'#1CA36B', backgroundColor:'#1CA36B', tension:0.35, borderWidth:2, pointRadius:3, pointBackgroundColor:'#1CA36B' }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ color:'#8494AC', font:{ size:11 } } },
+      y:{ grid:{ color:'#EEF2FA' }, ticks:{ color:'#8494AC', font:{ size:11 }, callback:v=>v+'tr' } }
+    }
+  }
+});
+
+const bookingCtx = document.getElementById('bookingChart');
+new Chart(bookingCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Đang chờ','Thương lượng','Đã chốt','Triển khai','Hoàn thành','Hủy'],
+    datasets: [{
+      data: [12,8,15,22,64,5],
+      backgroundColor: ['#8AB8F2','#5B9BF0','#2F80ED','#185FA5','#1CA36B','#DC4E4E'],
+      borderColor:'#fff', borderWidth:2
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'68%',
+    plugins:{ legend:{ display:false } }
+  }
+});
+</script>
+</body>
+</html>

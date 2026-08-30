@@ -39,7 +39,7 @@
           <div class="kpi-label">Booking đang chờ</div>
           <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-clock"></i></div>
         </div>
-        <div class="kpi-value">12</div>
+        <div class="kpi-value">@ViewBag.PendingCount</div>
         <div class="kpi-note">Chờ deal và chốt thông tin</div>
       </div>
 
@@ -48,7 +48,7 @@
           <div class="kpi-label">Đang thương lượng</div>
           <div class="kpi-icon" style="background:var(--amber-bg); color:var(--amber);"><i class="ti ti-message-dots"></i></div>
         </div>
-        <div class="kpi-value">8</div>
+        <div class="kpi-value">@ViewBag.NegotiatingCount</div>
         <div class="kpi-note">Đang liên hệ thương lượng giá</div>
       </div>
 
@@ -57,7 +57,7 @@
           <div class="kpi-label">Booking đã chốt</div>
           <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-circle-check"></i></div>
         </div>
-        <div class="kpi-value">15</div>
+        <div class="kpi-value">@ViewBag.ClosedCount</div>
         <div class="kpi-note">Đã ký kết hợp đồng</div>
       </div>
 
@@ -66,7 +66,7 @@
           <div class="kpi-label">Đang triển khai</div>
           <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-player-play"></i></div>
         </div>
-        <div class="kpi-value">22</div>
+        <div class="kpi-value">@ViewBag.RunningCount</div>
         <div class="kpi-note">KOL đang sản xuất/chờ đăng bài</div>
       </div>
 
@@ -75,7 +75,7 @@
           <div class="kpi-label">Booking hoàn thành</div>
           <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-checkbox"></i></div>
         </div>
-        <div class="kpi-value">64</div>
+        <div class="kpi-value">@ViewBag.CompletedCount</div>
         <div class="kpi-note">Đã nghiệm thu bài đăng</div>
       </div>
 
@@ -84,7 +84,7 @@
           <div class="kpi-label">Booking hủy</div>
           <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-circle-x"></i></div>
         </div>
-        <div class="kpi-value">5</div>
+        <div class="kpi-value">@ViewBag.CancelledCount</div>
         <div class="kpi-note">Hủy do KOL hoặc Client đổi kế hoạch</div>
       </div>
 
@@ -93,8 +93,8 @@
           <div class="kpi-label">Doanh thu Booking</div>
           <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-cash"></i></div>
         </div>
-        <div class="kpi-value">2.4 tỷ</div>
-        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>+12% so với tháng trước</div>
+        <div class="kpi-value">@ViewBag.RevenueText</div>
+        <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>Doanh số thực tế</div>
       </div>
 
       <div class="kpi-card">
@@ -102,7 +102,7 @@
           <div class="kpi-label">Chi phí Booking</div>
           <div class="kpi-icon" style="background:var(--blue-100); color:var(--blue-700);"><i class="ti ti-receipt"></i></div>
         </div>
-        <div class="kpi-value">980 tr</div>
+        <div class="kpi-value">@ViewBag.CostText</div>
         <div class="kpi-note">Bao gồm phí deal KOL &amp; dịch vụ</div>
       </div>
 
@@ -111,8 +111,8 @@
           <div class="kpi-label">Lợi nhuận Booking</div>
           <div class="kpi-icon" style="background:var(--green-bg); color:var(--green);"><i class="ti ti-chart-line"></i></div>
         </div>
-        <div class="kpi-value">1.42 tỷ</div>
-        <div class="kpi-note">Biên lợi nhuận đạt ~59.1%</div>
+        <div class="kpi-value">@ViewBag.ProfitText</div>
+        <div class="kpi-note">@ViewBag.ProfitMarginText</div>
       </div>
 
       <div class="kpi-card">
@@ -120,7 +120,7 @@
           <div class="kpi-label">Công việc quá hạn</div>
           <div class="kpi-icon" style="background:var(--red-bg); color:var(--red);"><i class="ti ti-alert-triangle"></i></div>
         </div>
-        <div class="kpi-value">7</div>
+        <div class="kpi-value">@ViewBag.OverdueCount</div>
         <div class="kpi-delta down"><i class="ti ti-arrow-down-right"></i>Cần đôn đốc nhân sự</div>
       </div>
     </div>
@@ -141,20 +141,27 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>Phạm Thu Hà</strong></td>
-              <td>12 booking</td>
-              <td>11/12</td>
-              <td><span class="bar-mini"><span class="bar-mini-fill" style="width:92%"></span></span>92%</td>
-              <td><span class="status-chip status-good">Tốt</span></td>
-            </tr>
-            <tr>
-              <td><strong>Nguyễn Văn B</strong></td>
-              <td>8 booking</td>
-              <td>6/8</td>
-              <td><span class="bar-mini"><span class="bar-mini-fill" style="width:75%"></span></span>75%</td>
-              <td><span class="status-chip status-warn">Cần cố gắng</span></td>
-            </tr>
+            @if (ViewBag.ManagerStats == null || !((IEnumerable<dynamic>)ViewBag.ManagerStats).Any())
+            {
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--muted-text); font-style: italic; padding: 20px 0;">
+                  Chưa có dữ liệu thống kê hiệu suất.
+                </td>
+              </tr>
+            }
+            else
+            {
+              foreach (var stat in ViewBag.ManagerStats)
+              {
+                <tr>
+                  <td><strong>@stat.ManagerName</strong></td>
+                  <td>@stat.TotalCount booking</td>
+                  <td>@stat.CompletedCount/@stat.TotalCount</td>
+                  <td><span class="bar-mini"><span class="bar-mini-fill" style="width:@stat.Kpi%"></span></span>@stat.Kpi%</td>
+                  <td><span class="status-chip @stat.RatingClass">@stat.Rating</span></td>
+                </tr>
+              }
+            }
           </tbody>
         </table>
       </div>
@@ -167,9 +174,9 @@
           <canvas id="bookingStatusChart"></canvas>
         </div>
         <div class="legend" style="justify-content:space-between; gap:10px 16px; font-size:12px;">
-          <span><i style="background:#8AB8F2"></i>Chờ (12)</span>
-          <span><i style="background:#2F80ED"></i>Đã chốt (15)</span>
-          <span><i style="background:#1CA36B"></i>Hoàn thành (64)</span>
+          <span><i style="background:#8AB8F2"></i>Chờ (@ViewBag.PendingCount)</span>
+          <span><i style="background:#2F80ED"></i>Đã chốt (@ViewBag.ClosedCount)</span>
+          <span><i style="background:#1CA36B"></i>Hoàn thành (@ViewBag.CompletedCount)</span>
         </div>
       </div>
     </div>
@@ -186,7 +193,7 @@ new Chart(bookingCtx, {
   data: {
     labels: ['Đang chờ','Đã chốt','Hoàn thành'],
     datasets: [{
-      data: [12, 15, 64],
+      data: [@ViewBag.PendingCount, @ViewBag.ClosedCount, @ViewBag.CompletedCount],
       backgroundColor: ['#8AB8F2','#2F80ED','#1CA36B'],
       borderColor:'#fff', borderWidth:2
     }]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HanaMedia.Models;
@@ -39,6 +39,8 @@ public partial class Booking
 
     public DateTime? UpdatedAt { get; set; }
 
+    public int? CampaignId { get; set; }
+
     public virtual ICollection<BookingWageAuditLog> BookingWageAuditLogs { get; set; } = new List<BookingWageAuditLog>();
 
     public virtual ICollection<BookingWage> BookingWages { get; set; } = new List<BookingWage>();
@@ -46,4 +48,6 @@ public partial class Booking
     public virtual Kol? Kol { get; set; }
 
     public virtual Employee? PrimaryManager { get; set; }
+
+    public virtual Campaign? Campaign { get; set; }
 }

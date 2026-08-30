@@ -1,0 +1,665 @@
+@model IEnumerable<HanaMedia.Models.Booking>
+@using HanaMedia.Constants
+@using System.Security.Claims
+@{
+    Layout = null;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    var isBookingManager = role == AppRoles.BookingManager;
+    
+    var campaigns = ViewBag.Campaigns as IEnumerable<HanaMedia.Models.Campaign> ?? Enumerable.Empty<HanaMedia.Models.Campaign>();
+    var kols = ViewBag.Kols as IEnumerable<HanaMedia.Models.Kol> ?? Enumerable.Empty<HanaMedia.Models.Kol>();
+    var employees = ViewBag.Employees as IEnumerable<HanaMedia.Models.Employee> ?? Enumerable.Empty<HanaMedia.Models.Employee>();
+
+    int? selectedCampaignId = ViewBag.CampaignId;
+    int? selectedKolId = ViewBag.KolId;
+    int? selectedManagerId = ViewBag.ManagerId;
+    string selectedStatus = ViewBag.Status ?? string.Empty;
+    string searchKeyword = ViewBag.Search ?? string.Empty;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Quản lý Booking</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-dang_cho { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-thuong_luong { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
+    .status-da_chot { background: #fffbeb; color: var(--warning-color); border: 1px solid #fde68a; }
+    .status-dang_trien_khai { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
+    .status-hoan_thanh { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status-huy { background: #fee2e2; color: var(--danger-color); border: 1px solid #fca5a5; }
+
+    .btn-primary-blue {
+      background-color: var(--primary-blue) !important;
+      color: var(--white) !important;
+      border: none !important;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-primary-blue:hover {
+      background-color: var(--secondary-blue) !important;
+    }
+
+    .btn-action {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 550;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+    .btn-action-view {
+      color: var(--primary-blue);
+      border-color: rgba(11, 58, 110, 0.15);
+      background: #f8fafc;
+    }
+    .btn-action-view:hover {
+      background: #f1f5f9;
+    }
+    .btn-action-edit {
+      color: var(--secondary-blue);
+      border-color: rgba(37, 99, 235, 0.15);
+      background: #eff6ff;
+    }
+    .btn-action-edit:hover {
+      background: #dbeafe;
+    }
+    .btn-action-delete {
+      color: var(--danger-color);
+      border-color: rgba(220, 38, 38, 0.15);
+      background: #fff5f5;
+    }
+    .btn-action-delete:hover {
+      background: #fee2e2;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #64748b;
+      border: 1.5px solid #cbd5e1;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+      color: #334155;
+    }
+
+    /* Modal styling matching standard 3-part layout */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: var(--white);
+      width: 100%;
+      max-width: 680px;
+      border-radius: 14px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-blue);
+    }
+    .modal-close {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--muted-text);
+    }
+    .modal-close:hover {
+      color: var(--danger-color);
+    }
+    #bookingForm {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d2ddec;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+    .form-control:focus {
+      border-color: var(--secondary-blue);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 550;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Quản lý Booking &amp; Chiến dịch</h1>
+        <div class="page-sub">Theo dõi, điều phối lịch trình hợp tác và chi tiết hoạt động Booking của KOL/KOC</div>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <a href="/ManageBooking/Dashboard" class="btn-primary-blue" style="background-color: var(--secondary-blue) !important;"><i class="ti ti-chart-bar"></i> Xem Dashboard</a>
+        @if (ViewBag.IsWritable)
+        {
+          <button class="btn-primary-blue" onclick="openCreateModal()"><i class="ti ti-plus"></i> Tạo Booking mới</button>
+        }
+      </div>
+    </div>
+
+    <!-- Alert messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+      <div class="alert alert-success" style="margin-bottom: 20px;">
+        <i class="ti ti-circle-check"></i> @TempData["SuccessMessage"]
+      </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+      <div class="alert alert-danger" style="margin-bottom: 20px;">
+        <i class="ti ti-alert-circle"></i> @TempData["ErrorMessage"]
+      </div>
+    }
+
+    <!-- BỘ LỌC TÌM KIẾM -->
+    <div class="card" style="padding: 16px 20px; margin-bottom: 24px;">
+      <form method="get" action="/Bookings" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 2; min-width: 200px;">
+          <label class="form-label" style="margin-bottom: 4px;">Tìm kiếm</label>
+          <input class="form-control" name="search" value="@searchKeyword" placeholder="Tìm client, chiến dịch, ghi chú...">
+        </div>
+        <div style="flex: 1; min-width: 130px;">
+          <label class="form-label" style="margin-bottom: 4px;">Chiến dịch</label>
+          <select class="form-control" name="campaignId">
+            <option value="">-- Tất cả --</option>
+            @foreach (var camp in campaigns)
+            {
+              <option value="@camp.Id" selected="@(selectedCampaignId == camp.Id)">@camp.Name</option>
+            }
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 130px;">
+          <label class="form-label" style="margin-bottom: 4px;">KOL / KOC</label>
+          <select class="form-control" name="kolId">
+            <option value="">-- Tất cả --</option>
+            @foreach (var kol in kols)
+            {
+              <option value="@kol.Id" selected="@(selectedKolId == kol.Id)">@kol.Name</option>
+            }
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 130px;">
+          <label class="form-label" style="margin-bottom: 4px;">Trạng thái hợp tác</label>
+          <select class="form-control" name="status">
+            <option value="">-- Tất cả --</option>
+            <option value="dang_cho" selected="@(selectedStatus == "dang_cho")">Chờ</option>
+            <option value="thuong_luong" selected="@(selectedStatus == "thuong_luong")">Thương lượng</option>
+            <option value="da_chot" selected="@(selectedStatus == "da_chot")">Chốt</option>
+            <option value="dang_trien_khai" selected="@(selectedStatus == "dang_trien_khai")">Triển khai</option>
+            <option value="hoan_thanh" selected="@(selectedStatus == "hoan_thanh")">Hoàn thành</option>
+            <option value="huy" selected="@(selectedStatus == "huy")">Hủy</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="submit" class="btn-primary-blue"><i class="ti ti-filter"></i> Lọc</button>
+          @if (!string.IsNullOrEmpty(searchKeyword) || selectedCampaignId.HasValue || selectedKolId.HasValue || !string.IsNullOrEmpty(selectedStatus))
+          {
+            <a href="/Bookings" class="btn-secondary" style="text-decoration: none; padding: 9px 16px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center;"><i class="ti ti-refresh"></i> Xóa</a>
+          }
+        </div>
+      </form>
+    </div>
+
+    <!-- BẢNG DANH SÁCH BOOKING -->
+    <div class="card" style="padding: 0; overflow-x: auto;">
+      <table class="table" style="margin: 0; width: 100%;">
+        <thead>
+          <tr>
+            <th>Khách hàng / Chiến dịch</th>
+            <th>KOL / KOC</th>
+            <th>Thời hạn (Deadline)</th>
+            <th style="text-align: right;">Giá Booking</th>
+            <th style="text-align: right;">Chi phí thực tế</th>
+            <th>Người phụ trách</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right; width: 180px;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (!Model.Any())
+          {
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--muted-text); padding: 40px; font-style: italic;">
+                Không tìm thấy dữ liệu Booking nào.
+              </td>
+            </tr>
+          }
+          else
+          {
+            foreach (var item in Model)
+            {
+              var statusClass = item.Status switch
+              {
+                "dang_cho" => "status-dang_cho",
+                "thuong_luong" => "status-thuong_luong",
+                "da_chot" => "status-da_chot",
+                "dang_trien_khai" => "status-dang_trien_khai",
+                "hoan_thanh" => "status-hoan_thanh",
+                "huy" => "status-huy",
+                _ => "status-dang_cho"
+              };
+              var statusLabel = item.Status switch
+              {
+                "dang_cho" => "Chờ",
+                "thuong_luong" => "Thương lượng",
+                "da_chot" => "Chốt",
+                "dang_trien_khai" => "Triển khai",
+                "hoan_thanh" => "Hoàn thành",
+                "huy" => "Hủy",
+                _ => item.Status
+              };
+
+              <tr>
+                <td>
+                  <div style="font-weight: 700; color: var(--primary-blue);">@item.ClientName</div>
+                  <div style="font-size: 12.5px; color: var(--muted-text);">Chiến dịch: @(item.Campaign?.Name ?? item.CampaignName)</div>
+                </td>
+                <td>
+                  <div style="font-weight: 600;">@(item.Kol?.Name ?? "N/A")</div>
+                  <div style="font-size: 11px; color: var(--muted-text);">@item.Kol?.Platform</div>
+                </td>
+                <td style="font-size: 13.5px; font-weight: 550;">
+                  <div>@item.Deadline.ToString("dd/MM/yyyy")</div>
+                  @if (item.PostingDate.HasValue)
+                  {
+                    <div style="font-size: 11.5px; color: var(--success-color); font-weight: normal;">Đăng ngày: @item.PostingDate.Value.ToString("dd/MM/yyyy")</div>
+                  }
+                </td>
+                <td style="text-align: right; font-weight: 600; color: var(--primary-blue);">@item.BookingPrice.ToString("N0") VNĐ</td>
+                <td style="text-align: right; font-weight: 600; color: var(--danger-color);">@item.ActualCost.ToString("N0") VNĐ</td>
+                <td>
+                  <div style="font-weight: 550;">@(item.PrimaryManager?.FullName ?? "N/A")</div>
+                  <div style="font-size: 11px; color: var(--muted-text);">@item.PrimaryManager?.Position</div>
+                </td>
+                <td><span class="status-badge @statusClass">@statusLabel</span></td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
+                    <a href="/Bookings/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Chi tiết</a>
+                    @if (ViewBag.IsWritable)
+                    {
+                      <button class="btn-action btn-action-edit" data-booking='@Json.Serialize(new { id = item.Id, clientName = item.ClientName, campaignName = item.CampaignName, campaignId = item.CampaignId, kolId = item.KolId, jobDescription = item.JobDescription, bookingPrice = item.BookingPrice, actualCost = item.ActualCost, primaryManagerId = item.PrimaryManagerId, status = item.Status, postLink = item.PostLink, notes = item.Notes, participantIds = item.BookingWages.Select(x => x.EmployeeId).ToArray() })' data-deadline="@item.Deadline.ToString("yyyy-MM-dd")" data-postingdate="@(item.PostingDate?.ToString("yyyy-MM-dd") ?? "")" onclick="openEditModal(this)"><i class="ti ti-edit"></i>Sửa</button>
+                      <form method="post" action="/Bookings/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa Booking này?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Xóa</button>
+                      </form>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- FORM MODAL THÊM / SỬA BOOKING -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Tạo Booking mới</span>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="bookingForm" method="post" enctype="multipart/form-data">
+      @Html.AntiForgeryToken()
+      <div class="modal-body">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Chọn Chiến dịch quảng bá</label>
+            <select class="form-control" name="CampaignId" id="bookingCampaignId" onchange="syncCampaignDetails(this)">
+              <option value="">-- Chọn chiến dịch có sẵn --</option>
+              @foreach (var camp in campaigns)
+              {
+                <option value="@camp.Id" data-client="@camp.Client">@camp.Name</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Khách hàng (Client) *</label>
+            <input class="form-control" name="ClientName" id="bookingClientName" required placeholder="Nhập tên đối tác/Client">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Chiến dịch tự nhập (nếu không chọn sẵn)</label>
+            <input class="form-control" name="CampaignName" id="bookingCampaignName" placeholder="Nhập tên chiến dịch">
+          </div>
+          <div class="form-group">
+            <label class="form-label">KOL / KOC quảng cáo *</label>
+            <select class="form-control" name="KolId" id="bookingKolId" required>
+              <option value="">-- Chọn KOL/KOC hợp tác --</option>
+              @foreach (var kol in kols)
+              {
+                <option value="@kol.Id">@kol.Name (@kol.Platform)</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nội dung công việc (Job Description)</label>
+          <textarea class="form-control" name="JobDescription" id="bookingJobDescription" rows="2" placeholder="Ví dụ: Đăng bài review, làm video TikTok,..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Hạn chót hoàn thành (Deadline) *</label>
+            <input class="form-control" type="date" name="deadlineStr" id="bookingDeadline" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ngày bài đăng lên sóng (Posting Date)</label>
+            <input class="form-control" type="date" name="postingDateStr" id="bookingPostingDate">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Giá trị hợp đồng Booking (VNĐ) *</label>
+            <input class="form-control" type="number" name="BookingPrice" id="bookingPrice" required placeholder="Ví dụ: 10000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Chi phí thực tế phát sinh (VNĐ) *</label>
+            <input class="form-control" type="number" name="ActualCost" id="bookingActualCost" required placeholder="Ví dụ: 8000000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">File Hợp đồng (Contract File)</label>
+            <input class="form-control" type="file" name="contractFile" id="bookingContractFile">
+          </div>
+          <div class="form-group">
+            <label class="form-label">File Báo giá (Quotation File)</label>
+            <input class="form-control" type="file" name="quotationFile" id="bookingQuotationFile">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Link bài viết / Video đã đăng</label>
+            <input class="form-control" type="url" name="PostLink" id="bookingPostLink" placeholder="https://tiktok.com/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Người phụ trách (Manager) *</label>
+            <select class="form-control" name="PrimaryManagerId" id="bookingPrimaryManagerId" required>
+              <option value="">-- Chọn nhân viên phụ trách --</option>
+              @foreach (var emp in employees)
+              {
+                <option value="@emp.Id">@emp.FullName (@emp.Position)</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nhân sự tham gia Booking (Chọn nhiều)</label>
+          <div class="checkbox-grid">
+            @foreach (var emp in employees)
+            {
+              <label class="checkbox-item">
+                <input type="checkbox" name="participantIds" value="@emp.Id">
+                <span>@emp.FullName</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Trạng thái Booking</label>
+            <select class="form-control" name="Status" id="bookingStatus">
+              <option value="dang_cho">Chờ</option>
+              <option value="thuong_luong">Thương lượng</option>
+              <option value="da_chot">Chốt</option>
+              <option value="dang_trien_khai">Triển khai</option>
+              <option value="hoan_thanh">Hoàn thành</option>
+              <option value="huy">Hủy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ghi chú</label>
+            <input class="form-control" name="Notes" id="bookingNotes" placeholder="Ghi chú thêm...">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Hủy</button>
+        <button type="submit" class="btn-primary-blue" style="padding: 9px 20px;">Lưu lại</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function syncCampaignDetails(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const clientNameInput = document.getElementById('bookingClientName');
+    const campaignNameInput = document.getElementById('bookingCampaignName');
+    
+    if (selectedOption && selectedOption.value) {
+      clientNameInput.value = selectedOption.getAttribute('data-client') || '';
+      campaignNameInput.value = selectedOption.text;
+      campaignNameInput.readOnly = true;
+    } else {
+      campaignNameInput.readOnly = false;
+    }
+  }
+
+  function openCreateModal() {
+    document.getElementById('modalTitle').innerText = 'Tạo Booking mới';
+    document.getElementById('bookingForm').action = '/Bookings/Create';
+    document.getElementById('bookingForm').reset();
+    document.getElementById('bookingCampaignName').readOnly = false;
+    
+    // Uncheck participants
+    const checkboxes = document.querySelectorAll('#bookingForm input[name="participantIds"]');
+    checkboxes.forEach(cb => cb.checked = false);
+
+    document.getElementById('bookingModal').classList.add('active');
+  }
+
+  function openEditModal(btn) {
+    const booking = JSON.parse(btn.getAttribute('data-booking'));
+    const deadline = btn.getAttribute('data-deadline');
+    const postingDate = btn.getAttribute('data-postingdate');
+
+    document.getElementById('modalTitle').innerText = 'Cập nhật Booking ID: ' + booking.id;
+    document.getElementById('bookingForm').action = '/Bookings/Edit/' + booking.id;
+    
+    document.getElementById('bookingCampaignId').value = booking.campaignId || '';
+    document.getElementById('bookingClientName').value = booking.clientName || '';
+    document.getElementById('bookingCampaignName').value = booking.campaignName || '';
+    document.getElementById('bookingKolId').value = booking.kolId || '';
+    document.getElementById('bookingJobDescription').value = booking.jobDescription || '';
+    document.getElementById('bookingDeadline').value = deadline || '';
+    document.getElementById('bookingPostingDate').value = postingDate || '';
+    document.getElementById('bookingPrice').value = booking.bookingPrice || 0;
+    document.getElementById('bookingActualCost').value = booking.actualCost || 0;
+    document.getElementById('bookingPostLink').value = booking.postLink || '';
+    document.getElementById('bookingPrimaryManagerId').value = booking.primaryManagerId || '';
+    document.getElementById('bookingStatus').value = booking.status || 'dang_cho';
+    document.getElementById('bookingNotes').value = booking.notes || '';
+    
+    if (booking.campaignId) {
+      document.getElementById('bookingCampaignName').readOnly = true;
+    } else {
+      document.getElementById('bookingCampaignName').readOnly = false;
+    }
+
+    // Set participating checkboxes
+    const participantIds = booking.participantIds || [];
+    const checkboxes = document.querySelectorAll('#bookingForm input[name="participantIds"]');
+    checkboxes.forEach(cb => {
+      cb.checked = participantIds.includes(parseInt(cb.value));
+    });
+
+    document.getElementById('bookingModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('bookingModal').classList.remove('active');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+@{
+    Layout = null;
+    var statuses = ViewBag.Statuses as Dictionary<string, int> ?? new Dictionary<string, int>();
+    decimal revenue = ViewBag.Revenue;
+    decimal cost = ViewBag.Cost;
+    decimal profit = ViewBag.Profit;
+    
+    var overdueBookings = ViewBag.OverdueBookings as IEnumerable<HanaMedia.Models.Booking> ?? Enumerable.Empty<HanaMedia.Models.Booking>();
+    var managerStats = ViewBag.ManagerStats as IEnumerable<HanaMedia.Controllers.ManagerPerformanceViewModel> ?? Enumerable.Empty<HanaMedia.Controllers.ManagerPerformanceViewModel>();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Dashboard Booking</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --light-blue: #EFF6FF;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border-radius: 12px;
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card-revenue { background: linear-gradient(135deg, #0B3A6E, #2563EB); }
+    .stat-card-cost { background: linear-gradient(135deg, #DC2626, #EF4444); }
+    .stat-card-profit { background: linear-gradient(135deg, #16A34A, #22C55E); }
+
+    .stat-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .statuses-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .status-box {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(11, 58, 110, 0.04);
+      border: 1px solid rgba(11, 58, 110, 0.06);
+    }
+    .status-count {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary-blue);
+      margin-bottom: 4px;
+    }
+    .status-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted-text);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .back-link {
+      color: var(--muted-text);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      transition: color 0.15s;
+    }
+    .back-link:hover {
+      color: var(--primary-blue);
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <a href="/Bookings" class="back-link"><i class="ti ti-arrow-narrow-left"></i> Quay lại Danh sách Booking</a>
+
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Dashboard báo cáo Booking</h1>
+        <div class="page-sub">Tổng quan các chỉ số tài chính, tiến trình hợp tác, công việc quá hạn và hiệu suất nhân viên.</div>
+      </div>
+    </div>
+
+    <!-- 1. TÌNH TRẠNG BOOKING THEO TRẠNG THÁI -->
+    <div class="statuses-grid">
+      <div class="status-box" style="border-left: 4px solid #475569;">
+        <div class="status-count">@(statuses.GetValueOrDefault("dang_cho", 0))</div>
+        <div class="status-name">Chờ duyệt / Tạo mới</div>
+      </div>
+      <div class="status-box" style="border-left: 4px solid var(--secondary-blue);">
+        <div class="status-count">@(statuses.GetValueOrDefault("thuong_luong", 0))</div>
+        <div class="status-name">Thương lượng</div>
+      </div>
+      <div class="status-box" style="border-left: 4px solid var(--warning-color);">
+        <div class="status-count">@(statuses.GetValueOrDefault("da_chot", 0))</div>
+        <div class="status-name">Đã chốt</div>
+      </div>
+      <div class="status-box" style="border-left: 4px solid #a21caf;">
+        <div class="status-count">@(statuses.GetValueOrDefault("dang_trien_khai", 0))</div>
+        <div class="status-name">Đang triển khai</div>
+      </div>
+      <div class="status-box" style="border-left: 4px solid var(--success-color);">
+        <div class="status-count">@(statuses.GetValueOrDefault("hoan_thanh", 0))</div>
+        <div class="status-name">Hoàn thành</div>
+      </div>
+      <div class="status-box" style="border-left: 4px solid var(--danger-color);">
+        <div class="status-count">@(statuses.GetValueOrDefault("huy", 0))</div>
+        <div class="status-name">Hủy bỏ</div>
+      </div>
+    </div>
+
+    <!-- 2. CHỈ SỐ TÀI CHÍNH -->
+    <div class="dashboard-grid">
+      <div class="stat-card stat-card-revenue">
+        <div class="stat-title">Doanh thu Booking (Doanh số chốt)</div>
+        <div class="stat-value">@revenue.ToString("N0") VNĐ</div>
+      </div>
+      <div class="stat-card stat-card-cost">
+        <div class="stat-title">Chi phí Booking thực tế</div>
+        <div class="stat-value">@cost.ToString("N0") VNĐ</div>
+      </div>
+      <div class="stat-card stat-card-profit">
+        <div class="stat-title">Lợi nhuận gộp từ Booking</div>
+        <div class="stat-value">@profit.ToString("N0") VNĐ</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <!-- 3. DANH SÁCH CÔNG VIỆC QUÁ HẠN -->
+      <div class="card" style="padding: 20px;">
+        <div style="font-size: 16px; font-weight: 700; color: var(--primary-blue); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-clock-exclamation" style="font-size: 20px; color: var(--danger-color);"></i>
+          Công việc / Booking quá hạn
+        </div>
+        
+        <table class="table" style="font-size: 13.5px; width: 100%;">
+          <thead>
+            <tr>
+              <th>Client / Chiến dịch</th>
+              <th>Hạn chót</th>
+              <th>Người phụ trách</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (!overdueBookings.Any())
+            {
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--muted-text); font-style: italic; padding: 20px 0;">
+                  Tuyệt vời! Không có công việc nào quá hạn.
+                </td>
+              </tr>
+            }
+            else
+            {
+              foreach (var b in overdueBookings)
+              {
+                <tr>
+                  <td>
+                    <a href="/Bookings/Details/@b.Id" style="font-weight: 600; text-decoration: none; color: var(--secondary-blue);">
+                      @b.ClientName
+                    </a>
+                    <div style="font-size:11.5px; color: var(--muted-text);">@(b.Campaign?.Name ?? b.CampaignName)</div>
+                  </td>
+                  <td style="color: var(--danger-color); font-weight: 600;">@b.Deadline.ToString("dd/MM/yyyy")</td>
+                  <td>@b.PrimaryManager?.FullName</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4. HIỆU SUẤT NHÂN VIÊN BOOKING -->
+      <div class="card" style="padding: 20px;">
+        <div style="font-size: 16px; font-weight: 700; color: var(--primary-blue); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-users" style="font-size: 20px; color: var(--secondary-blue);"></i>
+          Hiệu suất nhân viên Booking
+        </div>
+        
+        <table class="table" style="font-size: 13.5px; width: 100%;">
+          <thead>
+            <tr>
+              <th>Nhân viên</th>
+              <th style="text-align: center;">Hoàn thành</th>
+              <th style="text-align: center;">Đang chạy</th>
+              <th style="text-align: center;">Tổng cộng</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (!managerStats.Any())
+            {
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--muted-text); font-style: italic; padding: 20px 0;">
+                  Chưa có dữ liệu thống kê hiệu suất.
+                </td>
+              </tr>
+            }
+            else
+            {
+              foreach (var stat in managerStats)
+              {
+                <tr>
+                  <td>
+                    <div style="font-weight: 600;">@stat.ManagerName</div>
+                    <div style="font-size:11.5px; color:var(--muted-text);">@stat.Position</div>
+                  </td>
+                  <td style="text-align: center; font-weight: 600; color: var(--success-color);">@stat.CompletedCount</td>
+                  <td style="text-align: center; font-weight: 600; color: var(--warning-color);">@stat.RunningCount</td>
+                  <td style="text-align: center; font-weight: 600; color: var(--primary-blue);">@stat.TotalCount</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -20,4 +20,5 @@ public partial class Campaign
 
     public virtual Employee? ManagerEmployee { get; set; }
     public virtual ICollection<WorkTask> WorkTasks { get; set; } = new List<WorkTask>();
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
