@@ -103,6 +103,22 @@ public partial class ApplicationDbContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("dang_cho")
                 .HasColumnName("status");
+            entity.Property(e => e.ContractStatus)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValue("cho_duyet")
+                .HasColumnName("contract_status");
+            entity.Property(e => e.ContractApprovedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("contract_approved_at");
+            entity.Property(e => e.ContractApprovedById).HasColumnName("contract_approved_by_id");
+            entity.Property(e => e.ContractSignedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("contract_signed_at");
+            entity.Property(e => e.ContractSignedById).HasColumnName("contract_signed_by_id");
+            entity.Property(e => e.RejectionReason)
+                .HasMaxLength(1000)
+                .HasColumnName("rejection_reason");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -118,6 +134,16 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.PrimaryManager).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.PrimaryManagerId)
                 .HasConstraintName("FK_bookings_employees_primary_manager_id");
+
+            entity.HasOne(d => d.ContractApprovedBy).WithMany()
+                .HasForeignKey(d => d.ContractApprovedById)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_bookings_contract_approved_by");
+
+            entity.HasOne(d => d.ContractSignedBy).WithMany()
+                .HasForeignKey(d => d.ContractSignedById)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_bookings_contract_signed_by");
 
             entity.HasOne(d => d.Campaign).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.CampaignId)

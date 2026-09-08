@@ -64,6 +64,40 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Auto-patch database for Module 11 contract workflow columns if missing
+using (var dbScope = app.Services.CreateScope())
+{
+    var dbContext = dbScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var columnsToAdd = new Dictionary<string, string>
+    {
+        { "contract_status", "ALTER TABLE bookings ADD contract_status NVARCHAR(50) NULL DEFAULT 'cho_duyet';" },
+        { "contract_approved_at", "ALTER TABLE bookings ADD contract_approved_at DATETIME2 NULL;" },
+        { "contract_approved_by_id", "ALTER TABLE bookings ADD contract_approved_by_id INT NULL;" },
+        { "contract_signed_at", "ALTER TABLE bookings ADD contract_signed_at DATETIME2 NULL;" },
+        { "contract_signed_by_id", "ALTER TABLE bookings ADD contract_signed_by_id INT NULL;" },
+        { "rejection_reason", "ALTER TABLE bookings ADD rejection_reason NVARCHAR(1000) NULL;" }
+    };
+
+    foreach (var kvp in columnsToAdd)
+    {
+        try
+        {
+            var checkSql = $"IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('bookings') AND name = '{kvp.Key}') BEGIN {kvp.Value} END";
+            dbContext.Database.ExecuteSqlRaw(checkSql);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning("Auto-patch column {Col}: {Msg}", kvp.Key, ex.Message);
+        }
+    }
+
+    try
+    {
+        dbContext.Database.ExecuteSqlRaw("UPDATE bookings SET contract_status = 'cho_duyet' WHERE contract_status IS NULL;");
+    }
+    catch { }
+}
+
 if (bootstrapAdminRequested)
 {
     if (!app.Environment.IsDevelopment())

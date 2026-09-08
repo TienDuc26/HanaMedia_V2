@@ -580,6 +580,149 @@
       font-size: 13px;
       font-style: italic;
     }
+
+    /* MODULE 11 STEPPER & WORKFLOW STYLES */
+    .contract-stepper {
+      margin: 16px 0;
+      padding: 16px 12px;
+      background: #F8FAFC;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+    .stepper-track {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .stepper-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+    .stepper-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid #CBD5E1;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+    .stepper-item.active .stepper-circle {
+      border-color: var(--primary);
+      background: #EFF6FF;
+      color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(23, 105, 224, 0.15);
+    }
+    .stepper-item.completed .stepper-circle {
+      border-color: var(--success);
+      background: var(--success);
+      color: #FFFFFF;
+    }
+    .stepper-item.rejected .stepper-circle {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: #FFFFFF;
+    }
+    .stepper-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-top: 6px;
+    }
+    .stepper-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .stepper-line {
+      flex: 1;
+      height: 2px;
+      background: #E2E8F0;
+      margin: 0 -10px;
+      position: relative;
+      top: -14px;
+      z-index: 1;
+    }
+    .stepper-line.completed {
+      background: var(--success);
+    }
+    .workflow-action-box {
+      margin-top: 16px;
+    }
+    .action-card-prompt {
+      background: #F0F9FF;
+      border: 1px solid #BAE6FD;
+      padding: 16px;
+      border-radius: 8px;
+    }
+    .action-card-info {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      padding: 14px 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-card-sign {
+      background: #FEFCE8;
+      border: 1px solid #FEF08A;
+      padding: 18px;
+      border-radius: 10px;
+    }
+    .action-card-signed {
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      padding: 18px;
+      border-radius: 10px;
+    }
+    .sign-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--text-main);
+      font-size: 13.5px;
+      cursor: pointer;
+      background: #FFFFFF;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #E2E8F0;
+    }
+    .file-input-clean {
+      font-size: 13px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: #FFFFFF;
+    }
+    .btn-action-outline-danger {
+      background: #FFFFFF;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-action-outline-danger:hover {
+      background: #FEF2F2;
+    }
   </style>
 </head>
 <body>
@@ -598,13 +741,50 @@
         <div class="breadcrumb">Booking / Chi tiết Booking</div>
       </div>
 
+      <!-- TempData Flash Banners -->
+      @if (TempData["SuccessMessage"] != null)
+      {
+        <div class="alert-banner-success" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#168A4A; padding:12px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+          <i class="ti ti-circle-check" style="font-size:18px;"></i> @TempData["SuccessMessage"]
+        </div>
+      }
+      @if (TempData["ErrorMessage"] != null)
+      {
+        <div class="alert-banner-danger" style="background:#FEF2F2; border:1px solid #FECACA; color:#D92D20; padding:12px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+          <i class="ti ti-alert-triangle" style="font-size:18px;"></i> @TempData["ErrorMessage"]
+        </div>
+      }
+
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-top">
           <div class="header-title-group">
             <span class="booking-id-tag">BOOKING #@Model.Id</span>
             <h1 class="page-title">@Model.ClientName</h1>
-            <span class="status-badge @statusClass">@statusLabel</span>
+            <span class="status-badge @statusClass" title="Trạng thái vận hành Booking">@statusLabel</span>
+            
+            @{
+              var cHeadStatus = Model.ContractStatus ?? "cho_duyet";
+              var cHeadClass = cHeadStatus switch
+              {
+                "cho_duyet" => "status-badge-cho",
+                "da_duyet" => "status-badge-thuongluong",
+                "cho_ky" => "status-badge-chot",
+                "da_ky" => "status-badge-hoanthanh",
+                "tu_choi" => "status-badge-huy",
+                _ => "status-badge-cho"
+              };
+              var cHeadLabel = cHeadStatus switch
+              {
+                "cho_duyet" => "HĐ: Chờ duyệt",
+                "da_duyet" => "HĐ: Đã duyệt",
+                "cho_ky" => "HĐ: Chờ ký",
+                "da_ky" => "HĐ: Đã ký (Hiệu lực)",
+                "tu_choi" => "HĐ: Từ chối",
+                _ => "HĐ: Chờ duyệt"
+              };
+            }
+            <span class="status-badge @cHeadClass" title="Trạng thái quy trình hợp đồng"><i class="ti ti-file-certificate" style="margin-right:4px;"></i> @cHeadLabel</span>
           </div>
         </div>
         <div class="header-sub">
@@ -679,6 +859,288 @@
                 </div>
               </div>
             }
+          </div>
+
+          <!-- CONTRACT WORKFLOW & APPROVAL CARD (MODULE 11) -->
+          <div class="enterprise-card">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title-text"><i class="ti ti-file-certificate" style="color: var(--primary);"></i> QUY TRÌNH DUYỆT &amp; KÝ HỢP ĐỒNG</h2>
+                <span class="card-subtitle-text">Tiến độ phê duyệt booking và xác thực hợp đồng chính thức</span>
+              </div>
+              <div>
+                @{
+                  var cStatus = Model.ContractStatus ?? "cho_duyet";
+                  var cBadgeClass = cStatus switch
+                  {
+                    "cho_duyet" => "status-badge-cho",
+                    "da_duyet" => "status-badge-thuongluong",
+                    "cho_ky" => "status-badge-chot",
+                    "da_ky" => "status-badge-hoanthanh",
+                    "tu_choi" => "status-badge-huy",
+                    _ => "status-badge-cho"
+                  };
+                  var cBadgeLabel = cStatus switch
+                  {
+                    "cho_duyet" => "Chờ duyệt booking",
+                    "da_duyet" => "Đã duyệt (Chờ soạn HĐ)",
+                    "cho_ky" => "Chờ Giám đốc ký HĐ",
+                    "da_ky" => "Đã ký (Hiệu lực)",
+                    "tu_choi" => "Từ chối",
+                    _ => "Chờ duyệt booking"
+                  };
+                }
+                <span class="status-badge @cBadgeClass" style="font-size: 13px; padding: 6px 12px;">
+                  <i class="ti ti-shield-check" style="margin-right: 4px;"></i> @cBadgeLabel
+                </span>
+              </div>
+            </div>
+
+            <!-- STEPPER TIMELINE -->
+            <div class="contract-stepper">
+              @{
+                int stepIndex = cStatus switch
+                {
+                  "cho_duyet" => 1,
+                  "da_duyet" => 2,
+                  "cho_ky" => 3,
+                  "da_ky" => 4,
+                  "tu_choi" => 1,
+                  _ => 1
+                };
+              }
+              <div class="stepper-track">
+                <div class="stepper-item @(stepIndex >= 1 ? (cStatus == "tu_choi" ? "rejected" : "completed") : "") @(stepIndex == 1 && cStatus != "tu_choi" ? "active" : "")">
+                  <div class="stepper-circle">
+                    @if (cStatus == "tu_choi") { <i class="ti ti-x"></i> }
+                    else if (stepIndex > 1) { <i class="ti ti-check"></i> }
+                    else { <span>1</span> }
+                  </div>
+                  <div class="stepper-label">1. Chờ duyệt</div>
+                  <div class="stepper-sub">Gửi đơn phê duyệt</div>
+                </div>
+
+                <div class="stepper-line @(stepIndex >= 2 ? "completed" : "")"></div>
+
+                <div class="stepper-item @(stepIndex >= 2 ? "completed" : "") @(stepIndex == 2 ? "active" : "")">
+                  <div class="stepper-circle">
+                    @if (stepIndex > 2) { <i class="ti ti-check"></i> }
+                    else { <span>2</span> }
+                  </div>
+                  <div class="stepper-label">2. Đã duyệt</div>
+                  <div class="stepper-sub">Chờ soạn hợp đồng</div>
+                </div>
+
+                <div class="stepper-line @(stepIndex >= 3 ? "completed" : "")"></div>
+
+                <div class="stepper-item @(stepIndex >= 3 ? "completed" : "") @(stepIndex == 3 ? "active" : "")">
+                  <div class="stepper-circle">
+                    @if (stepIndex > 3) { <i class="ti ti-check"></i> }
+                    else { <span>3</span> }
+                  </div>
+                  <div class="stepper-label">3. Chờ ký</div>
+                  <div class="stepper-sub">Gửi Giám đốc ký</div>
+                </div>
+
+                <div class="stepper-line @(stepIndex >= 4 ? "completed" : "")"></div>
+
+                <div class="stepper-item @(stepIndex >= 4 ? "completed active" : "")">
+                  <div class="stepper-circle">
+                    @if (stepIndex >= 4) { <i class="ti ti-check"></i> }
+                    else { <span>4</span> }
+                  </div>
+                  <div class="stepper-label">4. Đã ký</div>
+                  <div class="stepper-sub">Hiệu lực pháp lý</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTION AREA BASED ON ROLE & STATUS -->
+            <div class="workflow-action-box">
+              @if (cStatus == "tu_choi")
+              {
+                <div class="alert-banner-danger" style="display:flex; flex-direction:column; gap:6px; align-items:flex-start; margin-bottom:0;">
+                  <div style="display:flex; align-items:center; gap:8px; font-weight:700;">
+                    <i class="ti ti-circle-x" style="font-size:18px;"></i> Đơn phê duyệt Booking này đã bị Giám đốc từ chối.
+                  </div>
+                  @if (!string.IsNullOrEmpty(Model.RejectionReason))
+                  {
+                    <div style="font-size:13px; color:#991B1B;">Lý do từ chối: <strong>@Model.RejectionReason</strong></div>
+                  }
+                  <form method="post" action="/Bookings/SubmitApproval/@Model.Id" style="margin-top:8px;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-save-allocation" style="background:#DC2626;">
+                      <i class="ti ti-rotate-clockwise"></i> Gửi lại yêu cầu phê duyệt
+                    </button>
+                  </form>
+                </div>
+              }
+              else if (cStatus == "cho_duyet")
+              {
+                @if (role == AppRoles.Director)
+                {
+                  <div class="action-card-prompt">
+                    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                      <div>
+                        <strong style="font-size:14px; color:var(--text-main);"><i class="ti ti-bell-ring" style="color:var(--primary); font-size:18px;"></i> Yêu cầu phê duyệt Booking từ Nhân viên:</strong>
+                        <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Vui lòng kiểm tra nội dung công việc &amp; tài chính trước khi đưa ra quyết định.</p>
+                      </div>
+                      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <form method="post" action="/Bookings/Approve/@Model.Id">
+                          @Html.AntiForgeryToken()
+                          <button type="submit" class="btn-save-allocation" style="background:var(--success);">
+                            <i class="ti ti-check"></i> Duyệt Booking
+                          </button>
+                        </form>
+                        <button type="button" class="btn-action-outline-danger" onclick="document.getElementById('rejectModal').style.display='flex'">
+                          <i class="ti ti-x"></i> Từ chối
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+                else
+                {
+                  <div class="action-card-info">
+                    <i class="ti ti-clock-hour-4" style="font-size:22px; color:var(--warning);"></i>
+                    <div>
+                      <strong style="font-size:13.5px; color:var(--text-main);">Đơn phê duyệt Booking đã được gửi lên Giám đốc</strong>
+                      <div style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">Đang chờ Giám đốc xem xét và phê duyệt.</div>
+                    </div>
+                  </div>
+                }
+              }
+              else if (cStatus == "da_duyet")
+              {
+                <div class="action-card-prompt">
+                  <div>
+                    <strong style="font-size:14px; color:var(--success); display:flex; align-items:center; gap:6px;">
+                      <i class="ti ti-circle-check-filled" style="font-size:18px;"></i> Booking đã được Giám đốc duyệt!
+                    </strong>
+                    @if (Model.ContractApprovedAt.HasValue)
+                    {
+                      <div style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">
+                        Thời gian duyệt: @Model.ContractApprovedAt.Value.ToString("dd/MM/yyyy HH:mm") @(Model.ContractApprovedBy != null ? $"bởi Giám đốc {Model.ContractApprovedBy.FullName}" : "")
+                      </div>
+                    }
+                  </div>
+
+                  @if (role == AppRoles.BookingManager || role == AppRoles.BookingStaff)
+                  {
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #BAE6FD;">
+                      <label style="display:block; font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:6px;">
+                        <i class="ti ti-paperclip"></i> Soạn/Upload file hợp đồng chính thức để gửi Giám đốc ký:
+                      </label>
+                      <form method="post" action="/Bookings/UploadContract/@Model.Id" enctype="multipart/form-data" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        @Html.AntiForgeryToken()
+                        <input type="file" name="contractFile" accept=".pdf,.doc,.docx" class="file-input-clean" required>
+                        <button type="submit" class="btn-save-allocation">
+                          <i class="ti ti-send"></i> Gửi ký hợp đồng
+                        </button>
+                      </form>
+                    </div>
+                  }
+                  else
+                  {
+                    <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">Chờ nhân viên phụ trách soạn và tải lên file hợp đồng chính thức.</div>
+                  }
+                </div>
+              }
+              else if (string.IsNullOrEmpty(cStatus) || cStatus == "tao_moi")
+              {
+                if (role == AppRoles.BookingManager || role == AppRoles.BookingStaff)
+                {
+                  <div class="action-card-prompt">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                      <div>
+                        <strong style="font-size:14px; color:var(--text-main);"><i class="ti ti-info-circle" style="color:var(--primary); font-size:18px;"></i> Booking đã hoàn tất thông tin:</strong>
+                        <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Gửi Booking lên Giám đốc để thực hiện Giai đoạn 1 (Phê duyệt Booking).</p>
+                      </div>
+                      <form method="post" action="/Bookings/SubmitApproval/@Model.Id">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-save-allocation">
+                          <i class="ti ti-send"></i> Gửi duyệt Booking
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                }
+              }
+              else if (cStatus == "cho_ky")
+              {
+                @if (role == AppRoles.Director)
+                {
+                  <div class="action-card-sign">
+                    <div style="font-weight:700; font-size:15px; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                      <i class="ti ti-file-certificate" style="font-size:20px;"></i> HỢP ĐỒNG ĐÃ SẴN SÀNG ĐỂ KÝ
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:#FFFFFF; padding:12px 16px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                      <div>
+                        <div style="font-weight:600; font-size:13.5px; color:var(--text-main);">File hợp đồng đã tải lên:</div>
+                        @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
+                        {
+                          <a href="@Model.ContractFileUrl" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-size:13px; margin-top:2px;">
+                            <i class="ti ti-file-search"></i> Xem / Tải về file hợp đồng <i class="ti ti-external-link"></i>
+                          </a>
+                        }
+                      </div>
+                      <span class="status-badge status-badge-chot">Chờ Giám đốc xác nhận</span>
+                    </div>
+
+                    <form method="post" action="/Bookings/SignContract/@Model.Id">
+                      @Html.AntiForgeryToken()
+                      <label class="sign-checkbox-label">
+                        <input type="checkbox" id="chkConfirmSign" onchange="document.getElementById('btnSignContractSubmit').disabled = !this.checked">
+                        <span><i class="ti ti-checkbox" style="color:var(--primary);"></i> Tôi xác nhận đã kiểm tra hợp đồng và xác nhận ký hợp đồng này.</span>
+                      </label>
+
+                      <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+                        <button type="submit" id="btnSignContractSubmit" class="btn-save-allocation" style="background:var(--success);" disabled>
+                          <i class="ti ti-writing-sign"></i> XÁC NHẬN KÝ HỢP ĐỒNG
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                }
+                else
+                {
+                  <div class="action-card-info">
+                    <i class="ti ti-file-check" style="font-size:22px; color:var(--primary);"></i>
+                    <div>
+                      <strong style="font-size:13.5px; color:var(--text-main);">Hợp đồng đã được gửi lên Giám đốc</strong>
+                      <div style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">
+                        File: <a href="@Model.ContractFileUrl" target="_blank" style="color:var(--primary); font-weight:600;">Xem file hợp đồng</a> — Đang chờ Giám đốc ký duyệt.
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+              else if (cStatus == "da_ky")
+              {
+                <div class="action-card-signed">
+                  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                    <div>
+                      <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; color:var(--success);">
+                        <i class="ti ti-circle-check-filled" style="font-size:22px;"></i> HỢP ĐỒNG ĐÃ ĐƯỢC GIÁM ĐỐC KÝ VÀ CÓ HIỆU LỰC PHÁP LÝ
+                      </div>
+                      @if (Model.ContractSignedAt.HasValue)
+                      {
+                        <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+                          Thời gian ký: <strong>@Model.ContractSignedAt.Value.ToString("dd/MM/yyyy HH:mm")</strong>
+                          @(Model.ContractSignedBy != null ? $"bởi Giám đốc {Model.ContractSignedBy.FullName}" : "")
+                        </div>
+                      }
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
+                    {
+                      <a href="@Model.ContractFileUrl" target="_blank" download class="btn-save-allocation" style="background:#0284C7; text-decoration:none;">
+                        <i class="ti ti-file-download"></i> Tải hợp đồng đã ký
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
           </div>
 
           <!-- Job Description Card -->
@@ -984,5 +1446,27 @@
     updateCalculations();
   });
 </script>
+<!-- REJECTION REASON MODAL FOR DIRECTOR -->
+<div id="rejectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#FFFFFF; border-radius:12px; padding:24px; max-width:480px; width:90%; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--danger); display:flex; align-items:center; gap:6px;">
+        <i class="ti ti-alert-triangle"></i> Từ chối đơn phê duyệt Booking
+      </h3>
+      <button type="button" onclick="document.getElementById('rejectModal').style.display='none'" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted);">&times;</button>
+    </div>
+    <form method="post" action="/Bookings/Reject/@Model.Id">
+      @Html.AntiForgeryToken()
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:6px;">Vui lòng nhập lý do từ chối (không bắt buộc):</label>
+        <textarea name="rejectionReason" rows="3" class="file-input-clean" style="width:100%;" placeholder="Nhập lý do từ chối..."></textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="document.getElementById('rejectModal').style.display='none'" style="padding:8px 16px; border:1px solid var(--border-color); background:#FFFFFF; border-radius:6px; font-weight:600; cursor:pointer;">Hủy</button>
+        <button type="submit" class="btn-save-allocation" style="background:var(--danger);">Xác nhận từ chối</button>
+      </div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

@@ -27,6 +27,18 @@ public partial class Booking
 
     public string? Status { get; set; }
 
+    public string? ContractStatus { get; set; }
+
+    public DateTime? ContractApprovedAt { get; set; }
+
+    public int? ContractApprovedById { get; set; }
+
+    public DateTime? ContractSignedAt { get; set; }
+
+    public int? ContractSignedById { get; set; }
+
+    public string? RejectionReason { get; set; }
+
     public string? ContractFileUrl { get; set; }
 
     public string? QuotationFileUrl { get; set; }
@@ -48,6 +60,10 @@ public partial class Booking
     public virtual Kol? Kol { get; set; }
 
     public virtual Employee? PrimaryManager { get; set; }
+
+    public virtual Employee? ContractApprovedBy { get; set; }
+
+    public virtual Employee? ContractSignedBy { get; set; }
 
     public virtual Campaign? Campaign { get; set; }
 }

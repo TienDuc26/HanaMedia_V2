@@ -109,6 +109,8 @@ namespace HanaMedia.Controllers
                 .Include(b => b.Campaign)
                 .Include(b => b.Kol)
                 .Include(b => b.PrimaryManager)
+                .Include(b => b.ContractApprovedBy)
+                .Include(b => b.ContractSignedBy)
                 .AsQueryable();
 
             if (role == AppRoles.BookingStaff)
@@ -559,6 +561,263 @@ namespace HanaMedia.Controllers
                 TempData["ErrorMessage"] = "Lỗi khi lưu dữ liệu. Có thể do giá trị thù lao vượt quá giới hạn hệ thống.";
             }
 
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost("Bookings/SubmitApproval/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitApproval(int id, CancellationToken cancellationToken)
+        {
+            if (!IsAuthorized(out var role, out _, out _))
+            {
+                return Forbid();
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            if (booking.ContractStatus == "da_ky")
+            {
+                TempData["ErrorMessage"] = "Hợp đồng này đã được ký, không thể gửi duyệt lại.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            booking.ContractStatus = "cho_duyet";
+            booking.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TryGetUserId(out int currentUserId);
+            await _auditService.WriteAsync(new AuditEvent(
+                AuditModules.Booking,
+                AuditActions.Updated,
+                $"Đã gửi đơn phê duyệt Booking #{booking.Id} ({booking.ClientName}) lên Giám đốc",
+                currentUserId,
+                "Booking",
+                booking.Id.ToString()
+            ), cancellationToken);
+
+            TempData["SuccessMessage"] = "Đã gửi đơn phê duyệt Booking lên Giám đốc thành công.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost("Bookings/Approve/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Approve(int id, CancellationToken cancellationToken)
+        {
+            if (!IsAuthorized(out var role, out var employeeId, out _) || role != AppRoles.Director)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+                    return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
+                return Forbid();
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            if (booking == null)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+                    return Json(new { success = false, message = "Không tìm thấy Booking." });
+                return NotFound();
+            }
+
+            if (booking.ContractStatus != "cho_duyet")
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+                    return Json(new { success = false, message = "Trạng thái hợp đồng không ở bước chờ duyệt." });
+                TempData["ErrorMessage"] = "Trạng thái hợp đồng không ở bước chờ duyệt.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            booking.ContractStatus = "da_duyet";
+            booking.ContractApprovedAt = DateTime.Now;
+            if (employeeId > 0)
+            {
+                booking.ContractApprovedById = employeeId;
+            }
+            booking.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TryGetUserId(out int currentUserId);
+            await _auditService.WriteAsync(new AuditEvent(
+                AuditModules.Booking,
+                AuditActions.Approved,
+                $"Giám đốc đã duyệt Booking #{booking.Id} ({booking.ClientName}) (Chờ soạn hợp đồng)",
+                currentUserId,
+                "Booking",
+                booking.Id.ToString()
+            ), cancellationToken);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+            {
+                return Json(new { success = true, message = $"Đã duyệt Booking #{booking.Id} thành công!" });
+            }
+
+            TempData["SuccessMessage"] = "Đã duyệt Booking thành công! Chờ nhân viên tải lên hợp đồng.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost("Bookings/Reject/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reject(int id, string? rejectionReason, CancellationToken cancellationToken)
+        {
+            if (!IsAuthorized(out var role, out _, out _) || role != AppRoles.Director)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+                    return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
+                return Forbid();
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            if (booking == null)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+                    return Json(new { success = false, message = "Không tìm thấy Booking." });
+                return NotFound();
+            }
+
+            if (booking.ContractStatus != "cho_duyet")
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+                    return Json(new { success = false, message = "Trạng thái hợp đồng không ở bước chờ duyệt." });
+                TempData["ErrorMessage"] = "Trạng thái hợp đồng không ở bước chờ duyệt.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            booking.ContractStatus = "tu_choi";
+            booking.RejectionReason = rejectionReason;
+            booking.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TryGetUserId(out int currentUserId);
+            var reasonText = string.IsNullOrWhiteSpace(rejectionReason) ? "Không có" : rejectionReason;
+            await _auditService.WriteAsync(new AuditEvent(
+                AuditModules.Booking,
+                AuditActions.Rejected,
+                $"Giám đốc đã từ chối Booking #{booking.Id} ({booking.ClientName}). Lý do: {reasonText}",
+                currentUserId,
+                "Booking",
+                booking.Id.ToString()
+            ), cancellationToken);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+            {
+                return Json(new { success = true, message = $"Đã từ chối đơn phê duyệt Booking #{booking.Id}." });
+            }
+
+            TempData["SuccessMessage"] = "Đã từ chối đơn phê duyệt Booking.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost("Bookings/UploadContract/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadContract(int id, IFormFile? contractFile, CancellationToken cancellationToken)
+        {
+            if (!IsAuthorized(out var role, out _, out _))
+            {
+                return Forbid();
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            if (booking.ContractStatus != "da_duyet" && booking.ContractStatus != "cho_ky")
+            {
+                TempData["ErrorMessage"] = "Booking chưa được duyệt hoặc trạng thái hợp đồng không hợp lệ để tải file.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (contractFile == null || contractFile.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Vui lòng chọn file hợp đồng để tải lên.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings");
+            if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+
+            var fileName = $"contract_{Guid.NewGuid()}{Path.GetExtension(contractFile.FileName)}";
+            var filePath = Path.Combine(uploadDir, fileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await contractFile.CopyToAsync(stream, cancellationToken);
+            }
+
+            booking.ContractFileUrl = $"/uploads/bookings/{fileName}";
+            booking.ContractStatus = "cho_ky";
+            booking.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TryGetUserId(out int currentUserId);
+            await _auditService.WriteAsync(new AuditEvent(
+                AuditModules.Booking,
+                AuditActions.Updated,
+                $"Đã tải lên và gửi hợp đồng cho Booking #{booking.Id} ({booking.ClientName}) chờ Giám đốc ký",
+                currentUserId,
+                "Booking",
+                booking.Id.ToString()
+            ), cancellationToken);
+
+            TempData["SuccessMessage"] = "Đã tải lên hợp đồng và gửi Giám đốc ký thành công.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost("Bookings/SignContract/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SignContract(int id, CancellationToken cancellationToken)
+        {
+            if (!IsAuthorized(out var role, out var employeeId, out _) || role != AppRoles.Director)
+            {
+                return Forbid();
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            if (booking.ContractStatus == "da_ky")
+            {
+                TempData["ErrorMessage"] = "Hợp đồng này đã được ký thành công trước đó.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (booking.ContractStatus != "cho_ky")
+            {
+                TempData["ErrorMessage"] = "Hợp đồng chưa ở trạng thái sẵn sàng để ký.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            booking.ContractStatus = "da_ky";
+            booking.ContractSignedAt = DateTime.Now;
+            if (employeeId > 0)
+            {
+                booking.ContractSignedById = employeeId;
+            }
+            booking.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TryGetUserId(out int currentUserId);
+            await _auditService.WriteAsync(new AuditEvent(
+                AuditModules.Booking,
+                AuditActions.ContractSigned,
+                $"Giám đốc đã xác nhận ký hợp đồng cho Booking #{booking.Id} ({booking.ClientName}) - Hợp đồng có hiệu lực",
+                currentUserId,
+                "Booking",
+                booking.Id.ToString()
+            ), cancellationToken);
+
+            TempData["SuccessMessage"] = "Giám đốc đã xác nhận ký hợp đồng thành công. Hợp đồng chính thức có hiệu lực!";
             return RedirectToAction(nameof(Details), new { id });
         }
 

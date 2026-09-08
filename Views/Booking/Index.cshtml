@@ -428,7 +428,33 @@
                   <div style="font-weight: 550;">@(item.PrimaryManager?.FullName ?? "N/A")</div>
                   <div style="font-size: 11px; color: var(--muted-text);">@item.PrimaryManager?.Position</div>
                 </td>
-                <td><span class="status-badge @statusClass">@statusLabel</span></td>
+                <td>
+                  <span class="status-badge @statusClass">@statusLabel</span>
+                  @{
+                    var cStatus = item.ContractStatus ?? "cho_duyet";
+                    var cClass = cStatus switch
+                    {
+                      "cho_duyet" => "status-dang_cho",
+                      "da_duyet" => "status-thuong_luong",
+                      "cho_ky" => "status-da_chot",
+                      "da_ky" => "status-hoan_thanh",
+                      "tu_choi" => "status-huy",
+                      _ => "status-dang_cho"
+                    };
+                    var cLabel = cStatus switch
+                    {
+                      "cho_duyet" => "HĐ: Chờ duyệt",
+                      "da_duyet" => "HĐ: Đã duyệt",
+                      "cho_ky" => "HĐ: Chờ ký",
+                      "da_ky" => "HĐ: Đã ký",
+                      "tu_choi" => "HĐ: Từ chối",
+                      _ => "HĐ: Chờ duyệt"
+                    };
+                  }
+                  <div style="margin-top: 4px;">
+                    <span class="status-badge @cClass" style="font-size: 11px; padding: 2px 6px;">@cLabel</span>
+                  </div>
+                </td>
                 <td style="text-align: right; white-space: nowrap;">
                   <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
                     <a href="/Bookings/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Chi tiết</a>

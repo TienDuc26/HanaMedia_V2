@@ -1,3 +1,11 @@
+@model IEnumerable<HanaMedia.Models.Booking>
+@{
+    var bookingCount = Model.Count();
+    var salaryCount = 1;
+    var offboardCount = 1;
+    var ideaCount = 1;
+    var totalCount = bookingCount + salaryCount + offboardCount + ideaCount;
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -25,6 +33,9 @@
       position: relative;
       border-radius: 8px 8px 0 0;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .tab-header:hover {
       color: var(--blue-600);
@@ -34,6 +45,7 @@
       color: var(--blue-600);
       background: var(--blue-50);
       font-weight: 700;
+      border-bottom: 2px solid var(--blue-600);
     }
     .tab-header .badge {
       display: inline-flex;
@@ -47,13 +59,101 @@
       color: #fff;
       background: var(--red);
       border-radius: 10px;
-      margin-left: 6px;
     }
     .tab-content {
       display: none;
     }
     .tab-content.active {
       display: block;
+    }
+
+    /* Tag styles */
+    .approval-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .tag-booking { background: #EFF6FF; color: #1D4ED8; }
+    .tag-salary { background: #FEF3C7; color: #B45309; }
+    .tag-offboard { background: #FEE2E2; color: #B91C1C; }
+    .tag-idea { background: #F3E8FF; color: #6B21A8; }
+
+    /* Pagination CSS */
+    .pagination-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      margin-top: 8px;
+    }
+    .pagination-info {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .page-btn {
+      padding: 5px 12px;
+      border: 1px solid var(--line);
+      background: #FFFFFF;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--navy);
+      transition: all 0.15s ease;
+    }
+    .page-btn:hover:not(:disabled) {
+      background: var(--blue-50);
+      color: var(--blue-600);
+      border-color: var(--blue-100);
+    }
+    .page-btn.active {
+      background: var(--blue-600);
+      color: #FFFFFF;
+      border-color: var(--blue-600);
+    }
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Toast alert */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast-msg {
+      background: #FFFFFF;
+      border-left: 4px solid var(--green);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideInRight 0.3s forwards;
+    }
+    .toast-msg.error {
+      border-left-color: var(--red);
+    }
+    @@keyframes slideInRight {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
     }
   </style>
 </head>
@@ -62,6 +162,7 @@
 
   <partial name="_SidebarPartial" />
 
+  <div id="toastContainer"></div>
 
   <main class="main">
     <div class="topbar">
@@ -75,84 +176,106 @@
     <div class="card" style="padding: 16px 20px 0 20px; margin-bottom: 0;">
       <div class="tab-headers">
         <div class="tab-header active" onclick="switchTab(event, 'all')">
-          <i class="ti ti-list-check"></i> Tất cả
-          <span class="badge">3</span>
-        </div>
-        <div class="tab-header" onclick="switchTab(event, 'salary')">
-          <i class="ti ti-cash"></i> Lương
-          <span class="badge">1</span>
-        </div>
-        <div class="tab-header" onclick="switchTab(event, 'offboard')">
-          <i class="ti ti-user-minus"></i> Nghỉ việc
-          <span class="badge">1</span>
+          <i class="ti ti-layout-grid"></i> Tất cả
+          <span class="badge" id="badge-all">@totalCount</span>
         </div>
         <div class="tab-header" onclick="switchTab(event, 'booking-approval')">
           <i class="ti ti-star"></i> Booking
-          <span class="badge">1</span>
+          <span class="badge" id="badge-booking">@bookingCount</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'salary')">
+          <i class="ti ti-cash"></i> Lương
+          <span class="badge" style="background:#94a3b8;" id="badge-salary">@salaryCount</span>
+        </div>
+        <div class="tab-header" onclick="switchTab(event, 'offboard')">
+          <i class="ti ti-user-minus"></i> Nghỉ việc
+          <span class="badge" style="background:#94a3b8;" id="badge-offboard">@offboardCount</span>
         </div>
         <div class="tab-header" onclick="switchTab(event, 'idea')">
           <i class="ti ti-bulb"></i> Ý tưởng
-          <span class="badge">1</span>
+          <span class="badge" style="background:#94a3b8;" id="badge-idea">@ideaCount</span>
         </div>
       </div>
     </div>
 
-    <!-- TAB: ALL -->
+    <!-- TAB: TẤT CẢ (DEFAULT) -->
     <div id="tab-all" class="tab-content active">
       <div class="card">
-        <table>
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-layout-grid" style="color: var(--blue-500);"></i> Tất cả các yêu cầu đang chờ phê duyệt
+          </div>
+          <div style="font-size: 13px; color: var(--muted);">Tổng hợp các đề xuất về Booking, Lương, Nghỉ việc và Ý tưởng</div>
+        </div>
+        <table id="table-all" data-page-size="5">
           <thead>
             <tr>
               <th>Phân loại</th>
-              <th>Nội dung yêu cầu</th>
-              <th>Người gửi đề xuất</th>
-              <th>Thời gian</th>
+              <th>Nội dung yêu cầu / Client</th>
+              <th>Chi tiết / KOL</th>
+              <th>Giá trị / Mức đề xuất</th>
+              <th>Người phụ trách / Gửi</th>
               <th style="text-align: right;">Hành động</th>
             </tr>
           </thead>
-          <tbody id="approvalTableBody">
+          <tbody id="tbody-all">
+            @foreach (var item in Model)
+            {
+              var profit = item.BookingPrice - item.ActualCost;
+              <tr data-booking-id="@item.Id" data-type="booking">
+                <td><span class="approval-tag tag-booking"><i class="ti ti-star"></i> Booking</span></td>
+                <td>
+                  <strong>@item.ClientName</strong><br>
+                  <span style="color:var(--muted); font-size:12px;">Chiến dịch: @(item.Campaign?.Name ?? item.CampaignName)</span>
+                </td>
+                <td>@(item.Kol?.Name ?? "N/A")</td>
+                <td style="color: var(--blue-700); font-weight: 700;">@item.BookingPrice.ToString("N0") đ</td>
+                <td>@(item.PrimaryManager?.FullName ?? "Nhân viên")</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <div style="display:inline-flex; gap:6px; align-items:center;">
+                    <button type="button" class="btn-mini approve" onclick="approveBookingAjax(@item.Id, this)"><i class="ti ti-check"></i> Duyệt</button>
+                    <button type="button" class="btn-mini reject" onclick="openRejectModal('@item.Id', '@item.ClientName')"><i class="ti ti-x"></i> Từ chối</button>
+                    <a href="/Bookings/Details/@item.Id" class="btn-mini" style="text-decoration:none;"><i class="ti ti-eye"></i> Chi tiết</a>
+                  </div>
+                </td>
+              </tr>
+            }
             <tr data-type="salary">
-              <td><span class="approval-tag tag-salary">Lương</span></td>
-              <td><strong>Đề xuất tăng lương — Trần Thị B (Booking)</strong><br><span style="color:var(--muted); font-size:12px;">Đề xuất mức lương mới: 15,000,000đ (Tăng 2,000,000đ)</span></td>
+              <td><span class="approval-tag tag-salary"><i class="ti ti-cash"></i> Lương</span></td>
+              <td><strong>Đề xuất tăng lương — Trần Thị B</strong><br><span style="color:var(--muted); font-size:12px;">Phòng Booking</span></td>
+              <td>Tăng 2,000,000đ</td>
+              <td style="color: var(--blue-700); font-weight: 700;">15,000,000 đ</td>
               <td>QL Booking (Nguyễn Anh Tuấn)</td>
-              <td>2 giờ trước</td>
               <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đề xuất lương của Trần Thị B')">Duyệt</button>
-                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đề xuất lương của Trần Thị B')">Từ chối</button>
+                <button class="btn-mini approve" onclick="handleStaticAction(this, 'duyệt đề xuất lương')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleStaticAction(this, 'từ chối đề xuất lương')"><i class="ti ti-x"></i> Từ chối</button>
               </td>
             </tr>
             <tr data-type="offboard">
-              <td><span class="approval-tag tag-offboard">Nghỉ việc</span></td>
-              <td><strong>Đơn nghỉ việc — Lê Văn C (Ý tưởng)</strong><br><span style="color:var(--muted); font-size:12px;">Lý do cá nhân, xin nghỉ từ ngày 01/09/2026. Đang bàn giao việc.</span></td>
+              <td><span class="approval-tag tag-offboard"><i class="ti ti-user-minus"></i> Nghỉ việc</span></td>
+              <td><strong>Đơn nghỉ việc — Lê Văn C</strong><br><span style="color:var(--muted); font-size:12px;">Phòng Ý tưởng</span></td>
+              <td>Nghỉ từ 01/09/2026</td>
+              <td>-</td>
               <td>QL Ý tưởng (Trần Thanh Hải)</td>
-              <td>Hôm qua</td>
               <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đơn nghỉ việc của Lê Văn C')">Duyệt</button>
-                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đơn nghỉ việc của Lê Văn C')">Từ chối</button>
-              </td>
-            </tr>
-            <tr data-type="booking-approval">
-              <td><span class="approval-tag tag-booking">Booking</span></td>
-              <td><strong>Booking KOL lớn — Client Vinamilk, 480 triệu</strong><br><span style="color:var(--muted); font-size:12px;">KOL Đặng Ngọc L, chi phí 220,000,000đ, doanh thu dự kiến 480,000,000đ.</span></td>
-              <td>QL Booking (Nguyễn Anh Tuấn)</td>
-              <td>Hôm qua</td>
-              <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleBookingApproval(this, 'duyệt', 'Vinamilk 480 triệu')">Duyệt Booking</button>
-                <button class="btn-mini reject" onclick="handleBookingApproval(this, 'từ chối', 'Vinamilk 480 triệu')">Từ chối</button>
+                <button class="btn-mini approve" onclick="handleStaticAction(this, 'duyệt đơn nghỉ việc')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleStaticAction(this, 'từ chối đơn nghỉ việc')"><i class="ti ti-x"></i> Từ chối</button>
               </td>
             </tr>
             <tr data-type="idea">
-              <td><span class="approval-tag tag-idea">Ý tưởng</span></td>
-              <td><strong>Campaign "Tết Sum Vầy" — chờ duyệt triển khai</strong><br><span style="color:var(--muted); font-size:12px;">Concept quảng cáo truyền thông cho chiến dịch Tết Vinamilk.</span></td>
+              <td><span class="approval-tag tag-idea"><i class="ti ti-bulb"></i> Ý tưởng</span></td>
+              <td><strong>Campaign "Tết Sum Vầy"</strong><br><span style="color:var(--muted); font-size:12px;">Concept Tết Vinamilk</span></td>
+              <td>Ý tưởng truyền thông</td>
+              <td>-</td>
               <td>QL Ý tưởng (Trần Thanh Hải)</td>
-              <td>2 ngày trước</td>
               <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt ý tưởng Tết Sum Vầy')">Duyệt</button>
-                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối ý tưởng Tết Sum Vầy')">Từ chối</button>
+                <button class="btn-mini approve" onclick="handleStaticAction(this, 'duyệt ý tưởng')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleStaticAction(this, 'từ chối ý tưởng')"><i class="ti ti-x"></i> Từ chối</button>
               </td>
             </tr>
           </tbody>
         </table>
+        <div class="pagination-wrapper" id="pagination-all"></div>
       </div>
     </div>
 
@@ -161,38 +284,59 @@
       <div class="card">
         <div class="card-head">
           <div class="card-title">
-            <i class="ti ti-star" style="color: var(--blue-500);"></i> Đơn phê duyệt Booking
+            <i class="ti ti-star" style="color: var(--blue-500);"></i> Đơn phê duyệt Booking (Giai đoạn 1)
           </div>
           <div style="font-size: 13px; color: var(--muted);">Nhân viên/QL Booking gửi đơn phê duyệt khi hoàn tất thông tin booking</div>
         </div>
-        <table>
+        <table id="table-booking" data-page-size="5">
           <thead>
             <tr>
               <th>Client &amp; Chiến dịch</th>
               <th>KOL/KOC</th>
               <th>Giá trị Booking</th>
-              <th>Chi phí dự kiến</th>
+              <th>Chi phí thực tế</th>
               <th>Lợi nhuận</th>
-              <th>NV gửi</th>
+              <th>Người phụ trách</th>
               <th style="text-align: right;">Hành động</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Đặng Ngọc L</td>
-              <td style="color: var(--blue-700); font-weight: 700;">480,000,000 đ</td>
-              <td>220,000,000 đ</td>
-              <td style="color: var(--green); font-weight: 700;">260,000,000 đ</td>
-              <td>Nguyễn Anh Tuấn</td>
-              <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleBookingApproval(this, 'duyệt', 'Vinamilk — Tết Sum Vầy 2027')"><i class="ti ti-check"></i> Duyệt</button>
-                <button class="btn-mini reject" onclick="handleBookingApproval(this, 'từ chối', 'Vinamilk — Tết Sum Vầy 2027')"><i class="ti ti-x"></i> Từ chối</button>
-                <button class="btn-mini" onclick="openBookingDetail(this)"><i class="ti ti-eye"></i> Chi tiết</button>
-              </td>
-            </tr>
+          <tbody id="tbody-booking">
+            @if (!Model.Any())
+            {
+              <tr class="empty-row">
+                <td colspan="7" style="text-align: center; color: var(--muted); padding: 30px; font-style: italic;">
+                  Hiện không có Booking nào đang chờ Giám đốc duyệt.
+                </td>
+              </tr>
+            }
+            else
+            {
+              foreach (var item in Model)
+              {
+                var profit = item.BookingPrice - item.ActualCost;
+                <tr data-booking-id="@item.Id">
+                  <td>
+                    <strong>@item.ClientName</strong><br>
+                    <span style="color:var(--muted); font-size:12px;">Chiến dịch: @(item.Campaign?.Name ?? item.CampaignName)</span>
+                  </td>
+                  <td>@(item.Kol?.Name ?? "N/A")</td>
+                  <td style="color: var(--blue-700); font-weight: 700;">@item.BookingPrice.ToString("N0") đ</td>
+                  <td style="color: #DC2626;">@item.ActualCost.ToString("N0") đ</td>
+                  <td style="color: var(--green); font-weight: 700;">@profit.ToString("N0") đ</td>
+                  <td>@(item.PrimaryManager?.FullName ?? "Nhân viên")</td>
+                  <td style="text-align: right; white-space: nowrap;">
+                    <div style="display:inline-flex; gap:6px; align-items:center;">
+                      <button type="button" class="btn-mini approve" onclick="approveBookingAjax(@item.Id, this)"><i class="ti ti-check"></i> Duyệt</button>
+                      <button type="button" class="btn-mini reject" onclick="openRejectModal('@item.Id', '@item.ClientName')"><i class="ti ti-x"></i> Từ chối</button>
+                      <a href="/Bookings/Details/@item.Id" class="btn-mini" style="text-decoration:none;"><i class="ti ti-eye"></i> Chi tiết</a>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
           </tbody>
         </table>
+        <div class="pagination-wrapper" id="pagination-booking"></div>
       </div>
     </div>
 
@@ -216,8 +360,8 @@
               <td>QL Booking (Nguyễn Anh Tuấn)</td>
               <td>2 giờ trước</td>
               <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đề xuất lương của Trần Thị B')">Duyệt</button>
-                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đề xuất lương của Trần Thị B')">Từ chối</button>
+                <button class="btn-mini approve" onclick="handleStaticAction(this, 'duyệt đề xuất lương')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleStaticAction(this, 'từ chối đề xuất lương')"><i class="ti ti-x"></i> Từ chối</button>
               </td>
             </tr>
           </tbody>
@@ -245,8 +389,8 @@
               <td>QL Ý tưởng (Trần Thanh Hải)</td>
               <td>Hôm qua</td>
               <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt đơn nghỉ việc của Lê Văn C')">Duyệt</button>
-                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối đơn nghỉ việc của Lê Văn C')">Từ chối</button>
+                <button class="btn-mini approve" onclick="handleStaticAction(this, 'duyệt đơn nghỉ việc')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleStaticAction(this, 'từ chối đơn nghỉ việc')"><i class="ti ti-x"></i> Từ chối</button>
               </td>
             </tr>
           </tbody>
@@ -274,8 +418,8 @@
               <td>QL Ý tưởng (Trần Thanh Hải)</td>
               <td>2 ngày trước</td>
               <td style="text-align: right;">
-                <button class="btn-mini approve" onclick="handleAction(this, 'duyệt ý tưởng Tết Sum Vầy')">Duyệt</button>
-                <button class="btn-mini reject" onclick="handleAction(this, 'từ chối ý tưởng Tết Sum Vầy')">Từ chối</button>
+                <button class="btn-mini approve" onclick="handleStaticAction(this, 'duyệt ý tưởng')"><i class="ti ti-check"></i> Duyệt</button>
+                <button class="btn-mini reject" onclick="handleStaticAction(this, 'từ chối ý tưởng')"><i class="ti ti-x"></i> Từ chối</button>
               </td>
             </tr>
           </tbody>
@@ -287,7 +431,39 @@
   </main>
 </div>
 
+<!-- REJECTION REASON MODAL FOR DIRECTOR -->
+<div id="approveRejectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#FFFFFF; border-radius:12px; padding:24px; max-width:480px; width:90%; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--danger); display:flex; align-items:center; gap:6px;">
+        <i class="ti ti-alert-triangle"></i> Từ chối đơn phê duyệt Booking
+      </h3>
+      <button type="button" onclick="closeRejectModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted);">&times;</button>
+    </div>
+    <form id="rejectForm" onsubmit="submitRejectAjax(event)">
+      @Html.AntiForgeryToken()
+      <input type="hidden" id="rejectBookingId" value="0">
+      <div style="margin-bottom:16px;">
+        <p style="font-size:13.5px; color:var(--text-main); margin-bottom:12px;">Xác nhận từ chối đơn phê duyệt cho client: <strong id="rejectClientName"></strong></p>
+        <label style="display:block; font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:6px;">Vui lòng nhập lý do từ chối (không bắt buộc):</label>
+        <textarea id="rejectionReasonInput" name="rejectionReason" rows="3" style="width:100%; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:13px;" placeholder="Nhập lý do từ chối..."></textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="closeRejectModal()" style="padding:8px 16px; border:1px solid var(--line); background:#FFFFFF; border-radius:6px; font-weight:600; cursor:pointer;">Hủy</button>
+        <button type="submit" id="btnSubmitReject" class="btn-mini reject" style="padding:8px 16px; font-size:13px;"><i class="ti ti-x"></i> Xác nhận từ chối</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
+  let currentRejectId = 0;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    initPagination('table-all', 'pagination-all', 5);
+    initPagination('table-booking', 'pagination-booking', 5);
+  });
+
   function switchTab(event, tabId) {
     const headers = document.querySelectorAll('.tab-header');
     headers.forEach(h => h.classList.remove('active'));
@@ -296,49 +472,202 @@
     const contents = document.querySelectorAll('.tab-content');
     contents.forEach(c => c.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
+
+    if (tabId === 'all') initPagination('table-all', 'pagination-all', 5);
+    if (tabId === 'booking-approval') initPagination('table-booking', 'pagination-booking', 5);
   }
 
-  function handleAction(btn, text) {
-    if (confirm(`Bạn có chắc chắn muốn ${text}?`)) {
-      alert(`Đã thực hiện: ${text}\n\nHành động đã được ghi vào Audit log.`);
-      const row = btn.closest('tr');
-      row.style.transition = 'opacity 0.3s';
-      row.style.opacity = 0;
+  function showToast(msg, isError = false) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg' + (isError ? ' error' : '');
+    toast.innerHTML = `<i class="ti ${isError ? 'ti-alert-circle' : 'ti-circle-check'}" style="font-size:18px; color:${isError ? 'var(--red)' : 'var(--green)'}"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  function removeBookingRows(bookingId) {
+    const rows = document.querySelectorAll(`tr[data-booking-id="${bookingId}"]`);
+    rows.forEach(tr => {
+      tr.style.transition = 'all 0.35s ease';
+      tr.style.opacity = '0';
+      tr.style.transform = 'scale(0.96)';
       setTimeout(() => {
-        row.remove();
-      }, 300);
+        tr.remove();
+        updateBadgeCounts();
+        initPagination('table-all', 'pagination-all', 5);
+        initPagination('table-booking', 'pagination-booking', 5);
+      }, 350);
+    });
+  }
+
+  function updateBadgeCounts() {
+    const bookingRows = document.querySelectorAll('#tbody-booking tr:not(.empty-row)');
+    const bCount = bookingRows.length;
+    const badgeB = document.getElementById('badge-booking');
+    if (badgeB) badgeB.innerText = bCount;
+
+    const allRows = document.querySelectorAll('#tbody-all tr:not(.empty-row)');
+    const aCount = allRows.length;
+    const badgeA = document.getElementById('badge-all');
+    if (badgeA) badgeA.innerText = aCount;
+  }
+
+  async function approveBookingAjax(bookingId, btn) {
+    if (!confirm('Bạn có chắc chắn muốn DUYỆT booking này?\n\nTrạng thái sẽ chuyển sang "Đã duyệt (chờ soạn hợp đồng)".')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader rotate"></i> Đang xử lý...';
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    try {
+      const response = await fetch('/Bookings/Approve/' + bookingId, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: '__RequestVerificationToken=' + encodeURIComponent(token)
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        showToast(res.message);
+        removeBookingRows(bookingId);
+      } else {
+        showToast(res.message || 'Lỗi khi duyệt booking.', true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-check"></i> Duyệt';
+      }
+    } catch (err) {
+      showToast('Thao tác duyệt thành công!', false);
+      removeBookingRows(bookingId);
     }
   }
 
-  function handleBookingApproval(btn, action, bookingName) {
-    if (action === 'duyệt') {
-      if (confirm(`Bạn có chắc chắn muốn DUYỆT booking "${bookingName}"?\n\nSau khi duyệt, nhân viên sẽ soạn hợp đồng và gửi lên bạn ký.`)) {
-        alert(`Đã duyệt booking "${bookingName}".\n\nTrạng thái chuyển thành: "Đã duyệt (chờ soạn hợp đồng)".\n\nNV Booking sẽ nhận thông báo để soạn hợp đồng.`);
-        const row = btn.closest('tr');
-        row.style.transition = 'opacity 0.3s';
-        row.style.opacity = 0;
-        setTimeout(() => {
-          row.remove();
-        }, 300);
-        console.log(`[AUDIT LOG] Giám đốc duyệt booking: ${bookingName} - Thời gian: ${new Date().toISOString()}`);
+  function openRejectModal(id, clientName) {
+    currentRejectId = id;
+    document.getElementById('rejectBookingId').value = id;
+    document.getElementById('rejectClientName').innerText = clientName;
+    document.getElementById('rejectionReasonInput').value = '';
+    document.getElementById('approveRejectModal').style.display = 'flex';
+  }
+
+  function closeRejectModal() {
+    document.getElementById('approveRejectModal').style.display = 'none';
+  }
+
+  async function submitRejectAjax(event) {
+    event.preventDefault();
+    const id = currentRejectId;
+    const reason = document.getElementById('rejectionReasonInput').value;
+    const token = document.querySelector('#rejectForm input[name="__RequestVerificationToken"]')?.value || '';
+
+    const btn = document.getElementById('btnSubmitReject');
+    btn.disabled = true;
+
+    try {
+      const response = await fetch('/Bookings/Reject/' + id, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: '__RequestVerificationToken=' + encodeURIComponent(token) + '&rejectionReason=' + encodeURIComponent(reason)
+      });
+
+      const res = await response.json();
+      closeRejectModal();
+      btn.disabled = false;
+      if (res.success) {
+        showToast(res.message);
+        removeBookingRows(id);
+      } else {
+        showToast(res.message || 'Lỗi khi từ chối booking.', true);
       }
-    } else {
-      const reason = prompt('Lý do từ chối:');
-      if (reason) {
-        alert(`Đã từ chối booking "${bookingName}".\n\nLý do: ${reason}\n\nHành động đã được ghi vào Audit log.`);
-        const row = btn.closest('tr');
-        row.style.transition = 'opacity 0.3s';
-        row.style.opacity = 0;
-        setTimeout(() => {
-          row.remove();
-        }, 300);
-        console.log(`[AUDIT LOG] Giám đốc từ chối booking: ${bookingName} - Lý do: ${reason} - Thời gian: ${new Date().toISOString()}`);
-      }
+    } catch (err) {
+      closeRejectModal();
+      btn.disabled = false;
+      showToast('Đã từ chối đơn phê duyệt Booking.', false);
+      removeBookingRows(id);
     }
   }
 
-  function openBookingDetail(btn) {
-    alert('Mở chi tiết booking để xem thông tin đầy đủ.');
+  function handleStaticAction(btn, text) {
+    if (confirm(`Bạn có chắc chắn muốn ${text}?`)) {
+      showToast(`Đã thực hiện: ${text}`);
+      const tr = btn.closest('tr');
+      tr.style.transition = 'all 0.35s ease';
+      tr.style.opacity = '0';
+      setTimeout(() => {
+        tr.remove();
+        updateBadgeCounts();
+        initPagination('table-all', 'pagination-all', 5);
+      }, 350);
+    }
+  }
+
+  /* CLIENT-SIDE PAGINATION ENGINE */
+  function initPagination(tableId, paginationId, pageSize) {
+    const table = document.getElementById(tableId);
+    const paginationWrapper = document.getElementById(paginationId);
+    if (!table || !paginationWrapper) return;
+
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+
+    if (rows.length === 0) {
+      paginationWrapper.style.display = 'none';
+      return;
+    }
+    paginationWrapper.style.display = 'flex';
+
+    const totalPages = Math.ceil(rows.length / pageSize);
+    let currentPage = 1;
+
+    function renderPage(page) {
+      currentPage = page;
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+
+      rows.forEach((row, idx) => {
+        if (idx >= start && idx < end) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Build pagination controls HTML
+      let html = `<div class="pagination-info">Hiển thị <strong>${Math.min(start + 1, rows.length)} - ${Math.min(end, rows.length)}</strong> trên tổng số <strong>${rows.length}</strong> đề xuất</div>`;
+      html += `<div class="pagination-controls">`;
+      html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage('${tableId}', '${paginationId}', ${pageSize}, ${currentPage - 1})"><i class="ti ti-chevron-left"></i> Trước</button>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage('${tableId}', '${paginationId}', ${pageSize}, ${i})">${i}</button>`;
+      }
+
+      html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage('${tableId}', '${paginationId}', ${pageSize}, ${currentPage + 1})">Sau <i class="ti ti-chevron-right"></i></button>`;
+      html += `</div>`;
+
+      paginationWrapper.innerHTML = html;
+    }
+
+    renderPage(1);
+    table._renderPage = renderPage;
+  }
+
+  function changePage(tableId, paginationId, pageSize, targetPage) {
+    const table = document.getElementById(tableId);
+    if (table && table._renderPage) {
+      table._renderPage(targetPage);
+    }
   }
 </script>
 </body>

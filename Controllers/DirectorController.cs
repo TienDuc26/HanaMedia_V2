@@ -25,9 +25,17 @@ namespace HanaMedia.Controllers
             return View();
         }
 
-        public IActionResult Approve()
+        public async Task<IActionResult> Approve(CancellationToken cancellationToken)
         {
-            return View();
+            var pendingBookings = await _context.Bookings
+                .Include(b => b.Campaign)
+                .Include(b => b.Kol)
+                .Include(b => b.PrimaryManager)
+                .Where(b => b.ContractStatus == "cho_duyet")
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            return View(pendingBookings);
         }
 
         public async Task<IActionResult> BookingCampaign(CancellationToken cancellationToken)
@@ -111,9 +119,18 @@ namespace HanaMedia.Controllers
             return View();
         }
 
-        public IActionResult SignContract()
+        public async Task<IActionResult> SignContract(CancellationToken cancellationToken)
         {
-            return View();
+            var bookings = await _context.Bookings
+                .Include(b => b.Campaign)
+                .Include(b => b.Kol)
+                .Include(b => b.PrimaryManager)
+                .Include(b => b.ContractSignedBy)
+                .Where(b => b.ContractStatus == "cho_ky" || b.ContractStatus == "da_ky" || b.ContractStatus == "tu_choi")
+                .OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            return View(bookings);
         }
 
         private static string GetEmployeeStatusLabel(string? status) => status switch
