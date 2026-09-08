@@ -97,25 +97,40 @@ namespace HanaMedia.Controllers
         }
 
         [HttpGet("Bookings/Details/{id}")]
+        [HttpGet("Booking/Details/{id}")]
         public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
-            if (!IsAuthorized(out _, out _, out _))
+            if (!IsAuthorized(out var role, out var employeeId, out _))
             {
                 return Forbid();
             }
 
-            var booking = await _context.Bookings
+            var query = _context.Bookings
                 .Include(b => b.Campaign)
                 .Include(b => b.Kol)
                 .Include(b => b.PrimaryManager)
-                .Include(b => b.BookingWages)
-                    .ThenInclude(bw => bw.Employee)
-                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+                .AsQueryable();
+
+            if (role == AppRoles.BookingStaff)
+            {
+                query = query.Include(b => b.BookingWages.Where(bw => bw.EmployeeId == employeeId))
+                             .ThenInclude(bw => bw.Employee);
+            }
+            else
+            {
+                query = query.Include(b => b.BookingWages)
+                             .ThenInclude(bw => bw.Employee);
+            }
+
+            var booking = await query.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
             if (booking == null)
             {
                 return NotFound();
             }
+
+            ViewBag.IsWritable = role == AppRoles.BookingManager;
+            ViewBag.Role = role;
 
             return View(booking);
         }
@@ -486,6 +501,65 @@ namespace HanaMedia.Controllers
             ViewBag.ManagerStats = managerStats;
 
             return View();
+        }
+
+        [HttpPost("Bookings/UpdateWages/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateWages(int id, Dictionary<int, decimal> wages, CancellationToken cancellationToken)
+        {
+            if (!IsAuthorized(out var role, out _, out _) || role != AppRoles.BookingManager)
+            {
+                return Forbid();
+            }
+
+            var booking = await _context.Bookings
+                .Include(b => b.BookingWages)
+                    .ThenInclude(bw => bw.Employee)
+                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            TryGetUserId(out int currentUserId);
+
+            foreach (var kvp in wages)
+            {
+                var employeeId = kvp.Key;
+                var newWage = kvp.Value;
+
+                var bw = booking.BookingWages.FirstOrDefault(x => x.EmployeeId == employeeId);
+                if (bw != null && bw.AllocatedWage != newWage)
+                {
+                    var oldWage = bw.AllocatedWage;
+                    bw.AllocatedWage = newWage;
+                    bw.UpdatedAt = DateTime.Now;
+
+                    var detail = $"Cập nhật thù lao cho [{bw.Employee.FullName}] từ {oldWage:N0} đ thành {newWage:N0} đ";
+                    
+                    _auditService.AddEvent(new AuditEvent(
+                        Module: AuditModules.Booking,
+                        ActionType: AuditActions.WageChanged,
+                        Detail: detail,
+                        UserId: currentUserId,
+                        TargetType: "BookingWage",
+                        TargetId: id.ToString()
+                    ));
+                }
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+                TempData["SuccessMessage"] = "Cập nhật phân bổ thù lao thành công.";
+            }
+            catch (DbUpdateException)
+            {
+                TempData["ErrorMessage"] = "Lỗi khi lưu dữ liệu. Có thể do giá trị thù lao vượt quá giới hạn hệ thống.";
+            }
+
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         private bool TryGetUserId(out int userId)

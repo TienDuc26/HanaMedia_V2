@@ -1,3 +1,30 @@
+@model IEnumerable<HanaMedia.Models.Booking>
+@{
+    Layout = null;
+}
+@functions {
+    public string GetStatusChipClass(string? status) => status switch
+    {
+        "dang_cho" => "status-warn",
+        "thuong_luong" => "status-info",
+        "da_chot" => "status-good",
+        "dang_trien_khai" => "status-good",
+        "hoan_thanh" => "status-good",
+        "huy" => "status-bad",
+        _ => "status-info"
+    };
+
+    public string GetStatusText(string? status) => status switch
+    {
+        "dang_cho" => "Đang chờ",
+        "thuong_luong" => "Đang thương lượng",
+        "da_chot" => "Đã chốt",
+        "dang_trien_khai" => "Đang triển khai",
+        "hoan_thanh" => "Hoàn thành",
+        "huy" => "Đã hủy",
+        _ => status ?? "N/A"
+    };
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -26,6 +53,9 @@
       cursor: pointer;
       padding: 6px 14px;
       position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .tab-header:hover {
       color: var(--blue-500);
@@ -49,6 +79,121 @@
     .tab-content.active {
       display: block;
     }
+
+    .staff-badge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 320px;
+    }
+    .staff-badge-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+    }
+    .staff-badge-item .staff-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .staff-badge-item .staff-wage {
+      font-weight: 700;
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .btn-action-view {
+      color: var(--blue-700);
+      border-color: rgba(11, 58, 110, 0.15);
+      background: #EFF6FF;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+    .btn-action-view:hover {
+      background: #DBEAFE;
+      color: #1D4ED8;
+    }
+
+    /* PAGINATION STYLES */
+    .pagination-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid #E4E9F0;
+    }
+    .pagination-info {
+      font-size: 12.5px;
+      color: #6B7A90;
+      font-weight: 500;
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      min-width: 34px;
+      height: 34px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFFFFF;
+      color: #172B4D;
+      border: 1px solid #E4E9F0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .page-btn:hover:not(.disabled):not(.active) {
+      background: #EFF6FF;
+      color: #1769E0;
+      border-color: #CFE1F8;
+    }
+    .page-btn.active {
+      background: #1769E0;
+      color: #FFFFFF;
+      font-weight: 700;
+      border-color: #1769E0;
+      cursor: default;
+    }
+    .page-btn.disabled {
+      background: #F5F7FA;
+      color: #A0AEC0;
+      border-color: #E4E9F0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .page-ellipsis {
+      font-size: 13px;
+      color: #6B7A90;
+      padding: 0 4px;
+    }
   </style>
 </head>
 <body>
@@ -56,12 +201,11 @@
 
   <partial name="_SidebarPartial" />
 
-  
-<main class="main">
+  <main class="main">
     <div class="topbar">
       <div>
         <div class="page-title">Giám sát Booking &amp; Thù lao</div>
-        <div class="page-sub">Giám sát trạng thái booking KOL và tình hình phân bổ thù lao</div>
+        <div class="page-sub">Giám sát trạng thái booking KOL và tình hình phân bổ thù lao chi tiết theo nhân sự</div>
       </div>
       <div class="topbar-actions">
         <a href="/Campaigns" class="btn-primary-blue" style="text-decoration:none;"><i class="ti ti-rocket"></i> Xem quản lý Chiến dịch &rarr;</a>
@@ -75,182 +219,291 @@
           <i class="ti ti-star"></i> Booking KOL
         </div>
         <div class="tab-header" onclick="switchTab(event, 'wage-overview')">
-          <i class="ti ti-cash"></i> Tổng quan thù lao
+          <i class="ti ti-cash"></i> Tổng quan thù lao &amp; Phân bổ nhân sự
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: Booking KOL (chi tiết) -->
+    <!-- TAB 1: Booking KOL (Dữ liệu động từ DB) -->
     <div id="tab-bookings" class="tab-content active">
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Danh sách Booking KOL/KOC — Chi tiết</div>
-          <div style="font-size: 13px; color: var(--muted);">Xem chi tiết từng booking và trạng thái phê duyệt</div>
+          <div>
+            <div class="card-title">Danh sách Booking KOL/KOC — Chi tiết</div>
+            <div style="font-size: 13px; color: var(--muted);">Danh sách toàn bộ các hợp đồng booking KOL đang triển khai trong hệ thống</div>
+          </div>
         </div>
-        <table>
+        <table id="bookingTable">
           <thead>
             <tr>
+              <th style="width: 50px;">STT</th>
               <th>Client &amp; Chiến dịch</th>
-              <th>KOL/KOC</th>
-              <th>Giá Booking</th>
-              <th>Chi phí</th>
-              <th>Lợi nhuận</th>
+              <th>KOL / KOC</th>
+              <th style="text-align: right;">Giá Booking</th>
+              <th style="text-align: right;">Chi phí thực tế</th>
+              <th style="text-align: right;">Lợi nhuận</th>
               <th>Trạng thái</th>
-              <th>Phê duyệt</th>
+              <th>Hợp đồng</th>
+              <th style="text-align: center;">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Nguyễn Thị H</td>
-              <td style="color: var(--blue-700); font-weight: 600;">10,000,000 đ</td>
-              <td>4,000,000 đ</td>
-              <td style="color: var(--green); font-weight: 600;">6,000,000 đ</td>
-              <td><span class="status-chip status-good">Đang triển khai</span></td>
-              <td><span class="status-chip status-good">Đã ký</span></td>
-            </tr>
-            <tr>
-              <td><strong>Traveloka — Mùa Hè Rực Rỡ</strong></td>
-              <td>Trần Văn K</td>
-              <td style="color: var(--blue-700); font-weight: 600;">25,000,000 đ</td>
-              <td>11,000,000 đ</td>
-              <td style="color: var(--green); font-weight: 600;">14,000,000 đ</td>
-              <td><span class="status-chip status-good">Hoàn thành</span></td>
-              <td><span class="status-chip status-good">Đã ký</span></td>
-            </tr>
-            <tr>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Đặng Ngọc L</td>
-              <td style="color: var(--blue-700); font-weight: 600;">480,000,000 đ</td>
-              <td>220,000,000 đ</td>
-              <td style="color: var(--green); font-weight: 600;">260,000,000 đ</td>
-              <td><span class="status-chip status-warn">Chờ ký hợp đồng</span></td>
-              <td><span class="status-chip status-info">Chờ ký</span></td>
-            </tr>
+            @if (Model != null && Model.Any())
+            {
+              int stt = 1;
+              foreach (var item in Model)
+              {
+                decimal profit = item.BookingPrice - item.ActualCost;
+                string profitColor = profit >= 0 ? "var(--green)" : "var(--red)";
+                string contractStatus = !string.IsNullOrEmpty(item.ContractFileUrl) ? "Đã ký" : "Chờ ký";
+                string contractChip = !string.IsNullOrEmpty(item.ContractFileUrl) ? "status-good" : "status-warn";
+
+                <tr class="booking-row">
+                  <td>@(stt++)</td>
+                  <td>
+                    <strong>@item.ClientName</strong>
+                    <div style="font-size: 12px; color: var(--muted);"><i class="ti ti-target"></i> @(item.Campaign?.Name ?? item.CampaignName)</div>
+                  </td>
+                  <td>
+                    <div style="font-weight: 600;">@(item.Kol?.Name ?? "N/A")</div>
+                    @if (item.Kol != null && !string.IsNullOrEmpty(item.Kol.Platform))
+                    {
+                      <span class="status-chip status-info" style="font-size: 10.5px; padding: 2px 6px;"><i class="ti ti-brand-tiktok"></i> @item.Kol.Platform</span>
+                    }
+                  </td>
+                  <td style="text-align: right; color: var(--blue-700); font-weight: 700;">@item.BookingPrice.ToString("N0") đ</td>
+                  <td style="text-align: right; color: var(--text-muted);">@item.ActualCost.ToString("N0") đ</td>
+                  <td style="text-align: right; color: @profitColor; font-weight: 700;">@profit.ToString("N0") đ</td>
+                  <td><span class="status-chip @GetStatusChipClass(item.Status)">@GetStatusText(item.Status)</span></td>
+                  <td><span class="status-chip @contractChip">@contractStatus</span></td>
+                  <td style="text-align: center;">
+                    <a href="/Bookings/Details/@item.Id" class="btn-action-view" style="text-decoration:none;">
+                      <i class="ti ti-eye"></i> Xem
+                    </a>
+                  </td>
+                </tr>
+              }
+            }
+            else
+            {
+              <tr>
+                <td colspan="9" style="text-align: center; color: var(--muted); padding: 30px 0;">
+                  Chưa có dữ liệu booking nào trong hệ thống.
+                </td>
+              </tr>
+            }
           </tbody>
         </table>
+
+        <!-- PAGINATION TAB 1 -->
+        <div id="bookingPagination" class="pagination-wrapper" style="display: none;">
+          <div class="pagination-info" id="bookingPaginationInfo">Hiển thị 1–6 trong 0 booking</div>
+          <div class="pagination-controls" id="bookingPaginationControls"></div>
+        </div>
       </div>
     </div>
 
-    <!-- TAB 3: Tổng quan thù lao (READ-ONLY) -->
+    <!-- TAB 2: Tổng quan thù lao (READ-ONLY cho Giám đốc) -->
     <div id="tab-wage-overview" class="tab-content">
-      <div class="card" style="margin-bottom: 22px;">
+      <div class="card" style="margin-bottom: 24px;">
         <div class="card-head">
-          <div class="card-title">
-            <i class="ti ti-cash" style="color: var(--green);"></i> Tổng quan phân bổ thù lao — Read Only
-          </div>
-          <div style="font-size: 13px; color: var(--muted);">
-            <i class="ti ti-info-circle"></i> Giám đốc chỉ có quyền xem tổng quan. Việc phân bổ thù lao do QL Booking thực hiện.
+          <div>
+            <div class="card-title">
+              <i class="ti ti-cash" style="color: var(--green);"></i> Phân bổ thù lao chi tiết theo nhân sự — Read Only
+            </div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">
+              <i class="ti ti-info-circle"></i> Giám đốc xem danh sách từng nhân viên thực hiện booking và mức thù lao nhận được. QL Booking trực tiếp phân bổ tiền.
+            </div>
           </div>
         </div>
-        <table>
+        <table id="wageOverviewTable">
           <thead>
             <tr>
-              <th>STT</th>
+              <th style="width: 45px;">STT</th>
               <th>Client &amp; Chiến dịch</th>
-              <th>KOL/KOC</th>
+              <th>KOL / KOC</th>
               <th style="text-align: right;">Giá trị Booking</th>
-              <th style="text-align: right;">Tổng thù lao đã phân bổ</th>
+              <th style="min-width: 250px;">Nhân sự làm booking &amp; Thù lao</th>
+              <th style="text-align: right;">Tổng chia</th>
               <th>Còn lại</th>
-              <th>QL Booking phụ trách</th>
+              <th>QL Phụ trách</th>
+              <th style="text-align: center;">Chi tiết</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Nguyễn Thị H</td>
-              <td style="text-align: right; font-weight: 600;">10,000,000 đ</td>
-              <td style="text-align: right; color: var(--green); font-weight: 600;">10,000,000 đ</td>
-              <td><span class="status-chip status-good">Đủ</span></td>
-              <td>Nguyễn Anh Tuấn</td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><strong>Traveloka — Mùa Hè Rực Rỡ</strong></td>
-              <td>Trần Văn K</td>
-              <td style="text-align: right; font-weight: 600;">25,000,000 đ</td>
-              <td style="text-align: right; color: var(--green); font-weight: 600;">25,000,000 đ</td>
-              <td><span class="status-chip status-good">Đủ</span></td>
-              <td>Nguyễn Anh Tuấn</td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td><strong>Vinamilk — Tết Sum Vầy 2027</strong></td>
-              <td>Đặng Ngọc L</td>
-              <td style="text-align: right; font-weight: 600;">480,000,000 đ</td>
-              <td style="text-align: right; color: var(--amber); font-weight: 600;">480,000,000 đ</td>
-              <td><span class="status-chip status-good">Đủ</span></td>
-              <td>Nguyễn Anh Tuấn</td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td><strong>Cocoon — Glow Up Your Skin</strong></td>
-              <td>Lê Thị M</td>
-              <td style="text-align: right; font-weight: 600;">150,000,000 đ</td>
-              <td style="text-align: right; color: var(--green); font-weight: 600;">140,000,000 đ</td>
-              <td><span class="status-chip status-warn">Còn 10,000,000 đ</span></td>
-              <td>Phạm Thu Hà</td>
-            </tr>
+            @if (Model != null && Model.Any())
+            {
+              int stt = 1;
+              foreach (var item in Model)
+              {
+                decimal totalAllocated = item.BookingWages.Sum(bw => bw.AllocatedWage);
+                decimal remaining = item.BookingPrice - totalAllocated;
+                string statusChipClass = remaining < 0 ? "status-warn" : (remaining == 0 ? "status-good" : "status-info");
+                string remainingText = remaining < 0 ? $"Vượt {-remaining:N0} đ" : (remaining == 0 ? "Đã chia đủ" : $"Còn {remaining:N0} đ");
+                string allocatedColor = remaining < 0 ? "var(--amber)" : "var(--green)";
+
+                var staffListData = item.BookingWages.Select(bw => new {
+                    name = bw.Employee.FullName,
+                    position = bw.Employee.Position ?? bw.Employee.Department,
+                    department = bw.Employee.Department,
+                    val = bw.AllocatedWage
+                }).ToList();
+                string staffJson = System.Text.Json.JsonSerializer.Serialize(staffListData);
+
+                <tr class="wage-row">
+                  <td>@(stt++)</td>
+                  <td>
+                    <strong>@item.ClientName</strong>
+                    <div style="font-size: 12px; color: var(--muted);">@(item.Campaign?.Name ?? item.CampaignName)</div>
+                  </td>
+                  <td><strong>@(item.Kol?.Name ?? "N/A")</strong></td>
+                  <td style="text-align: right; font-weight: 700; color: var(--blue-700);">@item.BookingPrice.ToString("N0") đ</td>
+                  <td>
+                    @if (item.BookingWages.Any())
+                    {
+                      <div class="staff-badge-list">
+                        @foreach (var bw in item.BookingWages)
+                        {
+                          <div class="staff-badge-item">
+                            <div class="staff-info" title="@bw.Employee.FullName (@bw.Employee.Position)">
+                              <i class="ti ti-user-check" style="color: var(--blue-500); flex-shrink:0;"></i>
+                              <strong>@bw.Employee.FullName</strong>
+                              <span style="color: var(--muted); font-size: 11px;">(@(bw.Employee.Position ?? bw.Employee.Department))</span>
+                            </div>
+                            <div class="staff-wage">@bw.AllocatedWage.ToString("N0") đ</div>
+                          </div>
+                        }
+                      </div>
+                    }
+                    else
+                    {
+                      <span style="font-size: 12.5px; color: var(--muted); font-style: italic;">Chưa gán nhân viên</span>
+                    }
+                  </td>
+                  <td style="text-align: right; color: @allocatedColor; font-weight: 700;">@totalAllocated.ToString("N0") đ</td>
+                  <td><span class="status-chip @statusChipClass">@remainingText</span></td>
+                  <td><span style="font-size: 13px; font-weight: 500;">@(item.PrimaryManager?.FullName ?? "N/A")</span></td>
+                  <td style="text-align: center;">
+                    <button type="button" class="btn-action-view" 
+                            onclick="openSalaryModal('@item.ClientName', '@(item.Campaign?.Name ?? item.CampaignName)', '@(item.Kol?.Name ?? "N/A")', '@(item.PrimaryManager?.FullName ?? "N/A")', @item.BookingPrice, @staffJson)">
+                      <i class="ti ti-file-text"></i> Xem chi tiết
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+            else
+            {
+              <tr>
+                <td colspan="9" style="text-align: center; color: var(--muted); padding: 30px 0;">
+                  Chưa có dữ liệu thù lao nào.
+                </td>
+              </tr>
+            }
           </tbody>
         </table>
+
+        <!-- PAGINATION FOR TAB 2 (Compensation Overview) - POSITIONED AFTER TABLE AND BEFORE SUMMARY CARDS -->
+        <div id="wagePagination" class="pagination-wrapper" style="display: none;">
+          <div class="pagination-info" id="wagePaginationInfo">Hiển thị 1–6 trong 0 booking</div>
+          <div class="pagination-controls" id="wagePaginationControls"></div>
+        </div>
       </div>
 
-      <!-- KPI Summary -->
-      <div class="grid-3">
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title">Tổng giá trị Booking</div>
+      <!-- KPI Summary Cards (Always computed on ALL bookings) -->
+      @if (Model != null && Model.Any())
+      {
+        decimal sumBookingValues = Model.Sum(m => m.BookingPrice);
+        decimal sumAllocated = Model.Sum(m => m.BookingWages.Sum(bw => bw.AllocatedWage));
+        decimal sumRemaining = sumBookingValues - sumAllocated;
+        int totalBookings = Model.Count();
+        int totalStaffAllocated = Model.SelectMany(m => m.BookingWages).Select(bw => bw.EmployeeId).Distinct().Count();
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title"><i class="ti ti-cash-banknote" style="color: var(--blue-500);"></i> Tổng giá trị Booking</div>
+            </div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--blue-700); margin: 12px 0;">@sumBookingValues.ToString("N0") đ</div>
+            <div style="font-size: 12px; color: var(--muted);">Theo dõi trên @totalBookings hợp đồng booking</div>
           </div>
-          <div style="font-size: 28px; font-weight: 800; color: var(--blue-700); margin: 12px 0;">665,000,000 đ</div>
-          <div style="font-size: 12px; color: var(--muted);">4 booking đang theo dõi</div>
-        </div>
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title">Tổng thù lao đã phân bổ</div>
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title"><i class="ti ti-user-check" style="color: var(--green);"></i> Tổng thù lao đã phân bổ</div>
+            </div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--green); margin: 12px 0;">@sumAllocated.ToString("N0") đ</div>
+            <div style="font-size: 12px; color: var(--muted);">Đã chia cho @totalStaffAllocated nhân viên tham gia</div>
           </div>
-          <div style="font-size: 28px; font-weight: 800; color: var(--green); margin: 12px 0;">655,000,000 đ</div>
-          <div style="font-size: 12px; color: var(--muted);">Đã phân bổ cho nhân viên</div>
-        </div>
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title">Còn lại chưa phân bổ</div>
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title"><i class="ti ti-clock" style="color: var(--amber);"></i> Còn lại chưa phân bổ</div>
+            </div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--amber); margin: 12px 0;">@sumRemaining.ToString("N0") đ</div>
+            <div style="font-size: 12px; color: var(--muted);">Quản lý Booking tiếp tục cập nhật</div>
           </div>
-          <div style="font-size: 28px; font-weight: 800; color: var(--amber); margin: 12px 0;">10,000,000 đ</div>
-          <div style="font-size: 12px; color: var(--muted);">Chờ QL Booking cập nhật</div>
         </div>
-      </div>
+      }
     </div>
 
-    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <footer>HanaMedia · Dashboard Giám đốc — Giám sát Booking &amp; Phân bổ thù lao nhân sự</footer>
   </main>
 </div>
 
 <!-- MODAL XEM CHI TIẾT PHÂN BỔ THÙ LAO -->
 <div class="modal-backdrop" id="salaryModal">
-  <div class="modal-card">
+  <div class="modal-card" style="max-width: 650px;">
     <div class="modal-header">
-      <div class="modal-title">Phân bổ thù lao theo Booking</div>
+      <div class="modal-title"><i class="ti ti-cash" style="color: var(--green);"></i> Chi tiết phân bổ thù lao nhân viên</div>
       <button class="modal-close" onclick="closeModal('salaryModal')">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="background: var(--blue-50); border: 1px solid var(--blue-100); border-radius: 10px; padding: 12px 14px; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-          <span style="font-size: 13px; font-weight: 600; color: var(--ink-2);">KOL/KOC:</span>
-          <span id="salKOL" style="font-size: 13px; font-weight: 700; color: var(--navy);">Nguyễn Thị H</span>
+      <!-- Info header box -->
+      <div style="background: #F0F7FF; border: 1px solid #BFDBFE; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+          <div>
+            <span style="font-size: 12px; color: var(--muted); display: block;">Khách hàng &amp; Chiến dịch</span>
+            <strong id="salClientCampaign" style="font-size: 14px; color: var(--navy);">---</strong>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--muted); display: block;">KOL / KOC</span>
+            <strong id="salKOL" style="font-size: 14px; color: var(--navy);">---</strong>
+          </div>
         </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span style="font-size: 13px; font-weight: 600; color: var(--ink-2);">Giá trị Booking:</span>
-          <span id="salBookingValue" style="font-size: 13px; font-weight: 700; color: var(--blue-700);">10,000,000 đ</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed #BFDBFE; padding-top: 8px;">
+          <div>
+            <span style="font-size: 12px; color: var(--muted); display: block;">Giá trị Booking</span>
+            <span id="salBookingValue" style="font-size: 15px; font-weight: 800; color: var(--blue-700);">0 đ</span>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--muted); display: block;">QL Booking phụ trách</span>
+            <span id="salManager" style="font-size: 13.5px; font-weight: 600; color: var(--ink-2);">---</span>
+          </div>
         </div>
       </div>
 
-      <div style="margin-bottom: 12px; font-weight: 700; font-size: 12px; color: var(--muted); text-transform: uppercase;">Danh sách nhân sự tham gia &amp; thù lao nhận được</div>
-      <table id="salTable" style="margin-bottom: 16px;">
+      <!-- Allocation progress bar -->
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px;">
+          <span>Tiến độ phân bổ thù lao:</span>
+          <strong id="salAllocatedProgressText" style="color: var(--green);">0 / 0 đ (0%)</strong>
+        </div>
+        <div style="background: #E2E8F0; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div id="salProgressBar" style="background: var(--green); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px; font-weight: 700; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
+        <i class="ti ti-users"></i> Danh sách nhân sự làm việc &amp; Mức thù lao được hưởng
+      </div>
+
+      <table id="salTable" style="margin-bottom: 16px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;">
         <thead>
-          <tr>
-            <th>Nhân viên</th>
+          <tr style="background: #F8FAFC;">
+            <th style="width: 40px;">STT</th>
+            <th>Họ &amp; Tên nhân viên</th>
+            <th>Vị trí / Phòng ban</th>
             <th style="text-align: right;">Thù lao nhận được</th>
+            <th style="text-align: right; width: 90px;">Tỷ lệ (%)</th>
           </tr>
         </thead>
         <tbody>
@@ -259,50 +512,70 @@
       </table>
 
       <div id="salWarningBox" class="alert-box" style="display:none; margin-top: 0; background: var(--red-bg); border-color: #F8D7DA;">
-        <i class="ti ti-alert-triangle" style="color: var(--red);"></i>
+        <i class="ti ti-alert-triangle" style="color: var(--red); font-size: 20px;"></i>
         <div>
-          <div class="alert-title" style="color: #721C24;">Cảnh báo phân bổ vượt định mức</div>
-          <div class="alert-desc" style="color: #721C24;">Tổng tiền thù lao đã phân bổ vượt mức giá trị booking hiện tại.</div>
+          <div class="alert-title" style="color: #721C24;">Cảnh báo phân bổ vượt định mức!</div>
+          <div class="alert-desc" style="color: #721C24;">Tổng số tiền thù lao phân bổ cho các nhân viên đã vượt quá giá trị hợp đồng booking.</div>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-mini approve" onclick="closeModal('salaryModal')">Xác nhận đã xem</button>
+      <button class="btn-mini approve" onclick="closeModal('salaryModal')">Đóng cửa sổ</button>
     </div>
   </div>
 </div>
 
 <script>
   function switchTab(event, tabId) {
-    // Update tab headers
     const headers = document.querySelectorAll('.tab-header');
     headers.forEach(h => h.classList.remove('active'));
     event.target.closest('.tab-header').classList.add('active');
 
-    // Update tab contents
     const contents = document.querySelectorAll('.tab-content');
     contents.forEach(c => c.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
   }
 
-  function openSalaryModal(kolName, totalValue, staffList) {
+  function openSalaryModal(clientName, campaignName, kolName, managerName, totalValue, staffList) {
+    document.getElementById('salClientCampaign').innerText = clientName + ' — ' + campaignName;
     document.getElementById('salKOL').innerText = kolName;
-    document.getElementById('salBookingValue').innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalValue);
+    document.getElementById('salManager').innerText = managerName;
+    
+    const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+    document.getElementById('salBookingValue').innerText = fmt.format(totalValue);
     
     let totalAllocated = 0;
     const tableBody = document.getElementById('salTable').getElementsByTagName('tbody')[0];
     tableBody.innerHTML = '';
     
-    staffList.forEach(item => {
-      totalAllocated += item.val;
+    if (staffList && staffList.length > 0) {
+      staffList.forEach((item, index) => {
+        totalAllocated += item.val;
+        let row = tableBody.insertRow();
+        
+        let pct = totalValue > 0 ? ((item.val / totalValue) * 100).toFixed(1) + '%' : '0%';
+
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td><strong>${item.name}</strong></td>
+          <td><span style="font-size:12px; color:var(--muted);">${item.position || item.department || 'Nhân viên'}</span></td>
+          <td style="text-align: right; font-weight: 700; color: var(--green);">${fmt.format(item.val)}</td>
+          <td style="text-align: right; font-size: 12px; font-weight: 600; color: var(--blue-700);">${pct}</td>
+        `;
+      });
+    } else {
       let row = tableBody.insertRow();
-      let cell1 = row.insertCell(0);
-      let cell2 = row.insertCell(1);
-      
-      cell1.innerHTML = `<strong>${item.name}</strong>`;
-      cell2.style.textAlign = 'right';
-      cell2.innerHTML = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.val);
-    });
+      row.innerHTML = `<td colspan="5" style="text-align: center; color: var(--muted); padding: 16px 0;">Chưa có nhân viên nào được phân bổ thù lao cho booking này.</td>`;
+    }
+
+    let pctTotal = totalValue > 0 ? Math.min(100, Math.round((totalAllocated / totalValue) * 100)) : 0;
+    document.getElementById('salProgressBar').style.width = pctTotal + '%';
+    document.getElementById('salAllocatedProgressText').innerText = `${fmt.format(totalAllocated)} / ${fmt.format(totalValue)} (${pctTotal}%)`;
+    if (totalAllocated > totalValue) {
+      document.getElementById('salProgressBar').style.background = 'var(--red)';
+    } else {
+      document.getElementById('salProgressBar').style.background = 'var(--green)';
+    }
 
     const warnBox = document.getElementById('salWarningBox');
     if (totalAllocated > totalValue) {
@@ -317,6 +590,140 @@
   function closeModal(id) {
     document.getElementById(id).classList.remove('active');
   }
+
+  // REUSABLE PAGINATION SYSTEM (MAX 6 ITEMS PER PAGE)
+  function setupTablePagination(config) {
+    const tableEl = document.getElementById(config.tableId);
+    if (!tableEl) return;
+
+    const rows = Array.from(tableEl.querySelectorAll(config.rowSelector));
+    const totalItems = rows.length;
+    const pageSize = config.pageSize || 6;
+    const paginationWrapper = document.getElementById(config.wrapperId);
+    const infoEl = document.getElementById(config.infoId);
+    const controlsEl = document.getElementById(config.controlsId);
+
+    if (totalItems === 0) {
+      if (paginationWrapper) paginationWrapper.style.display = 'none';
+      return;
+    }
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+    let currentPage = 1;
+
+    function renderPage(page) {
+      currentPage = Math.max(1, Math.min(page, totalPages));
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+      // Hide all rows, show only page slice
+      rows.forEach((row, index) => {
+        if (index >= startIndex && index < endIndex) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Update info text
+      if (infoEl) {
+        infoEl.innerText = `Hiển thị ${startIndex + 1}–${endIndex} trong ${totalItems} booking`;
+      }
+
+      // Render pagination buttons
+      if (controlsEl) {
+        controlsEl.innerHTML = '';
+
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.className = `page-btn ${currentPage === 1 ? 'disabled' : ''}`;
+        prevBtn.innerText = '←';
+        prevBtn.setAttribute('aria-label', 'Trang trước');
+        if (currentPage === 1) {
+          prevBtn.disabled = true;
+        } else {
+          prevBtn.onclick = () => renderPage(currentPage - 1);
+        }
+        controlsEl.appendChild(prevBtn);
+
+        // Page buttons with smart ellipsis
+        let pagesToRender = [];
+        if (totalPages <= 7) {
+          for (let i = 1; i <= totalPages; i++) pagesToRender.push(i);
+        } else {
+          pagesToRender.push(1);
+          if (currentPage > 3) pagesToRender.push('...');
+          
+          let start = Math.max(2, currentPage - 1);
+          let end = Math.min(totalPages - 1, currentPage + 1);
+          for (let i = start; i <= end; i++) pagesToRender.push(i);
+
+          if (currentPage < totalPages - 2) pagesToRender.push('...');
+          pagesToRender.push(totalPages);
+        }
+
+        pagesToRender.forEach(p => {
+          if (p === '...') {
+            const span = document.createElement('span');
+            span.className = 'page-ellipsis';
+            span.innerText = '...';
+            controlsEl.appendChild(span);
+          } else {
+            const btn = document.createElement('button');
+            btn.className = `page-btn ${p === currentPage ? 'active' : ''}`;
+            btn.innerText = p;
+            btn.setAttribute('aria-label', `Trang ${p}`);
+            if (p === currentPage) {
+              btn.setAttribute('aria-current', 'page');
+            } else {
+              btn.onclick = () => renderPage(p);
+            }
+            controlsEl.appendChild(btn);
+          }
+        });
+
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.className = `page-btn ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextBtn.innerText = '→';
+        nextBtn.setAttribute('aria-label', 'Trang sau');
+        if (currentPage === totalPages) {
+          nextBtn.disabled = true;
+        } else {
+          nextBtn.onclick = () => renderPage(currentPage + 1);
+        }
+        controlsEl.appendChild(nextBtn);
+      }
+
+      if (paginationWrapper) {
+        paginationWrapper.style.display = totalPages > 1 ? 'flex' : (totalItems > 0 ? 'flex' : 'none');
+      }
+    }
+
+    renderPage(1);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Setup 6-item pagination for Tab 2 (Compensation Overview)
+    setupTablePagination({
+      tableId: 'wageOverviewTable',
+      rowSelector: 'tbody tr.wage-row',
+      pageSize: 6,
+      wrapperId: 'wagePagination',
+      infoId: 'wagePaginationInfo',
+      controlsId: 'wagePaginationControls'
+    });
+
+    // Setup 6-item pagination for Tab 1 (Booking KOL)
+    setupTablePagination({
+      tableId: 'bookingTable',
+      rowSelector: 'tbody tr.booking-row',
+      pageSize: 6,
+      wrapperId: 'bookingPagination',
+      infoId: 'bookingPaginationInfo',
+      controlsId: 'bookingPaginationControls'
+    });
+  });
 </script>
 </body>
 </html>

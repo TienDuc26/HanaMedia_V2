@@ -7,14 +7,15 @@
 
     var statusClass = Model.Status switch
     {
-        "dang_cho" => "status-dang_cho",
-        "thuong_luong" => "status-thuong_luong",
-        "da_chot" => "status-da_chot",
-        "dang_trien_khai" => "status-dang_trien_khai",
-        "hoan_thanh" => "status-hoan_thanh",
-        "huy" => "status-huy",
-        _ => "status-dang_cho"
+        "dang_cho" => "status-badge-cho",
+        "thuong_luong" => "status-badge-thuongluong",
+        "da_chot" => "status-badge-chot",
+        "dang_trien_khai" => "status-badge-trienkhai",
+        "hoan_thanh" => "status-badge-hoanthanh",
+        "huy" => "status-badge-huy",
+        _ => "status-badge-cho"
     };
+
     var statusLabel = Model.Status switch
     {
         "dang_cho" => "Chờ",
@@ -25,129 +26,559 @@
         "huy" => "Hủy",
         _ => Model.Status
     };
+
+    var today = DateOnly.FromDateTime(DateTime.Now);
+    string deadlineColorClass = "text-main";
+    if (Model.Status == "hoan_thanh")
+    {
+        deadlineColorClass = "text-success";
+    }
+    else if (Model.Deadline < today)
+    {
+        deadlineColorClass = "text-danger";
+    }
+    else if (Model.Deadline <= today.AddDays(3))
+    {
+        deadlineColorClass = "text-warning";
+    }
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HanaMedia — Chi tiết Booking ID @Model.Id</title>
+  <title>Booking #@Model.Id — @Model.ClientName | HanaMedia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
   <link rel="stylesheet" href="~/css/components.css">
   <style>
     :root {
-      --primary-blue: #0B3A6E;
-      --secondary-blue: #2563EB;
-      --light-blue: #EFF6FF;
-      --bg-color: #F5F8FC;
-      --white: #FFFFFF;
-      --text-color: #17324D;
-      --muted-text: #64748B;
-      --success-color: #16A34A;
-      --warning-color: #D97706;
-      --danger-color: #DC2626;
+      --bg-main: #F5F7FA;
+      --sidebar-bg: #0F2F56;
+      --primary: #1769E0;
+      --primary-hover: #1255B8;
+      --text-main: #172B4D;
+      --text-muted: #6B7A90;
+      --border-color: #E4E9F0;
+      --card-bg: #FFFFFF;
+      
+      --success: #168A4A;
+      --success-bg: #F0FDF4;
+      --danger: #D92D20;
+      --danger-bg: #FEF2F2;
+      --warning: #B7791F;
+      --warning-bg: #FEFCE8;
+      --info: #0284C7;
+      --info-bg: #F0F9FF;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
-    .card {
-      background: var(--white);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
-      border: 1px solid rgba(11, 58, 110, 0.08);
-      padding: 24px;
-      margin-bottom: 24px;
+    .page-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 32px 40px 32px;
     }
 
-    .status-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
+    /* BREADCRUMB & BACK LINK */
+    .page-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
     }
-    .status-dang_cho { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-    .status-thuong_luong { background: #eff6ff; color: var(--secondary-blue); border: 1px solid #bfdbfe; }
-    .status-da_chot { background: #fffbeb; color: var(--warning-color); border: 1px solid #fde68a; }
-    .status-dang_trien_khai { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
-    .status-hoan_thanh { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-    .status-huy { background: #fee2e2; color: var(--danger-color); border: 1px solid #fca5a5; }
-
-    .back-link {
-      color: var(--muted-text);
+    .back-btn {
+      color: var(--text-muted);
       text-decoration: none;
+      font-size: 13.5px;
       font-weight: 500;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 16px;
-      transition: color 0.15s;
+      transition: color 0.15s ease;
     }
-    .back-link:hover {
-      color: var(--primary-blue);
+    .back-btn:hover {
+      color: var(--primary);
     }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 20px;
+    .breadcrumb {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
-    .info-label {
-      font-size: 13px;
-      color: var(--muted-text);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
+    /* HEADER */
+    .page-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    .info-value {
-      font-size: 15px;
-      color: var(--text-color);
-      font-weight: 550;
-      margin-bottom: 16px;
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
     }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--primary-blue);
-      margin-bottom: 16px;
-      border-left: 4px solid var(--secondary-blue);
-      padding-left: 8px;
-    }
-
-    .file-download-box {
+    .header-title-group {
       display: flex;
       align-items: center;
       gap: 12px;
-      background: #f8fafc;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .booking-id-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+      line-height: 1.2;
+    }
+    .header-sub {
+      margin-top: 8px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
 
-    .staff-list {
+    /* STATUS BADGES */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .status-badge-cho { background: #F1F5F9; color: #475569; border-color: #CBD5E1; }
+    .status-badge-thuongluong { background: #EFF6FF; color: var(--primary); border-color: #BFDBFE; }
+    .status-badge-chot { background: #FEFCE8; color: var(--warning); border-color: #FEF08A; }
+    .status-badge-trienkhai { background: #F5F3FF; color: #7C3AED; border-color: #DDD6FE; }
+    .status-badge-hoanthanh { background: var(--success-bg); color: var(--success); border-color: #BBF7D0; }
+    .status-badge-huy { background: var(--danger-bg); color: var(--danger); border-color: #FECACA; }
+
+    /* LAYOUT GRID */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+    @@media (max-width: 1100px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ENTERPRISE CARD */
+    .enterprise-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .card-header-clean {
+      margin-bottom: 18px;
+    }
+    .card-header-flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .card-title-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-subtitle-text {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* INFO GRID */
+    .info-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+    }
+    @@media (max-width: 640px) {
+      .info-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+    .info-cell {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 4px;
     }
-    .staff-item {
+    .info-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .kol-link {
+      color: var(--primary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kol-link:hover {
+      text-decoration: underline;
+    }
+    .platform-chip {
+      font-size: 11px;
+      background: #F1F5F9;
+      color: #475569;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* COLOR UTILS FOR DATA */
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-warning { color: var(--warning); }
+    .text-main { color: var(--text-main); }
+    .text-muted-italic { color: var(--text-muted); font-style: italic; }
+
+    /* CONTENT BOXES */
+    .job-desc-box {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 14px;
+      color: var(--text-main);
+      word-break: break-word;
+      line-height: 1.6;
+    }
+    .notes-content {
+      font-size: 14px;
+      color: var(--text-main);
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .external-post-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      word-break: break-all;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .external-post-link:hover {
+      text-decoration: underline;
+    }
+
+    /* FINANCIAL METRICS */
+    .financial-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+    }
+    .financial-metric-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .metric-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .metric-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .metric-value .currency {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .primary-value { color: var(--primary); }
+    .danger-value { color: var(--danger); }
+    .success-value { color: var(--success); }
+    .metric-divider {
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    /* LEDGER TABLE FOR WAGES */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .ledger-table th {
+      background: #F8FAFC;
+      color: var(--text-muted);
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+    .ledger-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+    .ledger-table tbody tr:hover {
+      background-color: #F8FAFC;
+    }
+    .ledger-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .user-avatar-cell {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 12px;
-      background: #f8fafc;
+    }
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #EFF6FF;
+      color: var(--primary);
+      border: 1px solid #BFDBFE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .user-name {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .role-text {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .amount-display {
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .wage-input-field {
+      width: 160px;
+      padding: 6px 10px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-align: right;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
-      border-left: 3px solid var(--secondary-blue);
+      color: var(--text-main);
+      transition: border-color 0.15s ease;
+    }
+    .wage-input-field:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(23, 105, 224, 0.1);
+    }
+
+    .total-allocated-badge {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .badge-amount {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .pct-calc-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: #EFF6FF;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .wage-form-footer {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+    .alert-banner-danger {
+      background: var(--danger-bg);
+      border: 1px solid #FECACA;
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn-save-allocation {
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.15s ease;
+    }
+    .btn-save-allocation:hover {
+      background: var(--primary-hover);
+    }
+
+    /* DOCUMENTS LIST */
+    .document-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .document-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+    .doc-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .doc-icon.pdf {
+      background: #FEF2F2;
+      color: var(--danger);
+      border: 1px solid #FEE2E2;
+    }
+    .doc-icon.excel {
+      background: #F0FDF4;
+      color: var(--success);
+      border: 1px solid #DCFCE7;
+    }
+    .doc-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .doc-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .doc-action-btn {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .doc-action-btn:hover {
+      text-decoration: underline;
+    }
+    .doc-status-none {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
     }
   </style>
 </head>
@@ -157,163 +588,401 @@
   <partial name="_SidebarPartial" />
 
   <main class="main">
-    <a href="/Bookings" class="back-link"><i class="ti ti-arrow-narrow-left"></i> Quay lại danh sách Booking</a>
-
-    <div class="topbar" style="margin-bottom: 16px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <h1 class="page-title" style="margin:0;">Booking Client: @Model.ClientName</h1>
-          <span class="status-badge @statusClass">@statusLabel</span>
-        </div>
-        <div class="page-sub" style="margin-top: 6px;">Chiến dịch: <strong style="color: var(--primary-blue);">@(Model.Campaign?.Name ?? Model.CampaignName)</strong></div>
+    <div class="page-container">
+      
+      <!-- Top Navigation & Breadcrumb -->
+      <div class="page-nav">
+        <a href="/Bookings" class="back-btn">
+          <i class="ti ti-arrow-left"></i> Quay lại danh sách Booking
+        </a>
+        <div class="breadcrumb">Booking / Chi tiết Booking</div>
       </div>
-    </div>
 
-    <div class="detail-grid">
-      <!-- Left side: Main details -->
-      <div>
-        <div class="card">
-          <div class="section-title">Chi tiết Booking</div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <div>
-              <div class="info-label">KOL/KOC Hợp tác</div>
-              <div class="info-value">
-                @if (Model.Kol != null)
-                {
-                  <a href="/Kols/Details/@Model.KolId" style="color: var(--secondary-blue); text-decoration: none; font-weight: 700;">
-                    @Model.Kol.Name (@Model.Kol.Platform)
-                  </a>
-                }
-                else
-                {
-                  <span>N/A</span>
-                }
-              </div>
-            </div>
-            <div>
-              <div class="info-label">Người phụ trách chính</div>
-              <div class="info-value">
-                <span style="font-weight: 700;">@(Model.PrimaryManager?.FullName ?? "Chưa được gán")</span>
-                <span style="color: var(--muted-text); font-size:13px; font-weight:normal;"> (@Model.PrimaryManager?.Position)</span>
-              </div>
-            </div>
-            <div>
-              <div class="info-label">Thời hạn hoàn thành (Deadline)</div>
-              <div class="info-value" style="font-size: 16px; font-weight: 700; color: var(--danger-color);">@Model.Deadline.ToString("dd/MM/yyyy")</div>
-            </div>
-            <div>
-              <div class="info-label">Ngày đăng tải thực tế (Posting Date)</div>
-              <div class="info-value" style="font-size: 16px; font-weight: 700; color: var(--success-color);">
-                @(Model.PostingDate.HasValue ? Model.PostingDate.Value.ToString("dd/MM/yyyy") : "Chưa đăng")
-              </div>
-            </div>
-            <div>
-              <div class="info-label">Giá Booking</div>
-              <div class="info-value" style="font-size: 17px; font-weight: 700; color: var(--primary-blue);">
-                @Model.BookingPrice.ToString("N0") VNĐ
-              </div>
-            </div>
-            <div>
-              <div class="info-label">Chi phí thực tế phát sinh</div>
-              <div class="info-value" style="font-size: 17px; font-weight: 700; color: var(--danger-color);">
-                @Model.ActualCost.ToString("N0") VNĐ
-              </div>
-            </div>
-          </div>
-
-          <div style="margin-top: 8px;">
-            <div class="info-label">Nội dung công việc (Job Description)</div>
-            <div class="info-value" style="background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;">
-              @(!string.IsNullOrEmpty(Model.JobDescription) ? Model.JobDescription : "Chưa có nội dung công việc chi tiết.")
-            </div>
-          </div>
-
-          @if (!string.IsNullOrEmpty(Model.PostLink))
-          {
-            <div>
-              <div class="info-label">Link bài viết / Video sản phẩm</div>
-              <div class="info-value">
-                <a href="@Model.PostLink" target="_blank" style="color: var(--secondary-blue); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                  @Model.PostLink <i class="ti ti-external-link" style="font-size: 14px;"></i>
-                </a>
-              </div>
-            </div>
-          }
-
-          <div>
-            <div class="info-label">Ghi chú thêm</div>
-            <div class="info-value">@(!string.IsNullOrEmpty(Model.Notes) ? Model.Notes : "Không có ghi chú.")</div>
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-top">
+          <div class="header-title-group">
+            <span class="booking-id-tag">BOOKING #@Model.Id</span>
+            <h1 class="page-title">@Model.ClientName</h1>
+            <span class="status-badge @statusClass">@statusLabel</span>
           </div>
         </div>
-
-        <!-- Files Section -->
-        <div class="card">
-          <div class="section-title">Hồ sơ tài liệu hợp tác</div>
-          
-          <div class="info-label">Hợp đồng pháp lý</div>
-          @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
-          {
-            <div class="file-download-box">
-              <i class="ti ti-file-text" style="font-size: 28px; color: var(--primary-blue);"></i>
-              <div style="flex: 1;">
-                <div style="font-weight: 600; font-size: 14px;">File Hợp đồng ký kết</div>
-                <a href="@Model.ContractFileUrl" download target="_blank" style="color: var(--secondary-blue); text-decoration: none; font-size: 13px;">Tải xuống tài liệu</a>
-              </div>
-            </div>
-          }
-          else
-          {
-            <div style="color: var(--muted-text); font-style: italic; margin-bottom: 16px; font-size: 13.5px;">Chưa đính kèm File Hợp đồng.</div>
-          }
-
-          <div class="info-label">Bảng báo giá &amp; Kế hoạch</div>
-          @if (!string.IsNullOrEmpty(Model.QuotationFileUrl))
-          {
-            <div class="file-download-box">
-              <i class="ti ti-file-analytics" style="font-size: 28px; color: var(--success-color);"></i>
-              <div style="flex: 1;">
-                <div style="font-weight: 600; font-size: 14px;">Báo giá dịch vụ &amp; Booking</div>
-                <a href="@Model.QuotationFileUrl" download target="_blank" style="color: var(--secondary-blue); text-decoration: none; font-size: 13px;">Tải xuống báo giá</a>
-              </div>
-            </div>
-          }
-          else
-          {
-            <div style="color: var(--muted-text); font-style: italic; font-size: 13.5px;">Chưa đính kèm File Báo giá.</div>
-          }
+        <div class="header-sub">
+          <span><i class="ti ti-target" style="color: var(--primary);"></i> Chiến dịch: <strong>@(Model.Campaign?.Name ?? Model.CampaignName)</strong></span>
         </div>
       </div>
 
-      <!-- Right side: Assigned team members -->
-      <div>
-        <div class="card">
-          <div class="section-title">Thành viên tham gia (Team)</div>
+      <!-- Content Layout Grid (Main 70%, Right 30%) -->
+      <div class="content-grid">
+        
+        <!-- MAIN CONTENT LEFT -->
+        <div>
           
-          @if (!Model.BookingWages.Any())
-          {
-            <div style="color: var(--muted-text); font-style: italic; text-align: center; padding: 20px 0;">
-              Chưa có nhân viên nào tham gia.
+          <!-- Booking Overview Card -->
+          <div class="enterprise-card">
+            <div class="card-header-clean">
+              <h2 class="card-title-text"><i class="ti ti-info-circle" style="color: var(--primary);"></i> THÔNG TIN BOOKING</h2>
+              <span class="card-subtitle-text">Thông tin chi tiết về đối tác và nhân sự phụ trách</span>
             </div>
-          }
-          else
-          {
-            <div class="staff-list">
-              @foreach (var bw in Model.BookingWages)
-              {
-                <div class="staff-item">
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 14.5px;">@bw.Employee.FullName</div>
-                    <div style="font-size: 12px; color: var(--muted-text);">@bw.Employee.Position (@bw.Employee.Department)</div>
-                  </div>
+
+            <div class="info-grid-2">
+              <div class="info-cell">
+                <span class="info-label">KOL / KOC HỢP TÁC</span>
+                <div class="info-value">
+                  @if (Model.Kol != null)
+                  {
+                    <a href="/Kols/Details/@Model.KolId" class="kol-link">
+                      <i class="ti ti-user-star"></i> @Model.Kol.Name <span class="platform-chip">@Model.Kol.Platform</span>
+                    </a>
+                  }
+                  else
+                  {
+                    <span class="text-muted-italic">N/A</span>
+                  }
                 </div>
+              </div>
+
+              <div class="info-cell">
+                <span class="info-label">NGƯỜI PHỤ TRÁCH CHÍNH</span>
+                <div class="info-value">
+                  <span>@(Model.PrimaryManager?.FullName ?? "Chưa phân công")</span>
+                  @if (Model.PrimaryManager != null && !string.IsNullOrEmpty(Model.PrimaryManager.Position))
+                  {
+                    <span style="color: var(--text-muted); font-size: 13px; font-weight: 400;"> (@Model.PrimaryManager.Position)</span>
+                  }
+                </div>
+              </div>
+
+              <div class="info-cell">
+                <span class="info-label">THỜI HẠN HOÀN THÀNH (DEADLINE)</span>
+                <div class="info-value @deadlineColorClass">
+                  <i class="ti ti-calendar"></i> @Model.Deadline.ToString("dd/MM/yyyy")
+                </div>
+              </div>
+
+              <div class="info-cell">
+                <span class="info-label">NGÀY ĐĂNG TẢI THỰC TẾ</span>
+                <div class="info-value @(Model.PostingDate.HasValue ? "text-success" : "text-muted-italic")">
+                  <i class="ti ti-calendar-check"></i> @(Model.PostingDate.HasValue ? Model.PostingDate.Value.ToString("dd/MM/yyyy") : "Chưa đăng tải")
+                </div>
+              </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.PostLink))
+            {
+              <div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
+                <span class="info-label">LINK BÀI VIẾT / VIDEO SẢN PHẨM</span>
+                <div class="info-value" style="margin-top: 4px;">
+                  <a href="@Model.PostLink" target="_blank" class="external-post-link">
+                    @Model.PostLink <i class="ti ti-external-link"></i>
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Job Description Card -->
+          <div class="enterprise-card">
+            <div class="card-header-clean">
+              <h2 class="card-title-text"><i class="ti ti-file-text" style="color: var(--primary);"></i> NỘI DUNG CÔNG VIỆC</h2>
+              <span class="card-subtitle-text">Mô tả và yêu cầu chi tiết công việc cho chiến dịch</span>
+            </div>
+            <div class="job-desc-box">
+              @if (!string.IsNullOrWhiteSpace(Model.JobDescription))
+              {
+                <div>@Model.JobDescription</div>
+              }
+              else
+              {
+                <div class="text-muted-italic">Chưa có nội dung công việc chi tiết.</div>
               }
             </div>
-          }
+          </div>
+
+          <!-- Notes Card -->
+          <div class="enterprise-card">
+            <div class="card-header-clean">
+              <h2 class="card-title-text"><i class="ti ti-notes" style="color: var(--primary);"></i> GHI CHÚ THÊM</h2>
+            </div>
+            <div class="notes-content">
+              @if (!string.IsNullOrWhiteSpace(Model.Notes))
+              {
+                <div>@Model.Notes</div>
+              }
+              else
+              {
+                <div class="text-muted-italic">Không có ghi chú.</div>
+              }
+            </div>
+          </div>
+
+          <!-- Compensation Allocation Section (Ledger Table) -->
+          <div class="enterprise-card">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title-text"><i class="ti ti-users" style="color: var(--primary);"></i> PHÂN BỔ THÙ LAO</h2>
+                <span class="card-subtitle-text">Danh sách người nhận và chi phí được phân bổ cho booking</span>
+              </div>
+              <div class="total-allocated-badge">
+                <span class="badge-label">Tổng phân bổ:</span>
+                <span id="totalAllocatedText" class="badge-amount">0 VNĐ</span>
+              </div>
+            </div>
+
+            @if (!Model.BookingWages.Any())
+            {
+              <div class="empty-state">
+                <i class="ti ti-users-minus" style="font-size: 24px; display: block; margin-bottom: 8px;"></i>
+                Chưa có nhân viên nào được gán hoặc phân bổ thù lao cho booking này.
+              </div>
+            }
+            else
+            {
+              var isWritable = ViewBag.IsWritable == true;
+              <form method="post" action="/Bookings/UpdateWages/@Model.Id" id="wageForm">
+                @Html.AntiForgeryToken()
+
+                <div class="table-responsive">
+                  <table class="ledger-table">
+                    <thead>
+                      <tr>
+                        <th>NGƯỜI NHẬN</th>
+                        <th>VAI TRÒ / PHÒNG BAN</th>
+                        <th style="text-align: right;">SỐ TIỀN THÙ LAO</th>
+                        <th style="text-align: right; width: 110px;">TỶ LỆ (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach (var bw in Model.BookingWages)
+                      {
+                        var empName = bw.Employee?.FullName ?? "Nhân viên";
+                        var empPos = bw.Employee?.Position ?? bw.Employee?.Department ?? "Nhân viên";
+                        var nameParts = empName.Trim().Split(' ');
+                        var initials = nameParts.Length >= 2
+                            ? $"{nameParts[0][0]}{nameParts[^1][0]}".ToUpper()
+                            : empName[..Math.Min(2, empName.Length)].ToUpper();
+
+                        <tr>
+                          <td>
+                            <div class="user-avatar-cell">
+                              <div class="avatar-circle">@initials</div>
+                              <span class="user-name">@empName</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span class="role-text">@empPos</span>
+                          </td>
+                          <td style="text-align: right;">
+                            @if (isWritable)
+                            {
+                              <input type="number" 
+                                     class="wage-input-field" 
+                                     name="wages[@bw.EmployeeId]" 
+                                     value="@Math.Round(bw.AllocatedWage, 0)" 
+                                     min="0" 
+                                     step="1000"
+                                     data-emp-id="@bw.EmployeeId">
+                            }
+                            else
+                            {
+                              <span class="amount-display">@bw.AllocatedWage.ToString("N0") VNĐ</span>
+                            }
+                          </td>
+                          <td style="text-align: right;">
+                            <span class="pct-calc-badge" id="pct-@bw.EmployeeId">0%</span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                @if (isWritable)
+                {
+                  <div class="wage-form-footer">
+                    <div id="wageWarningBox" class="alert-banner-danger" style="display: none;">
+                      <i class="ti ti-alert-triangle" style="font-size: 18px;"></i>
+                      <span>Tổng thù lao phân bổ đã vượt quá Giá Booking (<strong>@Model.BookingPrice.ToString("N0") VNĐ</strong>)!</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                      <button type="submit" class="btn-save-allocation">
+                        <i class="ti ti-device-floppy"></i> Lưu phân bổ thù lao
+                      </button>
+                    </div>
+                  </div>
+                }
+              </form>
+            }
+          </div>
+
         </div>
+
+        <!-- RIGHT SIDEBAR (30%) -->
+        <div>
+          
+          <!-- Financial Summary Card -->
+          <div class="enterprise-card financial-card">
+            <div class="card-header-clean">
+              <h2 class="card-title-text"><i class="ti ti-chart-pie" style="color: var(--primary);"></i> TỔNG QUAN TÀI CHÍNH</h2>
+            </div>
+            
+            <div class="financial-metric-group">
+              <div class="metric-box">
+                <span class="metric-label">GIÁ BOOKING</span>
+                <div class="metric-value primary-value">
+                  @Model.BookingPrice.ToString("N0") <span class="currency">VNĐ</span>
+                </div>
+              </div>
+
+              <div class="metric-divider"></div>
+
+              <div class="metric-box">
+                <span class="metric-label">CHI PHÍ THỰC TẾ</span>
+                <div class="metric-value danger-value">
+                  @Model.ActualCost.ToString("N0") <span class="currency">VNĐ</span>
+                </div>
+              </div>
+
+              @{
+                decimal profit = Model.BookingPrice - Model.ActualCost;
+                string profitClass = profit >= 0 ? "success-value" : "danger-value";
+              }
+              <div class="metric-divider"></div>
+
+              <div class="metric-box">
+                <span class="metric-label">LỢI NHUẬN / CHÊNH LỆCH</span>
+                <div class="metric-value @profitClass">
+                  @profit.ToString("N0") <span class="currency">VNĐ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Documents Card -->
+          <div class="enterprise-card">
+            <div class="card-header-clean">
+              <h2 class="card-title-text"><i class="ti ti-files" style="color: var(--primary);"></i> HỒ SƠ TÀI LIỆU HỢP TÁC</h2>
+              <span class="card-subtitle-text">Tài liệu và báo giá đã đính kèm</span>
+            </div>
+
+            <div class="document-list">
+              <div class="document-item">
+                <div class="doc-icon pdf"><i class="ti ti-file-text"></i></div>
+                <div class="doc-info">
+                  <span class="doc-name">Hợp đồng pháp lý</span>
+                  @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
+                  {
+                    <a href="@Model.ContractFileUrl" target="_blank" download class="doc-action-btn">
+                      <i class="ti ti-download"></i> Tải xuống tài liệu
+                    </a>
+                  }
+                  else
+                  {
+                    <span class="doc-status-none">Chưa đính kèm</span>
+                  }
+                </div>
+              </div>
+
+              <div class="document-item">
+                <div class="doc-icon excel"><i class="ti ti-file-spreadsheet"></i></div>
+                <div class="doc-info">
+                  <span class="doc-name">Báo giá &amp; Kế hoạch</span>
+                  @if (!string.IsNullOrEmpty(Model.QuotationFileUrl))
+                  {
+                    <a href="@Model.QuotationFileUrl" target="_blank" download class="doc-action-btn">
+                      <i class="ti ti-download"></i> Tải xuống báo giá
+                    </a>
+                  }
+                  else
+                  {
+                    <span class="doc-status-none">Chưa đính kèm</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
+
     </div>
   </main>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const bookingPrice = @Model.BookingPrice;
+    const isWritable = @((ViewBag.IsWritable == true).ToString().ToLower());
+
+    function updateCalculations() {
+      let totalAllocated = 0;
+
+      if (isWritable) {
+        const inputs = document.querySelectorAll('.wage-input-field');
+        inputs.forEach(input => {
+          const val = Number(input.value) || 0;
+          totalAllocated += val;
+          const empId = input.getAttribute('data-emp-id');
+          const pctBadge = document.getElementById('pct-' + empId);
+          if (pctBadge) {
+            const pct = bookingPrice > 0 ? ((val / bookingPrice) * 100).toFixed(1) : '0';
+            pctBadge.innerText = pct + '%';
+          }
+        });
+
+        const totalSpan = document.getElementById('totalAllocatedText');
+        if (totalSpan) {
+          totalSpan.innerText = new Intl.NumberFormat('vi-VN').format(totalAllocated) + ' VNĐ';
+        }
+
+        const warningBox = document.getElementById('wageWarningBox');
+        if (warningBox) {
+          if (totalAllocated > bookingPrice) {
+            warningBox.style.display = 'flex';
+            if (totalSpan) totalSpan.style.color = 'var(--danger)';
+          } else {
+            warningBox.style.display = 'none';
+            if (totalSpan) totalSpan.style.color = 'var(--primary)';
+          }
+        }
+      } else {
+        // Readonly mode percentage calculation
+        @if (Model.BookingWages.Any())
+        {
+            foreach (var bw in Model.BookingWages)
+            {
+                <text>
+                (function() {
+                  const val = @bw.AllocatedWage;
+                  totalAllocated += val;
+                  const pctBadge = document.getElementById('pct-@bw.EmployeeId');
+                  if (pctBadge) {
+                    const pct = bookingPrice > 0 ? ((val / bookingPrice) * 100).toFixed(1) : '0';
+                    pctBadge.innerText = pct + '%';
+                  }
+                })();
+                </text>
+            }
+        }
+
+        const totalSpan = document.getElementById('totalAllocatedText');
+        if (totalSpan) {
+          totalSpan.innerText = new Intl.NumberFormat('vi-VN').format(totalAllocated) + ' VNĐ';
+        }
+      }
+    }
+
+    if (isWritable) {
+      const inputs = document.querySelectorAll('.wage-input-field');
+      inputs.forEach(input => {
+        input.addEventListener('input', updateCalculations);
+      });
+    }
+
+    updateCalculations();
+  });
+</script>
 </body>
 </html>

@@ -81,6 +81,27 @@
     .status-da_chot { background: #f0fdf4; color: var(--success-color); border: 1px solid #bbf7d0; }
     .status-dang_chay { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
     .status-hoan_thanh { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status-danger { background: #fee2e2; color: var(--danger-color); border: 1px solid #fca5a5; }
+
+    .booking-scroll-container {
+      max-height: 580px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .booking-scroll-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .booking-scroll-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .booking-scroll-container::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .booking-scroll-container::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
 
     .tag {
       display: inline-block;
@@ -257,14 +278,83 @@
         </div>
       </div>
 
-      <!-- Right side: Booking History Placeholder -->
+      <!-- Right side: Booking History -->
       <div>
         <div class="card">
-          <div class="section-title">Lịch sử booking (Module 9)</div>
-          <div class="empty-placeholder" style="padding: 30px 16px;">
-            <i class="ti ti-lock" style="font-size: 24px; display: block; margin-bottom: 8px; color: var(--muted-text);"></i>
-            Chưa có dữ liệu (chờ Module 9 — Quản lý Booking)
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <div class="section-title" style="margin-bottom: 0;">Lịch sử Booking</div>
+            <span class="status-badge status-da_lien_he" style="font-weight: 700;">@(Model.Bookings?.Count ?? 0) booking</span>
           </div>
+
+          @if (Model.Bookings != null && Model.Bookings.Any())
+          {
+            <div class="booking-scroll-container" style="display: flex; flex-direction: column; gap: 14px;">
+              @foreach (var booking in Model.Bookings.OrderByDescending(b => b.CreatedAt ?? DateTime.MinValue))
+              {
+                var bStatusClass = booking.Status switch
+                {
+                  "dang_cho" => "status-tiem_nang",
+                  "thuong_luong" => "status-da_lien_he",
+                  "da_chot" => "status-dang_deal",
+                  "dang_trien_khai" => "status-dang_chay",
+                  "hoan_thanh" => "status-hoan_thanh",
+                  "huy" => "status-danger",
+                  _ => "status-tiem_nang"
+                };
+                var bStatusLabel = booking.Status switch
+                {
+                  "dang_cho" => "Đang chờ",
+                  "thuong_luong" => "Thương lượng",
+                  "da_chot" => "Đã chốt",
+                  "dang_trien_khai" => "Đang triển khai",
+                  "hoan_thanh" => "Hoàn thành",
+                  "huy" => "Hủy",
+                  _ => booking.Status ?? "N/A"
+                };
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; transition: all 0.2s ease;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                      <div style="font-weight: 700; font-size: 14.5px; color: var(--primary-blue);">
+                        @(string.IsNullOrEmpty(booking.CampaignName) ? (booking.Campaign?.Name ?? "Booking không tên") : booking.CampaignName)
+                      </div>
+                      <div style="font-size: 13px; color: var(--muted-text); margin-top: 2px;">
+                        Khách hàng: <strong style="color: var(--text-color);">@booking.ClientName</strong>
+                      </div>
+                    </div>
+                    <span class="status-badge @bStatusClass" style="font-size: 11.5px; padding: 2px 8px; white-space: nowrap;">@bStatusLabel</span>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #edf2f7; font-size: 12.5px;">
+                    <div>
+                      <span style="color: var(--muted-text); display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;">Giá trị</span>
+                      <strong style="color: var(--primary-blue);">@booking.BookingPrice.ToString("N0") VNĐ</strong>
+                    </div>
+                    <div>
+                      <span style="color: var(--muted-text); display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;">Chi phí TT</span>
+                      <strong style="color: var(--success-color);">@booking.ActualCost.ToString("N0") VNĐ</strong>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; color: var(--muted-text);">
+                    <div>
+                      <i class="ti ti-calendar" style="font-size: 13px; vertical-align: -1px;"></i> Hạn: @booking.Deadline.ToString("dd/MM/yyyy")
+                    </div>
+                    <a href="/Bookings/Details/@booking.Id" style="color: var(--secondary-blue); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                      Chi tiết <i class="ti ti-chevron-right" style="font-size: 13px;"></i>
+                    </a>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          else
+          {
+            <div class="empty-placeholder" style="padding: 36px 16px;">
+              <i class="ti ti-calendar-off" style="font-size: 28px; display: block; margin-bottom: 8px; color: var(--muted-text);"></i>
+              KOL này chưa tham gia booking nào.
+            </div>
+          }
         </div>
       </div>
     </div>

@@ -73,6 +73,10 @@ public sealed class KolController : Controller
     {
         var kol = await _context.Kols
             .Include(k => k.ResponsibleStaff)
+            .Include(k => k.Bookings)
+                .ThenInclude(b => b.Campaign)
+            .Include(k => k.Bookings)
+                .ThenInclude(b => b.PrimaryManager)
             .FirstOrDefaultAsync(k => k.Id == id && k.IsActive, cancellationToken);
 
         if (kol == null)

@@ -30,9 +30,18 @@ namespace HanaMedia.Controllers
             return View();
         }
 
-        public IActionResult BookingCampaign()
+        public async Task<IActionResult> BookingCampaign(CancellationToken cancellationToken)
         {
-            return View();
+            var bookings = await _context.Bookings
+                .Include(b => b.Campaign)
+                .Include(b => b.Kol)
+                .Include(b => b.PrimaryManager)
+                .Include(b => b.BookingWages)
+                    .ThenInclude(bw => bw.Employee)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            return View(bookings);
         }
 
         public IActionResult Config()
