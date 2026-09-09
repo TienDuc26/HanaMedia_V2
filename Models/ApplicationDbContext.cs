@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using HanaMedia.Constants;
 
 namespace HanaMedia.Models;
 
@@ -27,6 +28,10 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<Department> Departments { get; set; }
     public virtual DbSet<Employee> Employees { get; set; }
     public virtual DbSet<Idea> Ideas { get; set; }
+
+    public virtual DbSet<IdeaComment> IdeaComments { get; set; }
+
+    public virtual DbSet<IdeaMoodboardImage> IdeaMoodboardImages { get; set; }
 
     public virtual DbSet<Kol> Kols { get; set; }
 
@@ -360,7 +365,7 @@ public partial class ApplicationDbContext : DbContext
                     "[category] IN ('trend', 'viral', 'da_trien_khai', 'chua_su_dung')");
                 table.HasCheckConstraint(
                     "chk_idea_status",
-                    "[status] IN ('y_tuong', 'review', 'need_revision', 'approved', 'done')");
+                    "[status] IN ('y_tuong', 'review', 'need_revision', 'approved', 'in_production', 'done')");
             });
 
             entity.HasIndex(e => e.Status, "idx_ideas_status");
@@ -369,6 +374,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CampaignName)
                 .HasMaxLength(100)
                 .HasColumnName("campaign_name");
+            entity.Property(e => e.CampaignId).HasColumnName("campaign_id");
             entity.Property(e => e.Category)
                 .HasMaxLength(30)
                 .IsUnicode(false)
@@ -395,6 +401,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("reference_link");
+            entity.Property(e => e.ReferenceFileUrl)
+                .HasMaxLength(255).IsUnicode(false)
+                .HasColumnName("reference_file_url");
+            entity.Property(e => e.MoodboardFileUrl)
+                .HasMaxLength(255).IsUnicode(false)
+                .HasColumnName("moodboard_file_url");
             entity.Property(e => e.ReviewerEmployeeId).HasColumnName("reviewer_employee_id");
             entity.Property(e => e.ScriptText).HasColumnName("script_text");
             entity.Property(e => e.Status)
@@ -414,6 +426,11 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.CreatorEmployeeId)
                 .HasConstraintName("FK_ideas_employees_creator_employee_id");
 
+            entity.HasOne(d => d.Campaign).WithMany(p => p.Ideas)
+                .HasForeignKey(d => d.CampaignId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ideas_campaigns_campaign_id");
+
             entity.HasOne(d => d.PrimaryStaff).WithMany(p => p.IdeaPrimaryStaffs)
                 .HasForeignKey(d => d.PrimaryStaffId)
                 .HasConstraintName("FK_ideas_employees_primary_staff_id");
@@ -421,6 +438,43 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.ReviewerEmployee).WithMany(p => p.IdeaReviewerEmployees)
                 .HasForeignKey(d => d.ReviewerEmployeeId)
                 .HasConstraintName("FK_ideas_employees_reviewer_employee_id");
+        });
+
+        modelBuilder.Entity<IdeaComment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_idea_comments");
+            entity.ToTable("idea_comments");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IdeaId).HasColumnName("idea_id");
+            entity.Property(e => e.AuthorUserId).HasColumnName("author_user_id");
+            entity.Property(e => e.CommentType).HasMaxLength(30).IsUnicode(false)
+                .HasDefaultValue(IdeaCommentTypes.General).HasColumnName("comment_type");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime2")
+                .HasDefaultValueSql("(sysutcdatetime())").HasColumnName("created_at");
+            entity.HasIndex(e => new { e.IdeaId, e.CreatedAt }, "idx_idea_comments_idea_created");
+            entity.HasOne(e => e.Idea).WithMany(e => e.Comments)
+                .HasForeignKey(e => e.IdeaId).OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_idea_comments_ideas_idea_id");
+            entity.HasOne(e => e.AuthorUser).WithMany(e => e.IdeaComments)
+                .HasForeignKey(e => e.AuthorUserId).OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_idea_comments_users_author_user_id");
+        });
+
+        modelBuilder.Entity<IdeaMoodboardImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_idea_moodboard_images");
+            entity.ToTable("idea_moodboard_images");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IdeaId).HasColumnName("idea_id");
+            entity.Property(e => e.FileUrl).HasMaxLength(255).IsUnicode(false).HasColumnName("file_url");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime2")
+                .HasDefaultValueSql("(sysutcdatetime())").HasColumnName("created_at");
+            entity.HasIndex(e => new { e.IdeaId, e.SortOrder }, "idx_idea_moodboard_images_idea_sort");
+            entity.HasOne(e => e.Idea).WithMany(e => e.MoodboardImages)
+                .HasForeignKey(e => e.IdeaId).OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_idea_moodboard_images_ideas_idea_id");
         });
 
         modelBuilder.Entity<Kol>(entity =>

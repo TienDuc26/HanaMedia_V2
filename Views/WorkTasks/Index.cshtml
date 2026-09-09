@@ -459,14 +459,14 @@
           <label>Liên kết nghiệp vụ (tuỳ chọn)</label>
           <select class="form-control" name="RelatedType" id="taskRelatedType" onchange="toggleRelatedId()">
             <option value="">-- Không liên kết --</option>
-            <option value="Employee">Nhân sự (Hồ sơ)</option>
-            <option value="Booking">Booking</option>
-            <option value="Idea">Ý tưởng</option>
+            <option value="Employee" selected="@(ViewBag.InitialRelatedType == "Employee")">Nhân sự (Hồ sơ)</option>
+            <option value="Booking" selected="@(ViewBag.InitialRelatedType == "Booking")">Booking</option>
+            <option value="Idea" selected="@(ViewBag.InitialRelatedType == "Idea")">Ý tưởng</option>
           </select>
         </div>
         <div class="form-group" id="relatedIdGroup" style="display:none">
           <label>Mã đối tượng liên kết (ID)</label>
-          <input type="number" class="form-control" name="RelatedId" min="1" placeholder="VD: 123">
+          <input type="number" class="form-control" name="RelatedId" min="1" value="@ViewBag.InitialRelatedId" placeholder="VD: 123">
         </div>
         
         <div class="form-group">

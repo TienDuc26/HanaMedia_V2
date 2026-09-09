@@ -38,4 +38,6 @@ public partial class User
     public virtual ICollection<WorkTask> ReviewedWorkTasks { get; set; } = new List<WorkTask>();
 
     public virtual ICollection<WorkTaskHistory> WorkTaskHistoryEntries { get; set; } = new List<WorkTaskHistory>();
+
+    public virtual ICollection<IdeaComment> IdeaComments { get; set; } = new List<IdeaComment>();
 }

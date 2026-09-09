@@ -35,6 +35,7 @@ public sealed class WorkTasksController : Controller
     public async Task<IActionResult> Index(
         string? module, string? search, int page = 1, int? employeeId = null,
         bool create = false, string? status = null, int? reviewerId = null,
+        string? relatedType = null, int? relatedId = null,
         bool? overdue = null, CancellationToken cancellationToken = default)
     {
         if (!TryGetIdentity(out var userId, out var role)) return Challenge();
@@ -44,6 +45,8 @@ public sealed class WorkTasksController : Controller
             .Where(c => c.Status != "cancelled")
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
+        ViewBag.InitialRelatedType = WorkTaskRelatedTypes.IsValid(relatedType) ? relatedType : null;
+        ViewBag.InitialRelatedId = relatedId > 0 ? relatedId : null;
 
         return View(model);
     }

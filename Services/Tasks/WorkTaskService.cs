@@ -449,7 +449,7 @@ public sealed class WorkTaskService : IWorkTaskService
                     Id = idea.Id,
                     Title = idea.Title,
                     ClientName = idea.ClientName,
-                    CampaignName = idea.CampaignName,
+                    CampaignName = idea.CampaignName ?? string.Empty,
                     Industry = idea.Industry,
                     Category = idea.Category switch
                     {
