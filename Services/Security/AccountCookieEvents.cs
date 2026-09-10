@@ -1,7 +1,9 @@
+using System;
 using System.Globalization;
 using System.Security.Claims;
 using HanaMedia.Constants;
 using HanaMedia.Models;
+using HanaMedia.Services.Config;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -12,10 +14,12 @@ namespace HanaMedia.Services.Security;
 public sealed class AccountCookieEvents : CookieAuthenticationEvents
 {
     private readonly ApplicationDbContext _context;
+    private readonly ISystemConfigService _configService;
 
-    public AccountCookieEvents(ApplicationDbContext context)
+    public AccountCookieEvents(ApplicationDbContext context, ISystemConfigService configService)
     {
         _context = context;
+        _configService = configService;
     }
 
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
@@ -27,6 +31,15 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
             return;
         }
 
+        // 1. Dynamic Inactivity Session Expiration Check
+        var now = DateTimeOffset.UtcNow;
+        if (context.Properties.ExpiresUtc.HasValue && now >= context.Properties.ExpiresUtc.Value)
+        {
+            await RejectAndSignOutAsync(context);
+            return;
+        }
+
+        // 2. Validate User Account & Security Stamp
         var identifier = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         User? account;
 
@@ -85,6 +98,26 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
             securityStampClaim != account.SecurityStamp)
         {
             await RejectAndSignOutAsync(context);
+            return;
+        }
+
+        // 3. Sliding Inactivity Expiration Renewal
+        try
+        {
+            var config = await _configService.GetConfigAsync(context.HttpContext.RequestAborted);
+            var timeoutMinutes = Math.Max(1, config.SessionTimeoutMinutes);
+
+            var issuedUtc = context.Properties.IssuedUtc ?? now;
+            if ((now - issuedUtc).TotalSeconds >= 10)
+            {
+                context.Properties.IssuedUtc = now;
+                context.Properties.ExpiresUtc = now.AddMinutes(timeoutMinutes);
+                context.ShouldRenew = true;
+            }
+        }
+        catch
+        {
+            // Fallback if config service throws
         }
     }
 
@@ -97,16 +130,14 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
 
     public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
     {
-        // Nếu là request API (XHR/fetch với Accept JSON hoặc X-Requested-With),
-        // trả 401 JSON thay vì redirect 302 về trang Login.
         if (IsApiRequest(context.HttpContext.Request))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return context.Response.WriteAsJsonAsync(new
             {
                 success = false,
-                message = "Bạn chưa đăng nhập hoặc phiên đã hết hạn.",
-                code = "UNAUTHORIZED"
+                message = "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.",
+                code = "SESSION_EXPIRED"
             });
         }
         return base.RedirectToLogin(context);
@@ -129,6 +160,8 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
 
     private static bool IsApiRequest(HttpRequest request)
     {
+        if (request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+            return true;
         if (string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
             return true;
         var accept = request.Headers["Accept"].ToString();
@@ -140,4 +173,3 @@ public sealed class AccountCookieEvents : CookieAuthenticationEvents
         return false;
     }
 }
-

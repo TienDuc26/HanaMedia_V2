@@ -39,6 +39,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
 
+    public virtual DbSet<IpAccessRule> IpAccessRules { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<WorkTask> WorkTasks { get; set; }
@@ -617,6 +619,28 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<IpAccessRule>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_ip_access_rules");
+            entity.ToTable("ip_access_rules");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Cidr)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("cidr");
+            entity.Property(e => e.RuleType)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("rule_type");
+            entity.Property(e => e.IsEnabled).HasColumnName("is_enabled");
+            entity.Property(e => e.Description).HasMaxLength(255).HasColumnName("description");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.CreatedBy).HasMaxLength(100).HasColumnName("created_by");
+            entity.Property(e => e.UpdatedBy).HasMaxLength(100).HasColumnName("updated_by");
         });
 
         modelBuilder.Entity<User>(entity =>

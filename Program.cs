@@ -6,6 +6,7 @@ using HanaMedia.Models;
 using HanaMedia.Services;
 using HanaMedia.Services.Accounts;
 using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Config;
 using HanaMedia.Services.Dashboard;
 using HanaMedia.Services.Security;
 using HanaMedia.Services.Tasks;
@@ -43,6 +44,10 @@ builder.Services.AddScoped<IDirectorMonitoringService, DirectorMonitoringService
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<IWorkTaskService, WorkTaskService>();
 builder.Services.AddScoped<IIdeaService, IdeaService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
+builder.Services.AddScoped<IIpAccessControlService, IpAccessControlService>();
+builder.Services.AddSingleton<ISystemConfigService, SystemConfigService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 
@@ -98,6 +103,76 @@ using (var dbScope = app.Services.CreateScope())
         dbContext.Database.ExecuteSqlRaw("UPDATE bookings SET contract_status = 'cho_duyet' WHERE contract_status IS NULL;");
     }
     catch { }
+
+    // Auto-patch ip_access_rules table
+    try
+    {
+        var createIpTableSql = @"
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ip_access_rules')
+            BEGIN
+                CREATE TABLE ip_access_rules (
+                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    cidr VARCHAR(100) NOT NULL,
+                    rule_type VARCHAR(20) NOT NULL DEFAULT 'Allow',
+                    is_enabled BIT NOT NULL DEFAULT 1,
+                    description NVARCHAR(255) NULL,
+                    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+                    updated_at DATETIME2 NULL,
+                    created_by NVARCHAR(100) NULL,
+                    updated_by NVARCHAR(100) NULL
+                );
+            END";
+        dbContext.Database.ExecuteSqlRaw(createIpTableSql);
+
+        // Seed initial Whitelist from appsettings.json if table is completely empty
+        var ruleCount = dbContext.IpAccessRules.Count();
+        if (ruleCount == 0)
+        {
+            var initialCidrsConfig = app.Configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24, 192.168.100.0/24, 192.168.0.0/24, 10.33.0.0/16";
+            var initialCidrs = initialCidrsConfig
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var rawCidr in initialCidrs)
+            {
+                if (HanaMedia.Services.Security.CidrHelper.IsValidCidrOrIp(rawCidr, out _, out var normalized))
+                {
+                    dbContext.IpAccessRules.Add(new HanaMedia.Models.IpAccessRule
+                    {
+                        Cidr = normalized,
+                        RuleType = HanaMedia.Models.IpRuleType.Allow,
+                        IsEnabled = true,
+                        Description = "Cấu hình mặc định từ appsettings.json",
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = "SystemSeed"
+                    });
+                }
+            }
+            dbContext.SaveChanges();
+            app.Logger.LogInformation("Successfully seeded initial IP whitelist rules into database.");
+        }
+
+        // Emergency cleanup: Remove accidental Deny rules for 10.33.0.0/16 and restore Whitelist
+        dbContext.Database.ExecuteSqlRaw("DELETE FROM ip_access_rules WHERE cidr LIKE '10.33%' AND rule_type = 'Deny';");
+        var hasAllow1033 = dbContext.IpAccessRules.Any(r => r.Cidr == "10.33.0.0/16" && r.RuleType == "Allow");
+        if (!hasAllow1033)
+        {
+            dbContext.IpAccessRules.Add(new HanaMedia.Models.IpAccessRule
+            {
+                Cidr = "10.33.0.0/16",
+                RuleType = HanaMedia.Models.IpRuleType.Allow,
+                IsEnabled = true,
+                Description = "Khôi phục dải IP mạng quản trị",
+                CreatedAt = DateTime.Now,
+                CreatedBy = "EmergencyRecovery"
+            });
+            dbContext.SaveChanges();
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning("Auto-patch/seed ip_access_rules: {Msg}", ex.Message);
+    }
 }
 
 if (bootstrapAdminRequested)
