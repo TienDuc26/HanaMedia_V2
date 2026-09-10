@@ -591,10 +591,11 @@ namespace HanaMedia.Controllers
             await _context.SaveChangesAsync(cancellationToken);
 
             TryGetUserId(out int currentUserId);
+            var roleLabel = role == AppRoles.BookingManager ? "QL Booking" : (role == AppRoles.BookingStaff ? "NV Booking" : "Giám đốc");
             await _auditService.WriteAsync(new AuditEvent(
                 AuditModules.Booking,
                 AuditActions.Updated,
-                $"Đã gửi đơn phê duyệt Booking #{booking.Id} ({booking.ClientName}) lên Giám đốc",
+                $"[{roleLabel}] Đã gửi đơn phê duyệt Booking #{booking.Id} ({booking.ClientName}) lên Giám đốc",
                 currentUserId,
                 "Booking",
                 booking.Id.ToString()
@@ -757,10 +758,11 @@ namespace HanaMedia.Controllers
             await _context.SaveChangesAsync(cancellationToken);
 
             TryGetUserId(out int currentUserId);
+            var roleLabel = role == AppRoles.BookingManager ? "QL Booking" : (role == AppRoles.BookingStaff ? "NV Booking" : "Giám đốc");
             await _auditService.WriteAsync(new AuditEvent(
                 AuditModules.Booking,
                 AuditActions.Updated,
-                $"Đã tải lên và gửi hợp đồng cho Booking #{booking.Id} ({booking.ClientName}) chờ Giám đốc ký",
+                $"[{roleLabel}] Đã tải lên và gửi hợp đồng cho Booking #{booking.Id} ({booking.ClientName}) chờ Giám đốc ký",
                 currentUserId,
                 "Booking",
                 booking.Id.ToString()

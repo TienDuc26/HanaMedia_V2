@@ -1,60 +1,564 @@
+@model HanaMedia.Models.SystemConfigModel
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HanaMedia — Cấu hình Kỹ thuật (AdminIT)</title>
+  <title>HanaMedia — Cấu hình Kỹ thuật & Tường lửa IP (AdminIT)</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
   <link rel="stylesheet" href="~/css/design-system.css">
   <link rel="stylesheet" href="~/css/layout.css">
   <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @@media (max-width: 1024px) {
+      .config-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .client-ip-card {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+    }
+    .client-ip-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94A3B8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .client-ip-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .client-ip-address {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 26px;
+      font-weight: 800;
+      color: #38BDF8;
+      letter-spacing: 1px;
+    }
+    .client-ip-meta {
+      font-size: 13px;
+      color: #CBD5E1;
+      margin-top: 4px;
+    }
+    .badge-status-allowed {
+      background: #166534;
+      color: #DCFCE7;
+      border: 1px solid #22C55E;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-status-denied {
+      background: #991B1B;
+      color: #FEE2E2;
+      border: 1px solid #EF4444;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rule-card-whitelist {
+      border-top: 4px solid var(--green, #168A4A);
+    }
+    .rule-card-blacklist {
+      border-top: 4px solid #D92D20;
+    }
+    .rule-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #F8FAFC;
+      border: 1px solid var(--line, #E2E8F0);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: all 0.15s ease;
+    }
+    .rule-item:hover {
+      background: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .rule-cidr {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0F172A;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .tag-allow {
+      background: #DCFCE7;
+      color: #15803D;
+    }
+    .tag-deny {
+      background: #FEE2E2;
+      color: #B91C1C;
+    }
+    .tag-disabled {
+      background: #F1F5F9;
+      color: #64748B;
+    }
+    .tag-type-cidr {
+      background: #E0F2FE;
+      color: #0369A1;
+    }
+    .tag-type-single {
+      background: #F3E8FF;
+      color: #7E22CE;
+    }
+    .preset-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .preset-chip {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--blue-600, #2563EB);
+      background: var(--blue-50, #EFF6FF);
+      border: 1px solid var(--blue-100, #DBEAFE);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .preset-chip:hover {
+      background: var(--blue-600, #2563EB);
+      color: #FFFFFF;
+    }
+    @@keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @@keyframes modalPopIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .system-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: modalFadeIn 0.2s ease-out forwards;
+    }
+    .system-modal-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 440px;
+      padding: 32px 24px 24px 24px;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+      text-align: center;
+      animation: modalPopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  </style>
 </head>
 <body>
 <div class="layout">
 
   <partial name="_SidebarPartial" />
 
-
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="page-title">Cấu hình kỹ thuật hệ thống</div>
-        <div class="page-sub">Quản lý tham số kỹ thuật hạ tầng, thời hạn đăng nhập và tường lửa bảo mật IP nội bộ</div>
+        <div class="page-title">Cấu hình kỹ thuật &amp; Tường lửa IP</div>
+        <div class="page-sub">Quản lý tham số hạ tầng hệ thống và thiết lập quy tắc kiểm soát IP Whitelist / Blacklist khi đăng nhập</div>
       </div>
     </div>
 
-    <div class="card" style="max-width: 650px;">
-      <div class="card-head">
-        <div class="card-title">Tham số kỹ thuật</div>
+    <!-- POPUP MODAL THÔNG BÁO HỆ THỐNG -->
+    @if (ViewBag.SuccessMessage != null || TempData["SuccessMessage"] != null)
+    {
+      var msg = (string)(ViewBag.SuccessMessage ?? TempData["SuccessMessage"]);
+      <div id="systemNotificationModal" class="system-modal-backdrop" onclick="closeSystemModal(event)">
+        <div class="system-modal-card" onclick="event.stopPropagation()">
+          <div style="width:68px; height:68px; border-radius:50%; background:#DCFCE7; color:#15803D; display:inline-flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 16px auto;">
+            <i class="ti ti-circle-check"></i>
+          </div>
+          <div style="font-size:19px; font-weight:800; color:#0F172A; margin-bottom:8px;">Thành công!</div>
+          <div style="font-size:14.5px; color:#334155; line-height:1.5; margin-bottom:24px; word-break:break-word;">
+            @msg
+          </div>
+          <button type="button" onclick="closeSystemModal()" class="btn-mini approve" style="width:100%; padding:12px; font-size:14px; font-weight:700; border-radius:10px; cursor:pointer;">
+            <i class="ti ti-check"></i> Đồng ý &amp; Đóng
+          </button>
+        </div>
       </div>
+    }
+    @if (ViewBag.ErrorMessage != null || TempData["ErrorMessage"] != null)
+    {
+      var msg = (string)(ViewBag.ErrorMessage ?? TempData["ErrorMessage"]);
+      <div id="systemNotificationModal" class="system-modal-backdrop" onclick="closeSystemModal(event)">
+        <div class="system-modal-card" onclick="event.stopPropagation()">
+          <div style="width:68px; height:68px; border-radius:50%; background:#FEE2E2; color:#B91C1C; display:inline-flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 16px auto;">
+            <i class="ti ti-alert-triangle"></i>
+          </div>
+          <div style="font-size:19px; font-weight:800; color:#991B1B; margin-bottom:8px;">Cảnh báo / Lỗi</div>
+          <div style="font-size:14.5px; color:#334155; line-height:1.5; margin-bottom:24px; word-break:break-word;">
+            @msg
+          </div>
+          <button type="button" onclick="closeSystemModal()" class="btn-mini reject" style="width:100%; padding:12px; font-size:14px; font-weight:700; border-radius:10px; background:#D92D20; color:#FFF; cursor:pointer;">
+            <i class="ti ti-x"></i> Đóng thông báo
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- CARD 1: THÔNG TIN IP HIỆN TẠI CỦA CLIENT -->
+    <div class="client-ip-card">
+      <div class="client-ip-title">
+        <i class="ti ti-radar" style="font-size: 16px; color: #38BDF8;"></i> Địa chỉ IP truy cập hiện tại của bạn (Browser Client)
+      </div>
+      <div class="client-ip-body">
+        <div>
+          <div class="client-ip-address">
+            <i class="ti ti-devices"></i> @Model.CurrentClientIpInfo.ClientIp
+          </div>
+          <div class="client-ip-meta">
+            Network Base: <strong>@Model.CurrentClientIpInfo.EvaluatedNetwork</strong>
+            @if (!string.IsNullOrEmpty(Model.CurrentClientIpInfo.MatchedRule))
+            {
+              <span style="margin-left: 12px;">Rule Khớp: <code style="background:rgba(255,255,255,0.15); padding:2px 6px; border-radius:4px;">@Model.CurrentClientIpInfo.MatchedRule</code></span>
+            }
+          </div>
+          <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">
+            Lý do đánh giá: <em>@Model.CurrentClientIpInfo.Reason</em>
+          </div>
+        </div>
+
+        <div>
+          @if (Model.CurrentClientIpInfo.IsAllowed)
+          {
+            <div class="badge-status-allowed">
+              <i class="ti ti-shield-check" style="font-size: 18px;"></i> Quyền đăng nhập: ĐƯỢC PHÉP
+            </div>
+          }
+          else
+          {
+            <div class="badge-status-denied">
+              <i class="ti ti-shield-x" style="font-size: 18px;"></i> Quyền đăng nhập: BỊ CHẶN
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTIONS WHITELIST & BLACKLIST -->
+    <div class="config-grid">
       
-      <div class="form-group">
-        <label>Giới hạn dung lượng upload file tối đa (MB)</label>
-        <input type="number" class="form-control" value="50">
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Áp dụng cho việc upload hợp đồng booking, báo giá, phụ lục và tài liệu đính kèm.</div>
+      <!-- CỘT 1: WHITELIST - DẢI IP ĐƯỢC PHÉP -->
+      <div>
+        <div class="card rule-card-whitelist">
+          <div class="card-head" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="card-title" style="color: #15803D;">
+              <i class="ti ti-shield-check" style="color: #168A4A;"></i> WHITELIST — IP / Dải IP được phép
+            </div>
+            <span class="badge-tag tag-allow" style="font-size: 12px;">@Model.WhitelistRules.Count(r => r.IsEnabled) / @Model.WhitelistRules.Count đang bật</span>
+          </div>
+
+          <!-- Form Thêm Whitelist IP -->
+          <form method="post" action="/AdminIT/AddIpRule" style="background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ruleType" value="Allow">
+            <div style="font-size: 12.5px; font-weight: 700; color: #166534; margin-bottom: 6px;">
+              <i class="ti ti-plus"></i> Thêm IP hoặc CIDR mới vào Whitelist
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" name="ipRange" placeholder="Ví dụ: 10.33.0.0/16 hoặc 192.168.1.100" class="form-control" style="flex: 1; font-family: monospace; font-size: 13px;" required>
+              <button type="submit" class="btn-mini approve" style="white-space: nowrap; padding: 0 16px;">
+                <i class="ti ti-plus"></i> Thêm Cho phép
+              </button>
+            </div>
+            <input type="text" name="description" placeholder="Ghi chú (Ví dụ: Mạng Wifi Văn phòng tầng 3)" class="form-control" style="font-size: 12px;">
+          </form>
+
+          <!-- Danh sách Whitelist Rules -->
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;">
+              Danh sách các quy tắc Whitelist hiện có
+            </div>
+            @if (!Model.WhitelistRules.Any())
+            {
+              <div style="text-align: center; color: var(--muted); padding: 24px; font-style: italic; background:#F8FAFC; border-radius:8px;">
+                Chưa có quy tắc Whitelist nào trong database.<br>
+                <small>(Hệ thống sẽ từ chối tất cả IP không nằm trong bypass)</small>
+              </div>
+            }
+            else
+            {
+              @foreach (var rule in Model.WhitelistRules)
+              {
+                var isCidrSubnet = rule.Cidr.Contains('/') && !rule.Cidr.EndsWith("/32");
+                <div class="rule-item" style="@(!rule.IsEnabled ? "opacity: 0.6;" : "")">
+                  <div>
+                    <div class="rule-cidr">
+                      <i class="ti ti-wifi" style="color: #168A4A;"></i> @rule.Cidr
+                      @if (rule.IsEnabled)
+                      {
+                        <span class="badge-tag tag-allow">Cho phép</span>
+                      }
+                      else
+                      {
+                        <span class="badge-tag tag-disabled">Đã tắt</span>
+                      }
+                      <span class="badge-tag @(isCidrSubnet ? "tag-type-cidr" : "tag-type-single")">
+                        @(isCidrSubnet ? "Dải IP (Subnet)" : "IP Đơn (/32)")
+                      </span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(rule.Description))
+                    {
+                      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">@rule.Description</div>
+                    }
+                  </div>
+
+                  <div style="display: flex; gap: 6px;">
+                    <form method="post" action="/AdminIT/ToggleIpRule" style="display:inline;">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="ruleId" value="@rule.Id">
+                      <button type="submit" class="btn-mini" style="background:#E2E8F0; color:#334155;" title="Bật/Tắt quy tắc này">
+                        <i class="ti ti-power"></i> @(rule.IsEnabled ? "Tắt" : "Bật")
+                      </button>
+                    </form>
+
+                    <form method="post" action="/AdminIT/DeleteIpRule" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA quy tắc Whitelist [@rule.Cidr] này?');" style="display:inline;">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="ruleId" value="@rule.Id">
+                      <button type="submit" class="btn-mini reject" title="Xóa khỏi Whitelist">
+                        <i class="ti ti-trash"></i> Xóa
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Thời gian hết hạn phiên làm việc (Session Timeout - Phút)</label>
-        <input type="number" class="form-control" value="30">
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Tự động đăng xuất và hủy session làm việc nếu người dùng không thao tác sau số phút này.</div>
+      <!-- CỘT 2: BLACKLIST - DẢI IP BỊ CHẶN -->
+      <div>
+        <div class="card rule-card-blacklist">
+          <div class="card-head" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="card-title" style="color: #B91C1C;">
+              <i class="ti ti-shield-x" style="color: #D92D20;"></i> BLACKLIST — IP / Dải IP bị chặn
+            </div>
+            <span class="badge-tag tag-deny" style="font-size: 12px;">@Model.BlacklistRules.Count(r => r.IsEnabled) / @Model.BlacklistRules.Count đang bật</span>
+          </div>
+
+          <!-- Form Thêm Blacklist IP -->
+          <form method="post" action="/AdminIT/AddIpRule" style="background: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ruleType" value="Deny">
+            <div style="font-size: 12.5px; font-weight: 700; color: #991B1B; margin-bottom: 6px;">
+              <i class="ti ti-ban"></i> Thêm IP hoặc CIDR bị CHẶN vào Blacklist (Ưu tiên cao nhất)
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" name="ipRange" placeholder="Ví dụ: 10.50.0.0/16 hoặc 14.226.24.100" class="form-control" style="flex: 1; font-family: monospace; font-size: 13px;" required>
+              <button type="submit" class="btn-mini reject" style="white-space: nowrap; padding: 0 16px; background:#D92D20; color:#FFF;">
+                <i class="ti ti-ban"></i> Chặn IP
+              </button>
+            </div>
+            <input type="text" name="description" placeholder="Ghi chú lý do chặn (Ví dụ: IP nguy cơ tấn công brute-force)" class="form-control" style="font-size: 12px;">
+          </form>
+
+          <!-- Danh sách Blacklist Rules -->
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;">
+              Danh sách các quy tắc Blacklist bị chặn
+            </div>
+            @if (!Model.BlacklistRules.Any())
+            {
+              <div style="text-align: center; color: var(--muted); padding: 24px; font-style: italic; background:#F8FAFC; border-radius:8px;">
+                Chưa có quy tắc Blacklist nào được tạo.
+              </div>
+            }
+            else
+            {
+              @foreach (var rule in Model.BlacklistRules)
+              {
+                var isCidrSubnet = rule.Cidr.Contains('/') && !rule.Cidr.EndsWith("/32");
+                <div class="rule-item" style="@(!rule.IsEnabled ? "opacity: 0.6;" : "")">
+                  <div>
+                    <div class="rule-cidr">
+                      <i class="ti ti-alert-circle" style="color: #D92D20;"></i> @rule.Cidr
+                      @if (rule.IsEnabled)
+                      {
+                        <span class="badge-tag tag-deny">Đang chặn</span>
+                      }
+                      else
+                      {
+                        <span class="badge-tag tag-disabled">Đã tắt</span>
+                      }
+                      <span class="badge-tag @(isCidrSubnet ? "tag-type-cidr" : "tag-type-single")">
+                        @(isCidrSubnet ? "Dải IP (Subnet)" : "IP Đơn (/32)")
+                      </span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(rule.Description))
+                    {
+                      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">@rule.Description</div>
+                    }
+                  </div>
+
+                  <div style="display: flex; gap: 6px;">
+                    <form method="post" action="/AdminIT/ToggleIpRule" style="display:inline;">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="ruleId" value="@rule.Id">
+                      <button type="submit" class="btn-mini" style="background:#E2E8F0; color:#334155;" title="Bật/Tắt quy tắc này">
+                        <i class="ti ti-power"></i> @(rule.IsEnabled ? "Tắt" : "Bật")
+                      </button>
+                    </form>
+
+                    <form method="post" action="/AdminIT/DeleteIpRule" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA quy tắc Blacklist [@rule.Cidr] này?');" style="display:inline;">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="ruleId" value="@rule.Id">
+                      <button type="submit" class="btn-mini reject" title="Xóa khỏi Blacklist">
+                        <i class="ti ti-trash"></i> Xóa
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Whitelist dải IP mạng nội bộ công ty (LAN/Wifi)</label>
-        <textarea class="form-control" rows="4">192.168.1.0/24
-113.161.45.88
-14.226.24.0/24</textarea>
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Danh sách IP tĩnh hoặc dải IP được phép truy cập vào ứng dụng. Các IP nằm ngoài whitelist sẽ bị tường lửa từ chối đăng nhập.</div>
-      </div>
+    </div>
 
-      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end;">
-        <button class="btn-mini approve" onclick="alert('Đã lưu cấu hình tham số kỹ thuật thành công!')" style="padding: 8px 20px; font-size: 13px;">Lưu thiết lập</button>
+    <!-- CARD 3: THAM SỐ HẠ TẦNG & DUNG LƯỢNG -->
+    <div style="margin-top: 24px;">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-adjustments" style="color: var(--blue-500);"></i> Tham số Dung lượng Upload &amp; Hạn phiên làm việc
+          </div>
+        </div>
+
+        <form method="post" action="/AdminIT/SaveConfigSystem">
+          @Html.AntiForgeryToken()
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <!-- Dung lượng upload file -->
+            <div class="form-group">
+              <label style="font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+                <i class="ti ti-upload" style="color: var(--blue-500);"></i> Giới hạn dung lượng upload file tối đa (MB)
+              </label>
+              <input type="number" id="inputMaxUpload" name="maxUploadSizeMb" class="form-control" value="@Model.MaxUploadSizeMb" min="1" max="5000" required>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                Áp dụng cho hợp đồng booking, báo giá, phụ lục và tài liệu đính kèm trên toàn hệ thống.
+              </div>
+              <div class="preset-chips">
+                <span style="font-size: 12px; color: var(--muted); align-self: center;">Chọn nhanh:</span>
+                <button type="button" class="preset-chip" onclick="setUpload(10)">10 MB</button>
+                <button type="button" class="preset-chip" onclick="setUpload(50)">50 MB</button>
+                <button type="button" class="preset-chip" onclick="setUpload(100)">100 MB</button>
+                <button type="button" class="preset-chip" onclick="setUpload(200)">200 MB</button>
+                <button type="button" class="preset-chip" onclick="setUpload(500)">500 MB</button>
+              </div>
+            </div>
+
+            <!-- Session Timeout -->
+            <div class="form-group">
+              <label style="font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+                <i class="ti ti-clock-hour-4" style="color: var(--amber);"></i> Thời gian hết hạn phiên làm việc (Session Timeout - Phút)
+              </label>
+              <input type="number" id="inputSessionTimeout" name="sessionTimeoutMinutes" class="form-control" value="@Model.SessionTimeoutMinutes" min="1" max="1440" required>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                Phiên làm việc sẽ tự động hết hạn sau số phút không hoạt động. Khi hết hạn, hệ thống sẽ từ chối các thao tác và hiển thị popup yêu cầu đăng nhập lại.
+              </div>
+              <div class="preset-chips">
+                <span style="font-size: 12px; color: var(--muted); align-self: center;">Chọn nhanh:</span>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(1)">1 phút (Test)</button>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(5)">5 phút (Test)</button>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(15)">15 phút</button>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(30)">30 phút</button>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(60)">60 phút</button>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(120)">120 phút</button>
+                <button type="button" class="preset-chip" onclick="setTimeoutMins(240)">240 phút</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn-mini approve" style="padding: 10px 24px; font-size: 13.5px; font-weight: 700;">
+              <i class="ti ti-device-floppy"></i> Lưu thiết lập tham số hạ tầng
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <footer>HanaMedia · Dashboard AdminIT — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
+    <footer>HanaMedia · Dashboard AdminIT — Cấu hình kỹ thuật &amp; Tường lửa kiểm soát IP</footer>
   </main>
 </div>
+
+<script>
+  function setUpload(mb) {
+    document.getElementById('inputMaxUpload').value = mb;
+  }
+
+  function setTimeoutMins(mins) {
+    document.getElementById('inputSessionTimeout').value = mins;
+  }
+
+  function closeSystemModal(e) {
+    if (e && e.target && e.target.id !== 'systemNotificationModal') {
+      return;
+    }
+    const modal = document.getElementById('systemNotificationModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('systemNotificationModal');
+      if (modal) modal.style.display = 'none';
+    }
+  });
+</script>
 </body>
 </html>

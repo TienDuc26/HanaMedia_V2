@@ -5,6 +5,7 @@ using HanaMedia.Constants;
 using HanaMedia.Models;
 using HanaMedia.Services;
 using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Config;
 using HanaMedia.Services.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -25,6 +26,9 @@ public sealed class AccountController : Controller
     private readonly IAccountPasswordService _passwordService;
     private readonly IConfiguration _configuration;
     private readonly ISystemAuditService _auditService;
+    private readonly IIpAccessControlService _ipAccessControlService;
+    private readonly IClientIpResolver _ipResolver;
+    private readonly ISystemConfigService _configService;
     private readonly ILogger<AccountController> _logger;
     private readonly IWebHostEnvironment _environment;
 
@@ -34,6 +38,9 @@ public sealed class AccountController : Controller
         IAccountPasswordService passwordService,
         IConfiguration configuration,
         ISystemAuditService auditService,
+        IIpAccessControlService ipAccessControlService,
+        IClientIpResolver ipResolver,
+        ISystemConfigService configService,
         ILogger<AccountController> logger,
         IWebHostEnvironment environment)
     {
@@ -42,6 +49,9 @@ public sealed class AccountController : Controller
         _passwordService = passwordService;
         _configuration = configuration;
         _auditService = auditService;
+        _ipAccessControlService = ipAccessControlService;
+        _ipResolver = ipResolver;
+        _configService = configService;
         _logger = logger;
         _environment = environment;
     }
@@ -77,36 +87,32 @@ public sealed class AccountController : Controller
             return View();
         }
 
-        var clientIp = GetClientIpAddress();
-        var allowedCidrConfig = _configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24";
-        var allowedCidrs = allowedCidrConfig
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var clientIp = _ipResolver.GetClientIp(HttpContext);
+        var accessDecision = await _ipAccessControlService.EvaluateAccessAsync(clientIp, cancellationToken);
 
-        _logger.LogInformation(
-            "[NetworkCheck] Client IP: {ClientIp}, Allowed CIDRs: {AllowedCidrs}",
-            clientIp,
-            string.Join(", ", allowedCidrs));
-
-        var inAnyRange = allowedCidrs.Any(cidr => IsIpInRange(clientIp, cidr));
-        if (!inAnyRange)
+        if (!accessDecision.IsAllowed)
         {
             _logger.LogWarning(
-                "[NetworkCheck] BLOCKED - IP {ClientIp} not in any of ranges {AllowedCidrs}",
+                "[NetworkCheck] BLOCKED - Client IP: {ClientIp}, MatchedRule: {MatchedRule}, RuleType: {RuleType}, Reason: {Reason}",
                 clientIp,
-                string.Join(", ", allowedCidrs));
+                accessDecision.MatchedRule,
+                accessDecision.RuleType,
+                accessDecision.Reason);
+
             await TryWriteAuditAsync(
                 null,
                 AuditActions.LoginBlockedNetwork,
-                $"Chặn đăng nhập từ IP ngoài mạng nội bộ: {Truncate(clientIp, 45)}.",
+                $"Chặn đăng nhập từ IP {Truncate(clientIp, 45)}. Lý do: {accessDecision.Reason}",
                 cancellationToken);
-            ViewBag.NetworkError =
-                "Vui lòng kết nối mạng nội bộ công ty để sử dụng hệ thống.";
+
+            ViewBag.NetworkError = "Vui lòng kết nối mạng nội bộ công ty để sử dụng hệ thống.";
             return View();
         }
 
         _logger.LogInformation(
-            "[NetworkCheck] PASSED - IP {ClientIp} is in allowed ranges",
-            clientIp);
+            "[NetworkCheck] PASSED - Client IP {ClientIp} is allowed ({Reason})",
+            clientIp,
+            accessDecision.Reason);
 
         var (result, user, message) =
             await _accountService.AuthenticateAsync(username, password);
@@ -131,10 +137,16 @@ public sealed class AccountController : Controller
                 var claimsIdentity = new ClaimsIdentity(
                     claims,
                     CookieAuthenticationDefaults.AuthenticationScheme);
+
+                var sysConfig = await _configService.GetConfigAsync(cancellationToken);
+                var sessionTimeoutMins = Math.Max(1, sysConfig.SessionTimeoutMinutes);
+                var now = DateTimeOffset.UtcNow;
+
                 var authProperties = new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2),
+                    IssuedUtc = now,
+                    ExpiresUtc = now.AddMinutes(sessionTimeoutMins),
                     AllowRefresh = true
                 };
 
@@ -420,4 +432,98 @@ public sealed class AccountController : Controller
 
     private static string Truncate(string value, int maxLength)
         => value.Length <= maxLength ? value : value[..maxLength];
+
+    #region Session Status & Renewal API Endpoints
+
+    [HttpGet("/api/auth/session")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetSessionStatus(CancellationToken cancellationToken)
+    {
+        var isAuth = User.Identity?.IsAuthenticated == true;
+        var now = DateTimeOffset.UtcNow;
+
+        if (!isAuth)
+        {
+            return StatusCode(StatusCodes.Status401Unauthorized, new
+            {
+                authenticated = false,
+                serverTime = now,
+                expiresAt = (DateTimeOffset?)null,
+                remainingSeconds = 0,
+                code = "UNAUTHORIZED"
+            });
+        }
+
+        var authResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        var expiresAt = authResult.Properties?.ExpiresUtc;
+
+        if (!expiresAt.HasValue || now >= expiresAt.Value)
+        {
+            return StatusCode(StatusCodes.Status401Unauthorized, new
+            {
+                authenticated = false,
+                serverTime = now,
+                expiresAt = (DateTimeOffset?)null,
+                remainingSeconds = 0,
+                code = "SESSION_EXPIRED"
+            });
+        }
+
+        var remainingSeconds = Math.Max(0, (int)(expiresAt.Value - now).TotalSeconds);
+        var sysConfig = await _configService.GetConfigAsync(cancellationToken);
+
+        return Ok(new
+        {
+            authenticated = true,
+            serverTime = now,
+            expiresAt = expiresAt.Value,
+            remainingSeconds,
+            sessionTimeoutMinutes = sysConfig.SessionTimeoutMinutes
+        });
+    }
+
+    [HttpPost("/api/auth/renew")]
+    public async Task<IActionResult> RenewSession(CancellationToken cancellationToken)
+    {
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return StatusCode(StatusCodes.Status401Unauthorized, new
+            {
+                success = false,
+                message = "Phiên đăng nhập không tồn tại hoặc đã hết hạn.",
+                code = "UNAUTHORIZED"
+            });
+        }
+
+        var sysConfig = await _configService.GetConfigAsync(cancellationToken);
+        var timeoutMinutes = Math.Max(1, sysConfig.SessionTimeoutMinutes);
+        var now = DateTimeOffset.UtcNow;
+        var newExpiresUtc = now.AddMinutes(timeoutMinutes);
+
+        var authResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = authResult.Properties ?? new AuthenticationProperties();
+
+        authProperties.IssuedUtc = now;
+        authProperties.ExpiresUtc = newExpiresUtc;
+        authProperties.AllowRefresh = true;
+        authProperties.IsPersistent = true;
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            User,
+            authProperties);
+
+        _logger.LogInformation("Session renewed for user {Username}. New expiration: {ExpiresUtc}", User.Identity?.Name, newExpiresUtc);
+
+        return Ok(new
+        {
+            success = true,
+            message = "Phiên làm việc đã được gia hạn thành công.",
+            serverTime = now,
+            expiresAt = newExpiresUtc,
+            remainingSeconds = (int)(newExpiresUtc - now).TotalSeconds
+        });
+    }
+
+    #endregion
 }

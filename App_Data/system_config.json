@@ -1,0 +1,19 @@
+{
+  "MaxUploadSizeMb": 50,
+  "SessionTimeoutMinutes": 2,
+  "IpRestrictionEnabled": true,
+  "AllowLoopback": false,
+  "CurrentClientIpInfo": {
+    "IsAllowed": false,
+    "MatchedRule": "",
+    "RuleType": "",
+    "Reason": "",
+    "ClientIp": "",
+    "EvaluatedNetwork": ""
+  },
+  "WhitelistRules": [],
+  "BlacklistRules": [],
+  "WhitelistedIps": [],
+  "UpdatedAt": "2026-09-10T14:53:51.2149028+07:00",
+  "UpdatedBy": "admin_it"
+}
