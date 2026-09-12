@@ -43,6 +43,8 @@ builder.Services.AddScoped<IDirectorMonitoringService, DirectorMonitoringService
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<IWorkTaskService, WorkTaskService>();
 builder.Services.AddScoped<IIdeaService, IdeaService>();
+builder.Services.AddScoped<IIdeaLibraryService, IdeaLibraryService>();
+builder.Services.AddScoped<IDirectorIdeaService, DirectorIdeaService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 
