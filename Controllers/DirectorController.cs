@@ -5,6 +5,9 @@ using HanaMedia.Services.Dashboard;
 using HanaMedia.Models;
 using HanaMedia.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using HanaMedia.Services.Ideas;
+using System.Globalization;
+using System.Security.Claims;
 
 namespace HanaMedia.Controllers
 {
@@ -12,11 +15,16 @@ namespace HanaMedia.Controllers
     public class DirectorController : Controller
     {
         private readonly IDirectorMonitoringService _monitoringService;
+        private readonly IDirectorIdeaService _ideaService;
         private readonly ApplicationDbContext _context;
 
-        public DirectorController(IDirectorMonitoringService monitoringService, ApplicationDbContext context)
+        public DirectorController(
+            IDirectorMonitoringService monitoringService,
+            IDirectorIdeaService ideaService,
+            ApplicationDbContext context)
         {
             _monitoringService = monitoringService;
+            _ideaService = ideaService;
             _context = context;
         }
         public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
@@ -104,9 +112,57 @@ namespace HanaMedia.Controllers
             });
         }
 
-        public IActionResult Idea()
+        [HttpGet]
+        public async Task<IActionResult> Idea(
+            string? search,
+            string? status,
+            string? directorStatus,
+            int page = 1,
+            CancellationToken cancellationToken = default)
         {
-            return View();
+            return View(await _ideaService.GetPageAsync(
+                search, status, directorStatus, page, cancellationToken));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditIdea(
+            DirectorEditIdeaInputModel input,
+            CancellationToken cancellationToken)
+        {
+            if (!TryGetUserId(out var userId)) return Challenge();
+            var result = ModelState.IsValid
+                ? await _ideaService.UpdateContentAsync(input, userId, cancellationToken)
+                : IdeaOperationResult.Failure(GetModelErrors());
+            SetIdeaMessage(result);
+            return RedirectToAction(nameof(Idea), new { focus = input.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendIdeaFeedback(
+            int id,
+            string? feedback,
+            CancellationToken cancellationToken)
+        {
+            if (!TryGetUserId(out var userId)) return Challenge();
+            var result = await _ideaService.SendFeedbackAsync(id, feedback, userId, cancellationToken);
+            SetIdeaMessage(result);
+            return RedirectToAction(nameof(Idea), new { focus = id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DecideIdea(
+            int id,
+            string decision,
+            string? reason,
+            CancellationToken cancellationToken)
+        {
+            if (!TryGetUserId(out var userId)) return Challenge();
+            var result = await _ideaService.DecideAsync(id, decision, reason, userId, cancellationToken);
+            SetIdeaMessage(result);
+            return RedirectToAction(nameof(Idea), new { focus = id });
         }
 
         public async Task<IActionResult> MonitoringSystem(CancellationToken cancellationToken)
@@ -148,5 +204,20 @@ namespace HanaMedia.Controllers
             "Y_tuong" => WorkTaskModules.Ideas,
             _ => null
         };
+
+        private bool TryGetUserId(out int userId) => int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out userId);
+
+        private string GetModelErrors() => string.Join(" ", ModelState.Values
+            .SelectMany(value => value.Errors)
+            .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                ? "Dữ liệu ý tưởng không hợp lệ."
+                : error.ErrorMessage));
+
+        private void SetIdeaMessage(IdeaOperationResult result) =>
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
     }
 }

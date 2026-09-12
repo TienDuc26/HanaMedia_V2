@@ -565,6 +565,28 @@ namespace HanaMedia.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("feedback_comment");
 
+                    b.Property<string>("DirectorFeedback")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("director_feedback");
+
+                    b.Property<DateTime?>("DirectorReviewedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("director_reviewed_at");
+
+                    b.Property<int?>("DirectorReviewedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("director_reviewed_by_user_id");
+
+                    b.Property<string>("DirectorReviewStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("director_review_status");
+
                     b.Property<string>("Industry")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -634,7 +656,19 @@ namespace HanaMedia.Migrations
 
                     b.HasIndex("CampaignId");
 
+                    b.HasIndex(new[] { "Category" }, "idx_ideas_category");
+
+                    b.HasIndex(new[] { "Category", "Status" }, "idx_ideas_category_status");
+
+                    b.HasIndex(new[] { "ClientName" }, "idx_ideas_client");
+
                     b.HasIndex("CreatorEmployeeId");
+
+                    b.HasIndex("DirectorReviewedByUserId");
+
+                    b.HasIndex(new[] { "DirectorReviewStatus" }, "idx_ideas_director_review_status");
+
+                    b.HasIndex(new[] { "Industry" }, "idx_ideas_industry");
 
                     b.HasIndex("PrimaryStaffId");
 
@@ -645,6 +679,8 @@ namespace HanaMedia.Migrations
                     b.ToTable("ideas", null, t =>
                         {
                             t.HasCheckConstraint("chk_idea_cat", "[category] IN ('trend', 'viral', 'da_trien_khai', 'chua_su_dung')");
+
+                            t.HasCheckConstraint("chk_idea_director_review_status", "[director_review_status] IN ('pending', 'revision_requested', 'approved', 'rejected')");
 
                             t.HasCheckConstraint("chk_idea_status", "[status] IN ('y_tuong', 'review', 'need_revision', 'approved', 'in_production', 'done')");
                         });
@@ -1398,6 +1434,12 @@ namespace HanaMedia.Migrations
                         .WithMany("IdeaReviewerEmployees")
                         .HasForeignKey("ReviewerEmployeeId")
                         .HasConstraintName("FK_ideas_employees_reviewer_employee_id");
+
+                    b.HasOne("HanaMedia.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("DirectorReviewedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_ideas_users_director_reviewed_by_user_id");
 
                     b.Navigation("Campaign");
 

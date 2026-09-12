@@ -48,6 +48,8 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
 builder.Services.AddScoped<IIpAccessControlService, IpAccessControlService>();
 builder.Services.AddSingleton<ISystemConfigService, SystemConfigService>();
+builder.Services.AddScoped<IIdeaLibraryService, IdeaLibraryService>();
+builder.Services.AddScoped<IDirectorIdeaService, DirectorIdeaService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 

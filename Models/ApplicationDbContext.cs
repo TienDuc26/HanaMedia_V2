@@ -368,9 +368,22 @@ public partial class ApplicationDbContext : DbContext
                 table.HasCheckConstraint(
                     "chk_idea_status",
                     "[status] IN ('y_tuong', 'review', 'need_revision', 'approved', 'in_production', 'done')");
+                table.HasCheckConstraint(
+                    "chk_idea_director_review_status",
+                    "[director_review_status] IN ('pending', 'revision_requested', 'approved', 'rejected')");
             });
 
             entity.HasIndex(e => e.Status, "idx_ideas_status");
+
+            entity.HasIndex(e => e.Industry, "idx_ideas_industry");
+
+            entity.HasIndex(e => e.ClientName, "idx_ideas_client");
+
+            entity.HasIndex(e => e.Category, "idx_ideas_category");
+
+            entity.HasIndex(e => new { e.Category, e.Status }, "idx_ideas_category_status");
+
+            entity.HasIndex(e => e.DirectorReviewStatus, "idx_ideas_director_review_status");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CampaignName)
@@ -393,6 +406,18 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CreatorEmployeeId).HasColumnName("creator_employee_id");
             entity.Property(e => e.Deadline).HasColumnName("deadline");
             entity.Property(e => e.FeedbackComment).HasColumnName("feedback_comment");
+            entity.Property(e => e.DirectorReviewStatus)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasDefaultValue(DirectorIdeaReviewStatuses.Pending)
+                .HasColumnName("director_review_status");
+            entity.Property(e => e.DirectorFeedback)
+                .HasMaxLength(2000)
+                .HasColumnName("director_feedback");
+            entity.Property(e => e.DirectorReviewedByUserId).HasColumnName("director_reviewed_by_user_id");
+            entity.Property(e => e.DirectorReviewedAt)
+                .HasColumnType("datetime2")
+                .HasColumnName("director_reviewed_at");
             entity.Property(e => e.Industry)
                 .HasMaxLength(100)
                 .HasColumnName("industry");
@@ -440,6 +465,11 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.ReviewerEmployee).WithMany(p => p.IdeaReviewerEmployees)
                 .HasForeignKey(d => d.ReviewerEmployeeId)
                 .HasConstraintName("FK_ideas_employees_reviewer_employee_id");
+
+            entity.HasOne<User>().WithMany()
+                .HasForeignKey(d => d.DirectorReviewedByUserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ideas_users_director_reviewed_by_user_id");
         });
 
         modelBuilder.Entity<IdeaComment>(entity =>

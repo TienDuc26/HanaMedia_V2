@@ -42,6 +42,10 @@ public sealed class IdeaListItemViewModel
     public string Status { get; init; } = null!;
     public string StatusLabel { get; init; } = null!;
     public string? FeedbackComment { get; init; }
+    public string DirectorReviewStatus { get; init; } = string.Empty;
+    public string DirectorReviewStatusLabel { get; init; } = string.Empty;
+    public string? DirectorFeedback { get; init; }
+    public DateTime? DirectorReviewedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }
     public bool CanEdit { get; init; }
     public bool CanSubmit { get; init; }
