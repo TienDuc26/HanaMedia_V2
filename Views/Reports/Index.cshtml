@@ -1,0 +1,83 @@
+@model HanaMedia.ViewModels.ReportPageViewModel
+@using HanaMedia.ViewModels
+@{
+  string Money(decimal value) => $"{value:N0} đ";
+  string ReportTitle() => Model.ReportType switch { ReportTypes.Booking => "Báo cáo Booking", ReportTypes.Ideas => "Báo cáo Ý tưởng", _ => "Báo cáo Nhân sự" };
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — @ReportTitle()</title>
+  <link rel="stylesheet" href="~/css/design-system.css"><link rel="stylesheet" href="~/css/layout.css"><link rel="stylesheet" href="~/css/components.css">
+</head>
+<body><div class="layout"><partial name="_SidebarPartial" />
+<main class="main">
+  <div class="topbar"><div><div class="page-title">@ReportTitle()</div><div class="page-sub">Dữ liệu tổng hợp từ hệ thống · @Model.PeriodLabel @(Model.IsLimited ? "· Quyền xem giới hạn" : "")</div></div>
+    <div class="topbar-actions"><a class="icon-btn" title="Xuất CSV" aria-label="Xuất báo cáo CSV" href="/Reports/Export?type=@Model.ReportType&period=@Model.Period"><i class="ti ti-download"></i></a></div>
+  </div>
+
+  @if (Model.IsDirector)
+  {
+    <nav class="report-tabs card" aria-label="Loại báo cáo">
+      <a class="@(Model.ReportType == ReportTypes.HumanResources ? "active" : null)" href="/Reports?type=human_resources&period=@Model.Period">Nhân sự</a>
+      <a class="@(Model.ReportType == ReportTypes.Booking ? "active" : null)" href="/Reports?type=booking&period=@Model.Period">Booking</a>
+      <a class="@(Model.ReportType == ReportTypes.Ideas ? "active" : null)" href="/Reports?type=ideas&period=@Model.Period">Ý tưởng</a>
+    </nav>
+  }
+  <nav class="period-tabs report-periods" aria-label="Kỳ báo cáo">
+    <a class="period-tab @(Model.Period == "day" ? "active" : null)" href="/Reports?type=@Model.ReportType&period=day">Ngày</a>
+    <a class="period-tab @(Model.Period == "month" ? "active" : null)" href="/Reports?type=@Model.ReportType&period=month">Tháng</a>
+    <a class="period-tab @(Model.Period == "quarter" ? "active" : null)" href="/Reports?type=@Model.ReportType&period=quarter">Quý</a>
+  </nav>
+
+  @if (Model.HumanResources is { } hr)
+  {
+    <div class="kpi-grid report-kpis">
+      <div class="kpi-card"><div class="kpi-label">Tổng nhân sự</div><div class="kpi-value">@hr.TotalEmployees</div></div>
+      <div class="kpi-card"><div class="kpi-label">Nhân sự mới</div><div class="kpi-value metric-good">@hr.NewEmployees</div></div>
+      <div class="kpi-card"><div class="kpi-label">Nghỉ việc</div><div class="kpi-value metric-bad">@hr.DepartedEmployees</div></div>
+      <div class="kpi-card"><div class="kpi-label">Tỷ lệ duy trì</div><div class="kpi-value">@hr.RetentionRate%</div></div>
+    </div>
+    <div class="grid-2 report-grid"><partial name="_ReportBreakdown" model='("Nhân sự theo phòng ban", hr.Departments)' /><partial name="_ReportBreakdown" model='("Loại hợp đồng", hr.ContractTypes)' /></div>
+    @if (!Model.IsLimited)
+    {
+      <div class="card report-card"><div class="card-head"><div><div class="card-title">Hiệu suất nhân viên</div><div class="card-sub">Tính theo task có deadline trong kỳ</div></div></div><div class="table-scroll"><table><thead><tr><th>ID</th><th>Nhân sự</th><th>Phòng ban</th><th>Tổng task</th><th>Hoàn thành</th><th>Quá hạn</th><th>Hiệu suất</th></tr></thead><tbody>
+      @if (hr.EmployeePerformance.Count == 0) { <tr><td colspan="7" class="empty-cell">Chưa có dữ liệu task trong kỳ.</td></tr> }
+      else { @foreach (var row in hr.EmployeePerformance) { <tr><td>#@row.EmployeeId</td><td><strong>@row.EmployeeName</strong></td><td>@row.DepartmentName</td><td>@row.TotalTasks</td><td>@row.CompletedTasks</td><td>@row.OverdueTasks</td><td><strong>@row.CompletionRate%</strong></td></tr> } }
+      </tbody></table></div></div>
+    }
+  }
+
+  @if (Model.Booking is { } booking)
+  {
+    <div class="kpi-grid report-kpis">
+      <div class="kpi-card"><div class="kpi-label">Tổng booking</div><div class="kpi-value">@booking.TotalBookings</div></div>
+      <div class="kpi-card"><div class="kpi-label">Hoàn thành</div><div class="kpi-value metric-good">@booking.CompletedBookings</div></div>
+      <div class="kpi-card"><div class="kpi-label">Quá hạn</div><div class="kpi-value metric-bad">@booking.OverdueBookings</div></div>
+      @if (Model.IsLimited) { <div class="kpi-card"><div class="kpi-label">Thù lao của tôi</div><div class="kpi-value money">@Money(booking.MyWage)</div></div> }
+      else { <div class="kpi-card"><div class="kpi-label">Doanh thu</div><div class="kpi-value money">@Money(booking.Revenue)</div></div><div class="kpi-card"><div class="kpi-label">Chi phí</div><div class="kpi-value money">@Money(booking.Cost)</div></div><div class="kpi-card"><div class="kpi-label">Lợi nhuận</div><div class="kpi-value money metric-good">@Money(booking.Profit)</div></div> }
+    </div>
+    <div class="report-card"><partial name="_ReportBreakdown" model='("Booking theo trạng thái", booking.Statuses)' /></div>
+    <div class="card report-card"><div class="card-head"><div class="card-title">Chi tiết booking</div></div><div class="table-scroll"><table><thead><tr><th>ID</th><th>Client &amp; chiến dịch</th><th>KOL/KOC</th><th>Trạng thái</th><th>Deadline</th>@if(Model.IsLimited){<th>Thù lao của tôi</th>}else{<th>Doanh thu</th><th>Chi phí</th><th>Lợi nhuận</th><th>Thù lao team</th>}</tr></thead><tbody>
+    @if (booking.Rows.Count == 0) { <tr><td colspan="10" class="empty-cell">Chưa có booking trong kỳ.</td></tr> }
+    else { @foreach(var row in booking.Rows){<tr><td>#@row.Id</td><td><strong>@row.ClientCampaign</strong></td><td>@row.KolName</td><td>@row.StatusLabel</td><td>@row.Deadline.ToString("dd/MM/yyyy")</td>@if(Model.IsLimited){<td>@Money(row.MyWage)</td>}else{<td>@Money(row.Revenue)</td><td>@Money(row.Cost)</td><td class="metric-good">@Money(row.Revenue-row.Cost)</td><td>@Money(row.AllocatedWage)</td>}</tr>} }
+    </tbody></table></div></div>
+  }
+
+  @if (Model.Ideas is { } ideas)
+  {
+    <div class="kpi-grid report-kpis"><div class="kpi-card"><div class="kpi-label">Tổng ý tưởng</div><div class="kpi-value">@ideas.TotalIdeas</div></div><div class="kpi-card"><div class="kpi-label">Đã duyệt</div><div class="kpi-value metric-good">@ideas.ApprovedIdeas</div></div><div class="kpi-card"><div class="kpi-label">Cần chỉnh sửa</div><div class="kpi-value metric-bad">@ideas.RevisionIdeas</div></div><div class="kpi-card"><div class="kpi-label">Chờ duyệt</div><div class="kpi-value">@ideas.PendingIdeas</div></div><div class="kpi-card"><div class="kpi-label">Tỷ lệ duyệt</div><div class="kpi-value">@ideas.ApprovalRate%</div></div></div>
+    <div class="report-card"><partial name="_ReportBreakdown" model='("Ý tưởng theo trạng thái", ideas.Statuses)' /></div>
+    @if (!Model.IsLimited && ideas.EmployeePerformance.Count > 0)
+    {
+      <div class="card report-card"><div class="card-head"><div class="card-title">Hiệu suất nhân sự Ý tưởng</div></div><div class="table-scroll"><table><thead><tr><th>Nhân sự</th><th>Tổng ý tưởng</th><th>Đã duyệt</th><th>Cần sửa</th><th>Tỷ lệ duyệt</th></tr></thead><tbody>@foreach(var row in ideas.EmployeePerformance){<tr><td><strong>@row.EmployeeName</strong></td><td>@row.TotalIdeas</td><td>@row.ApprovedIdeas</td><td>@row.RevisionIdeas</td><td>@row.ApprovalRate%</td></tr>}</tbody></table></div></div>
+    }
+    <div class="card report-card"><div class="card-head"><div class="card-title">Chi tiết ý tưởng</div></div><div class="table-scroll"><table><thead><tr><th>ID</th><th>Ý tưởng</th><th>Client &amp; chiến dịch</th><th>Phụ trách</th><th>Trạng thái</th><th>Giám đốc</th><th>Deadline</th></tr></thead><tbody>
+    @if(ideas.Rows.Count==0){<tr><td colspan="7" class="empty-cell">Chưa có ý tưởng trong kỳ.</td></tr>}else{@foreach(var row in ideas.Rows){<tr><td>#@row.Id</td><td><strong>@row.Title</strong></td><td>@row.ClientCampaign</td><td>@row.OwnerName</td><td>@row.StatusLabel</td><td>@row.DirectorStatusLabel</td><td>@row.Deadline.ToString("dd/MM/yyyy")</td></tr>}}
+    </tbody></table></div></div>
+  }
+</main></div>
+<style>
+ .report-tabs{display:flex;gap:8px;padding:10px;margin-bottom:14px}.report-tabs a{padding:9px 16px;border-radius:7px;text-decoration:none;color:var(--muted);font-weight:600}.report-tabs a.active{background:var(--blue-100);color:var(--blue-700)}.report-periods{margin-bottom:18px}.report-periods a{text-decoration:none}.report-kpis{margin-bottom:18px}.report-grid{margin:0 0 18px}.report-card{margin:0 0 18px}.money{font-size:23px}.metric-good{color:var(--green)!important}.metric-bad{color:var(--red)!important}.table-scroll{overflow-x:auto}.empty-cell{text-align:center!important;color:var(--muted);padding:24px!important}
+</style></body></html>

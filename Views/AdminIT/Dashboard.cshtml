@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 @model HanaMedia.ViewModels.AdminITDashboardViewModel
+@{
+  var companyDashboardViewData = new ViewDataDictionary(ViewData)
+  {
+    ["DashboardPath"] = "/AdminIT/Dashboard",
+    ["PeriodQueryName"] = "companyPeriod",
+    ["ReadOnly"] = true
+  };
+}
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -29,6 +37,13 @@
         </div>
         <a href="/AdminIT/AuditLog" class="icon-btn" aria-label="Mở nhật ký hệ thống"><i class="ti ti-bell"></i>@if (Model.SecurityAlertCount > 0) {<span class="dot"></span>}</a>
       </div>
+    </div>
+
+    <partial name="_CompanyDashboardSummary" model="Model.CompanyOverview" view-data="companyDashboardViewData" />
+
+    <div class="card" style="margin-top:20px; margin-bottom:20px;">
+      <div class="card-title">Giám sát kỹ thuật</div>
+      <div class="card-sub">Thông tin vận hành dành riêng cho AdminIT</div>
     </div>
 
     <!-- KPI GRID -->
@@ -147,7 +162,6 @@
       </div>
     </div>
 
-    <footer>HanaMedia · Dashboard AdminIT — dữ liệu cập nhật từ hệ thống</footer>
   </main>
 </div>
 </body>

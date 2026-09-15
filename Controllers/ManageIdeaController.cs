@@ -89,10 +89,7 @@ namespace HanaMedia.Controllers
             return RedirectToAction(nameof(Idea), new { focus = ideaId });
         }
 
-        public IActionResult Reported()
-        {
-            return View();
-        }
+        public IActionResult Reported() => RedirectToAction("Index", "Reports", new { type = ReportTypes.Ideas });
 
         private async Task<IActionResult> Run(int id, Func<IIdeaService, int, Task<IdeaOperationResult>> operation)
         {

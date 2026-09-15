@@ -1,0 +1,14 @@
+@model (string Title, IReadOnlyList<HanaMedia.ViewModels.ReportBreakdownRowViewModel> Rows)
+<div class="card">
+  <div class="card-head"><div class="card-title">@Model.Title</div></div>
+  @if (Model.Rows.Count == 0) { <div class="empty-cell">Chưa có dữ liệu trong kỳ.</div> }
+  else
+  {
+    <div style="display:grid;gap:12px">
+    @foreach (var row in Model.Rows)
+    {
+      <div style="display:grid;grid-template-columns:minmax(130px,1fr) 2fr 100px;gap:12px;align-items:center"><span>@row.Label</span><span class="bar-mini" style="width:100%"><span class="bar-mini-fill" style="width:@row.Percentage.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span></span><strong style="text-align:right">@row.Count (@row.Percentage%)</strong></div>
+    }
+    </div>
+  }
+</div>

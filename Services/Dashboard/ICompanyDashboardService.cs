@@ -2,10 +2,9 @@ using HanaMedia.ViewModels;
 
 namespace HanaMedia.Services.Dashboard;
 
-public interface IAdminITDashboardService
+public interface ICompanyDashboardService
 {
-    Task<AdminITDashboardViewModel> GetAsync(
+    Task<CompanyDashboardViewModel> GetAsync(
         string? period,
-        string? companyPeriod,
         CancellationToken cancellationToken = default);
 }

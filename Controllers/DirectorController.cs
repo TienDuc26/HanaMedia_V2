@@ -6,6 +6,7 @@ using HanaMedia.Models;
 using HanaMedia.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using HanaMedia.Services.Ideas;
+using HanaMedia.Services.Config;
 using System.Globalization;
 using System.Security.Claims;
 
@@ -15,23 +16,26 @@ namespace HanaMedia.Controllers
     public class DirectorController : Controller
     {
         private readonly IDirectorMonitoringService _monitoringService;
+        private readonly ICompanyDashboardService _dashboardService;
+        private readonly IBusinessConfigService _businessConfigService;
         private readonly IDirectorIdeaService _ideaService;
         private readonly ApplicationDbContext _context;
 
         public DirectorController(
             IDirectorMonitoringService monitoringService,
+            ICompanyDashboardService dashboardService,
+            IBusinessConfigService businessConfigService,
             IDirectorIdeaService ideaService,
             ApplicationDbContext context)
         {
             _monitoringService = monitoringService;
+            _dashboardService = dashboardService;
+            _businessConfigService = businessConfigService;
             _ideaService = ideaService;
             _context = context;
         }
-        public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
-        {
-            ViewBag.RunningCampaignsCount = await _context.Campaigns.CountAsync(c => c.Status == "running", cancellationToken);
-            return View();
-        }
+        public async Task<IActionResult> Dashboard(string? period, CancellationToken cancellationToken)
+            => View(await _dashboardService.GetAsync(period, cancellationToken));
 
         public async Task<IActionResult> Approve(CancellationToken cancellationToken)
         {
@@ -43,7 +47,42 @@ namespace HanaMedia.Controllers
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync(cancellationToken);
 
-            return View(pendingBookings);
+            var departmentNames = await _context.Departments.AsNoTracking()
+                .ToDictionaryAsync(item => item.Code, item => item.Name, cancellationToken);
+            var pendingTaskEntities = await _context.WorkTasks.AsNoTracking()
+                .Include(item => item.AssignedEmployee)
+                .Include(item => item.CreatedByUser)
+                .Include(item => item.Submissions)
+                .Where(item => item.Status == WorkTaskStatuses.Review &&
+                    (item.Module == WorkTaskModules.HumanResources || item.Module == WorkTaskModules.Booking))
+                .OrderByDescending(item => item.UpdatedAt)
+                .ToListAsync(cancellationToken);
+            var pendingTasks = pendingTaskEntities
+                .Select(item => new DirectorTaskApprovalRowViewModel
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    Description = item.Description,
+                    Module = item.Module,
+                    DepartmentName = departmentNames.ContainsKey(item.AssignedEmployee.Department)
+                        ? departmentNames[item.AssignedEmployee.Department]
+                        : item.AssignedEmployee.Department,
+                    EmployeeName = item.AssignedEmployee.FullName,
+                    CreatedByName = item.CreatedByUser.Username,
+                    Deadline = item.Deadline,
+                    SubmittedAt = item.Submissions
+                        .Where(submission => submission.Status == "review")
+                        .OrderByDescending(submission => submission.SubmittedAt)
+                        .Select(submission => submission.SubmittedAt)
+                        .FirstOrDefault()
+                })
+                .ToList();
+
+            return View(new DirectorApprovalViewModel
+            {
+                BookingApprovals = pendingBookings,
+                TaskApprovals = pendingTasks
+            });
         }
 
         public async Task<IActionResult> BookingCampaign(CancellationToken cancellationToken)
@@ -60,9 +99,18 @@ namespace HanaMedia.Controllers
             return View(bookings);
         }
 
-        public IActionResult Config()
+        [HttpGet]
+        public async Task<IActionResult> Config(CancellationToken cancellationToken)
+            => View(await _businessConfigService.GetAsync(cancellationToken));
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Config(BusinessConfigViewModel input, CancellationToken cancellationToken)
         {
-            return View();
+            if (!TryGetUserId(out var userId)) return Challenge();
+            if (!ModelState.IsValid) return View(input);
+            var result = await _businessConfigService.UpdateAsync(input, userId, cancellationToken);
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
+            return result.Succeeded ? RedirectToAction(nameof(Config)) : View(input);
         }
 
         public IActionResult Department()
@@ -170,10 +218,7 @@ namespace HanaMedia.Controllers
             return View(await _monitoringService.GetAsync(cancellationToken));
         }
 
-        public IActionResult Report()
-        {
-            return View();
-        }
+        public IActionResult Report() => RedirectToAction("Index", "Reports");
 
         public async Task<IActionResult> SignContract(CancellationToken cancellationToken)
         {

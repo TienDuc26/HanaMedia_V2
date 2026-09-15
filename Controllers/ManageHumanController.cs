@@ -1,4 +1,5 @@
 using HanaMedia.Constants;
+using HanaMedia.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,9 +20,6 @@ namespace HanaMedia.Controllers
             return RedirectToAction("Index", "WorkTasks", new { module = WorkTaskModules.HumanResources });
         }
 
-        public IActionResult Repoted()
-        {
-            return View();
-        }
+        public IActionResult Repoted() => RedirectToAction("Index", "Reports", new { type = ReportTypes.HumanResources });
     }
 }

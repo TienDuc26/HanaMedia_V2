@@ -63,10 +63,7 @@ namespace HanaMedia.Controllers
         public async Task<IActionResult> AddComment(int id, string? content, CancellationToken cancellationToken)
             => await Run(id, (service, userId) => service.AddCommentAsync(id, content, userId, AppRoles.IdeaStaff, cancellationToken));
 
-        public IActionResult Reported()
-        {
-            return View();
-        }
+        public IActionResult Reported() => RedirectToAction("Index", "Reports", new { type = ReportTypes.Ideas });
 
         private async Task<IActionResult> Run(int id, Func<IIdeaService, int, Task<IdeaOperationResult>> operation)
         {

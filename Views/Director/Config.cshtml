@@ -1,64 +1,22 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HanaMedia — Cấu hình nghiệp vụ (Giám đốc)</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
-  <link rel="stylesheet" href="~/css/design-system.css">
-  <link rel="stylesheet" href="~/css/layout.css">
-  <link rel="stylesheet" href="~/css/components.css">
-</head>
-<body>
-<div class="layout">
-
-  <partial name="_SidebarPartial" />
-
-
-  <main class="main">
-    <div class="topbar">
-      <div>
-        <div class="page-title">Cấu hình tham số nghiệp vụ</div>
-        <div class="page-sub">Thiết lập hạn mức phê duyệt, quy chế phân bổ thù lao và chính sách vận hành công ty</div>
-      </div>
+@model HanaMedia.ViewModels.BusinessConfigViewModel
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>HanaMedia — Cấu hình nghiệp vụ</title><link rel="stylesheet" href="~/css/design-system.css"><link rel="stylesheet" href="~/css/layout.css"><link rel="stylesheet" href="~/css/components.css"></head>
+<body><div class="layout"><partial name="_SidebarPartial" /><main class="main">
+  <div class="topbar"><div><div class="page-title">Cấu hình tham số nghiệp vụ</div><div class="page-sub">Chính sách vận hành do Giám đốc quản lý; tách biệt với cấu hình kỹ thuật của AdminIT</div></div></div>
+  @if (TempData["SuccessMessage"] is string success) { <div class="alert-box config-success"><i class="ti ti-circle-check"></i><div>@success</div></div> }
+  @if (TempData["ErrorMessage"] is string error) { <div class="alert-box config-error"><i class="ti ti-alert-triangle"></i><div>@error</div></div> }
+  <form method="post" asp-action="Config" class="card config-form">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="validation-errors"></div>
+    <div class="card-head"><div><div class="card-title">Tham số vận hành nghiệp vụ</div><div class="card-sub">Thay đổi được lưu vào database và ghi Audit log</div></div></div>
+    <div class="config-grid">
+      <div class="form-group"><label asp-for="BookingApprovalThreshold">Giá trị Booking cần Giám đốc phê duyệt trực tiếp</label><div class="input-suffix"><input asp-for="BookingApprovalThreshold" type="number" min="0" step="1000000" class="form-control"><span>đ</span></div><span asp-validation-for="BookingApprovalThreshold" class="field-error"></span><small>Booking từ ngưỡng này được xác định là Booking quan trọng.</small></div>
+      <div class="form-group"><label asp-for="CampaignApprovalThreshold">Ngân sách chiến dịch cần Giám đốc duyệt</label><div class="input-suffix"><input asp-for="CampaignApprovalThreshold" type="number" min="0" step="1000000" class="form-control"><span>đ</span></div><span asp-validation-for="CampaignApprovalThreshold" class="field-error"></span><small>Áp dụng cho chiến dịch/ý tưởng quan trọng cần Giám đốc xem xét.</small></div>
+      <div class="form-group"><label asp-for="BookingWageLimitPercentage">Giới hạn tổng thù lao trên giá trị Booking</label><div class="input-suffix"><input asp-for="BookingWageLimitPercentage" type="number" min="1" max="500" step="1" class="form-control"><span>%</span></div><span asp-validation-for="BookingWageLimitPercentage" class="field-error"></span><small>Hệ thống đối chiếu tổng tiền phân bổ cho team với giới hạn này.</small></div>
+      <div class="form-group"><label asp-for="EmployeeHandoverDays">Số ngày bàn giao hồ sơ khi nghỉ việc</label><div class="input-suffix"><input asp-for="EmployeeHandoverDays" type="number" min="1" max="365" class="form-control"><span>ngày</span></div><span asp-validation-for="EmployeeHandoverDays" class="field-error"></span><small>Thời hạn bàn giao tiêu chuẩn sau khi nghỉ việc được duyệt.</small></div>
     </div>
-
-    <div class="card" style="max-width: 650px;">
-      <div class="card-head">
-        <div class="card-title">Tham số vận hành nghiệp vụ</div>
-      </div>
-      
-      <div class="form-group">
-        <label>Giá trị Booking cần Giám đốc phê duyệt trực tiếp</label>
-        <input type="text" class="form-control" value="100,000,000 đ">
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Các booking có giá trị từ ngưỡng này trở lên sẽ gửi yêu cầu phê duyệt về bàn làm việc của Giám đốc.</div>
-      </div>
-
-      <div class="form-group">
-        <label>Ngưỡng ngân sách chiến dịch cần Giám đốc duyệt Ý tưởng/Campaign</label>
-        <input type="text" class="form-control" value="500,000,000 đ">
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Các ý tưởng thuộc chiến dịch có ngân sách lớn hơn ngưỡng này cần sự xác nhận duyệt của Giám đốc trước khi chạy.</div>
-      </div>
-
-      <div class="form-group">
-        <label>Cảnh báo phân bổ thù lao vượt định mức (%)</label>
-        <input type="number" class="form-control" value="100">
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Cảnh báo hệ thống hiển thị khi quản lý booking phân bổ tổng thù lao nhân viên vượt quá tỉ lệ phần trăm so với giá trị booking.</div>
-      </div>
-
-      <div class="form-group">
-        <label>Số ngày bàn giao hồ sơ công việc tiêu chuẩn khi nghỉ việc</label>
-        <input type="number" class="form-control" value="30">
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Thời hạn quy định kể từ khi Giám đốc phê duyệt đơn nghỉ việc của nhân sự đến ngày dừng hoạt động chính thức.</div>
-      </div>
-
-      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end;">
-        <button class="btn-mini approve" onclick="alert('Đã lưu cấu hình tham số nghiệp vụ thành công!')" style="padding: 8px 20px; font-size: 13px;">Lưu thiết lập</button>
-      </div>
-    </div>
-
-    <footer>HanaMedia · Dashboard Giám đốc — dữ liệu minh họa cho mục đích thiết kế giao diện</footer>
-  </main>
-</div>
-</body>
-</html>
+    <label class="policy-switch"><input asp-for="AllowBookingWageOverLimit" type="checkbox"><span><strong>Cho phép QL Booking lưu phân bổ vượt giới hạn</strong><small>Nếu tắt, hệ thống chặn lưu. Nếu bật, hệ thống vẫn lưu nhưng hiển thị cảnh báo.</small></span></label>
+    <div class="config-footer"><span>@(Model.UpdatedAt.HasValue ? $"Cập nhật gần nhất: {Model.UpdatedAt:HH:mm dd/MM/yyyy}" : "Đang dùng giá trị mặc định")</span><button type="submit" class="btn-primary-blue"><i class="ti ti-device-floppy"></i>Lưu thiết lập</button></div>
+  </form>
+</main></div>
+<style>.config-form{max-width:900px}.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.form-group label{display:block;font-weight:600;margin-bottom:7px}.form-group small,.policy-switch small{display:block;color:var(--muted);font-size:12px;margin-top:6px}.input-suffix{display:flex;align-items:center}.input-suffix input{border-radius:7px 0 0 7px}.input-suffix span{padding:10px 13px;border:1px solid var(--border);border-left:0;border-radius:0 7px 7px 0;background:var(--surface-2);white-space:nowrap}.policy-switch{display:flex;gap:12px;align-items:flex-start;padding:16px;border:1px solid var(--border);border-radius:9px;margin-top:20px}.policy-switch input{margin-top:3px}.config-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid var(--border);padding-top:18px;margin-top:20px;color:var(--muted);font-size:12px}.field-error,.validation-errors{color:var(--red);font-size:12px}.config-success{background:var(--green-bg);color:var(--green);margin-bottom:16px}.config-error{background:var(--red-bg);color:var(--red);margin-bottom:16px}@@media(max-width:760px){.config-grid{grid-template-columns:1fr}}</style>
+</body></html>

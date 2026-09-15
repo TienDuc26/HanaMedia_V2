@@ -1,4 +1,5 @@
 using HanaMedia.Constants;
+using HanaMedia.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,9 +18,6 @@ namespace HanaMedia.Controllers
             return View();
         }
 
-        public IActionResult Reported()
-        {
-            return View();
-        }
+        public IActionResult Reported() => RedirectToAction("Index", "Reports", new { type = ReportTypes.Booking });
     }
 }

@@ -52,8 +52,9 @@ public sealed class AdminITController : Controller
     [HttpGet]
     public async Task<IActionResult> Dashboard(
         string? period,
+        string? companyPeriod,
         CancellationToken cancellationToken)
-        => View(await _dashboardService.GetAsync(period, cancellationToken));
+        => View(await _dashboardService.GetAsync(period, companyPeriod, cancellationToken));
 
     [HttpGet]
     public async Task<IActionResult> Account(string? q, CancellationToken cancellationToken)
