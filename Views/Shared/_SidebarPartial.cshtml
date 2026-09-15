@@ -17,8 +17,9 @@
 
 <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css" />
 <script src="~/js/session-manager.js"></script>
-
-<aside class="sidebar">
+<partial name="_MobileNavigationPartial" />
+<aside class="sidebar" id="appSidebar" aria-label="Menu điều hướng">
+  <button type="button" class="mobile-menu-close" id="mobileMenuClose" aria-label="Đóng menu điều hướng"><i class="ti ti-x" aria-hidden="true"></i></button>
   <div class="brand">
     <div class="brand-mark">HM</div>
     <div>
