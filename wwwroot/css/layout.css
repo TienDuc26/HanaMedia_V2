@@ -1,11 +1,12 @@
 /* LAYOUT & GRID SYSTEM */
 .layout {
   display: grid;
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100vh;
 }
 
 .main {
+  min-width: 0;
   padding: 28px 36px 60px;
 }
 

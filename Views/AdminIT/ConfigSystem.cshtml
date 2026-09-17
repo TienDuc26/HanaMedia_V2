@@ -304,7 +304,7 @@
             <div style="font-size: 12.5px; font-weight: 700; color: #166534; margin-bottom: 6px;">
               <i class="ti ti-plus"></i> Thêm IP hoặc CIDR mới vào Whitelist
             </div>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <div class="ip-rule-form-row" style="display: flex; gap: 8px; margin-bottom: 8px;">
               <input type="text" name="ipRange" placeholder="Ví dụ: 10.33.0.0/16 hoặc 192.168.1.100" class="form-control" style="flex: 1; font-family: monospace; font-size: 13px;" required>
               <button type="submit" class="btn-mini approve" style="white-space: nowrap; padding: 0 16px;">
                 <i class="ti ti-plus"></i> Thêm Cho phép
@@ -394,7 +394,7 @@
             <div style="font-size: 12.5px; font-weight: 700; color: #991B1B; margin-bottom: 6px;">
               <i class="ti ti-ban"></i> Thêm IP hoặc CIDR bị CHẶN vào Blacklist (Ưu tiên cao nhất)
             </div>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <div class="ip-rule-form-row" style="display: flex; gap: 8px; margin-bottom: 8px;">
               <input type="text" name="ipRange" placeholder="Ví dụ: 10.50.0.0/16 hoặc 14.226.24.100" class="form-control" style="flex: 1; font-family: monospace; font-size: 13px;" required>
               <button type="submit" class="btn-mini reject" style="white-space: nowrap; padding: 0 16px; background:#D92D20; color:#FFF;">
                 <i class="ti ti-ban"></i> Chặn IP
@@ -479,7 +479,7 @@
 
         <form method="post" action="/AdminIT/SaveConfigSystem">
           @Html.AntiForgeryToken()
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
             <!-- Dung lượng upload file -->
             <div class="form-group">
               <label style="font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 6px;">
@@ -530,7 +530,6 @@
       </div>
     </div>
 
-    <footer>HanaMedia · Dashboard AdminIT — Cấu hình kỹ thuật &amp; Tường lửa kiểm soát IP</footer>
   </main>
 </div>
 

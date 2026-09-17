@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HanaMedia.Constants;
 using HanaMedia.Models;
+using HanaMedia.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -101,10 +102,7 @@ namespace HanaMedia.Controllers
             return RedirectToAction("Index", "Kol");
         }
 
-        public IActionResult Reported()
-        {
-            return View();
-        }
+        public IActionResult Reported() => RedirectToAction("Index", "Reports", new { type = ReportTypes.Booking });
 
         public IActionResult StaffHuman()
         {

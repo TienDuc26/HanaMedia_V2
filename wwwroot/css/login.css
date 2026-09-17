@@ -111,3 +111,9 @@
 .login-footer a:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 600px) {
+  .login-container { padding: 20px 16px; min-height: 100vh; min-height: 100dvh; }
+  .login-card { padding: 28px 24px; }
+  .login-card .form-control { font-size: 16px; }
+}

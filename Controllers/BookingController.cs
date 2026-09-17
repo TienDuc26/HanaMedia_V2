@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using HanaMedia.Constants;
 using HanaMedia.Models;
 using HanaMedia.Services.Auditing;
+using HanaMedia.Services.Config;
 
 namespace HanaMedia.Controllers
 {
@@ -18,11 +19,16 @@ namespace HanaMedia.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ISystemAuditService _auditService;
+        private readonly IBusinessConfigService _businessConfigService;
 
-        public BookingController(ApplicationDbContext context, ISystemAuditService auditService)
+        public BookingController(
+            ApplicationDbContext context,
+            ISystemAuditService auditService,
+            IBusinessConfigService businessConfigService)
         {
             _context = context;
             _auditService = auditService;
+            _businessConfigService = businessConfigService;
         }
 
         private bool IsAuthorized(out string role, out int employeeId, out string userId)
@@ -524,6 +530,23 @@ namespace HanaMedia.Controllers
                 return NotFound();
             }
 
+            if (wages.Any(item => item.Value < 0))
+            {
+                TempData["ErrorMessage"] = "Thù lao nhân viên không được là số âm.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var config = await _businessConfigService.GetAsync(cancellationToken);
+            var proposedTotal = booking.BookingWages.Sum(item =>
+                wages.TryGetValue(item.EmployeeId, out var proposedWage) ? proposedWage : item.AllocatedWage);
+            var wageLimit = booking.BookingPrice * config.BookingWageLimitPercentage / 100m;
+            var exceedsLimit = proposedTotal > wageLimit;
+            if (exceedsLimit && !config.AllowBookingWageOverLimit)
+            {
+                TempData["ErrorMessage"] = $"Tổng thù lao {proposedTotal:N0} đ vượt giới hạn {config.BookingWageLimitPercentage}% ({wageLimit:N0} đ) của Booking. Cấu hình hiện tại không cho phép lưu vượt.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             TryGetUserId(out int currentUserId);
 
             foreach (var kvp in wages)
@@ -554,7 +577,9 @@ namespace HanaMedia.Controllers
             try
             {
                 await _context.SaveChangesAsync(cancellationToken);
-                TempData["SuccessMessage"] = "Cập nhật phân bổ thù lao thành công.";
+                TempData["SuccessMessage"] = exceedsLimit
+                    ? $"Đã cập nhật. Cảnh báo: tổng thù lao vượt giới hạn {config.BookingWageLimitPercentage}% theo cấu hình nghiệp vụ."
+                    : "Cập nhật phân bổ thù lao thành công.";
             }
             catch (DbUpdateException)
             {

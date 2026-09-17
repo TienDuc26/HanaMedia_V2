@@ -2,6 +2,7 @@ namespace HanaMedia.ViewModels;
 
 public sealed class AdminITDashboardViewModel
 {
+    public CompanyDashboardViewModel CompanyOverview { get; init; } = new();
     public string Period { get; init; } = "today";
     public string PeriodLabel { get; init; } = "Hôm nay";
     public int LoginCount { get; init; }

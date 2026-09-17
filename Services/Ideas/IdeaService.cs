@@ -184,9 +184,10 @@ public sealed class IdeaService : IIdeaService
         var actorEmployeeId = await GetActorEmployeeIdAsync(actorUserId, cancellationToken);
         var isManager = actorRole == AppRoles.IdeaManager;
         var editableStatus = idea.Status is IdeaStatuses.Idea or IdeaStatuses.Review or IdeaStatuses.NeedRevision;
-        var canEdit = (isManager && editableStatus) || (actorEmployeeId.HasValue &&
+        var hasDirectorRevisionRequest = idea.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested;
+        var canEdit = (isManager && (editableStatus || hasDirectorRevisionRequest)) || (actorEmployeeId.HasValue &&
             (idea.CreatorEmployeeId == actorEmployeeId || idea.PrimaryStaffId == actorEmployeeId) &&
-            idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision);
+            (idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision || hasDirectorRevisionRequest));
         if (!canEdit) return IdeaOperationResult.Failure("Bạn không có quyền chỉnh sửa ý tưởng ở trạng thái hiện tại.");
 
         var campaign = await _context.Campaigns.AsNoTracking()
@@ -228,7 +229,8 @@ public sealed class IdeaService : IIdeaService
         var actorEmployeeId = await GetActorEmployeeIdAsync(actorUserId, cancellationToken);
         if (!CanAccess(idea, actorEmployeeId, actorRole == AppRoles.IdeaManager))
             return IdeaOperationResult.Failure("Bạn không có quyền gửi ý tưởng này.");
-        if (idea.Status is not (IdeaStatuses.Idea or IdeaStatuses.NeedRevision))
+        var isDirectorResubmission = idea.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested;
+        if (idea.Status is not (IdeaStatuses.Idea or IdeaStatuses.NeedRevision) && !isDirectorResubmission)
             return IdeaOperationResult.Failure("Chỉ ý tưởng mới hoặc đang cần sửa mới có thể gửi review.");
         if (string.IsNullOrWhiteSpace(idea.Insight) || string.IsNullOrWhiteSpace(idea.Concept) ||
             string.IsNullOrWhiteSpace(idea.ContentDetails) || string.IsNullOrWhiteSpace(idea.ScriptText))
@@ -236,7 +238,15 @@ public sealed class IdeaService : IIdeaService
         if (!idea.ReviewerEmployeeId.HasValue)
             return IdeaOperationResult.Failure("Ý tưởng chưa có người review.");
 
-        idea.Status = IdeaStatuses.Review;
+        if (idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision)
+            idea.Status = IdeaStatuses.Review;
+        if (isDirectorResubmission)
+        {
+            idea.DirectorReviewStatus = DirectorIdeaReviewStatuses.Pending;
+            idea.DirectorReviewedAt = null;
+            idea.DirectorReviewedByUserId = null;
+            AddComment(idea.Id, actorUserId, "Đã cập nhật ý tưởng theo feedback và gửi lại Giám đốc.", IdeaCommentTypes.General);
+        }
         idea.UpdatedAt = DateTime.Now;
         _auditService.AddEvent(new AuditEvent(AuditModules.Ideas, AuditActions.Updated,
             $"Gửi ý tưởng '{idea.Title}' để review.", actorUserId, "Idea", id.ToString()));
@@ -392,10 +402,19 @@ public sealed class IdeaService : IIdeaService
             Status = idea.Status ?? IdeaStatuses.Idea,
             StatusLabel = IdeaStatuses.GetLabel(idea.Status ?? IdeaStatuses.Idea),
             FeedbackComment = idea.FeedbackComment,
+            DirectorReviewStatus = idea.DirectorReviewStatus,
+            DirectorReviewStatusLabel = DirectorIdeaReviewStatuses.GetLabel(idea.DirectorReviewStatus),
+            DirectorFeedback = idea.DirectorFeedback,
+            DirectorReviewedAt = idea.DirectorReviewedAt,
             UpdatedAt = idea.UpdatedAt,
-            CanEdit = (isManager && idea.Status is IdeaStatuses.Idea or IdeaStatuses.Review or IdeaStatuses.NeedRevision) ||
-                      (!isManager && canAccess && idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision),
-            CanSubmit = canAccess && idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision,
+            CanEdit = (isManager && (idea.Status is IdeaStatuses.Idea or IdeaStatuses.Review or IdeaStatuses.NeedRevision ||
+                                     idea.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested)) ||
+                      (!isManager && canAccess &&
+                       (idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision ||
+                        idea.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested)),
+            CanSubmit = canAccess &&
+                        (idea.Status is IdeaStatuses.Idea or IdeaStatuses.NeedRevision ||
+                         idea.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested),
             CanReview = isManager && idea.Status == IdeaStatuses.Review,
             CanAdvance = canAccess && idea.Status is IdeaStatuses.Approved or IdeaStatuses.InProgress,
             CanDelete = isManager,

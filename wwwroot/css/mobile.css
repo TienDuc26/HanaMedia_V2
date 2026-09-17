@@ -1,0 +1,106 @@
+/* Shared mobile overrides. Desktop layouts and business workflows stay unchanged. */
+.mobile-topbar, .mobile-menu-close, .mobile-nav-backdrop { display: none; }
+
+@media (max-width: 1024px) {
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr); padding-top: 60px; }
+  .layout > main.main { padding: 20px 16px 36px; min-width: 0; }
+  .mobile-topbar {
+    position: fixed; inset: 0 0 auto; z-index: 800;
+    min-height: 60px; display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; background: #0b2545; color: #fff;
+    box-shadow: 0 2px 10px #0b25451a;
+  }
+  .mobile-menu-button, #appSidebar .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 44px; height: 44px; border: 1px solid #ffffff40; border-radius: 10px;
+    background: #ffffff10; color: #fff; cursor: pointer; font-size: 24px;
+  }
+  .mobile-brand { font-weight: 750; font-size: 16px; }
+  .mobile-page-label { margin-left: auto; min-width: 0; max-width: 45%; font-size: 12px; text-align: right; overflow-wrap: anywhere; color: #cbdcf4; }
+  #appSidebar.sidebar {
+    display: flex; position: fixed; z-index: 901; inset: 0 auto 0 0;
+    width: min(310px, calc(100vw - 40px)); height: 100vh; height: 100dvh;
+    padding: 20px 16px max(20px, env(safe-area-inset-bottom));
+    visibility: hidden; transform: translateX(-100%);
+    box-shadow: 12px 0 40px #0b254530;
+  }
+  #appSidebar .brand { padding-right: 44px; margin-bottom: 18px; min-height: 44px; }
+  #appSidebar .brand-mark { flex-shrink: 0; }
+  #appSidebar .brand-sub { font-size: 10px; }
+  #appSidebar .mobile-menu-close { position: absolute; top: 20px; right: 12px; }
+  #appSidebar .sidebar-nav { min-height: 0; overscroll-behavior: contain; }
+  #appSidebar .nav-item, #appSidebar .user-menu-item { min-height: 44px; }
+  #appSidebar .sidebar-user { flex-shrink: 0; }
+  .mobile-menu-open { overflow: hidden; }
+  .mobile-menu-open #appSidebar { visibility: visible; transform: none; }
+  .mobile-nav-backdrop:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 900; background: #0b254580; touch-action: none; }
+  .mobile-menu-button:focus-visible, .mobile-menu-close:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+  /* Allow grid/flex children to shrink; scroll only tables, not the entire page. */
+  .main :is(.card, .kpi-card, .grid-2, .grid-3, .content-grid, .grid-container, .enterprise-card, .panel-card),
+  .main :is(.grid-2, .grid-3, .content-grid, .grid-container, .config-grid, .detail-grid) > *,
+  .modal-card :is(.idea-detail-columns, .director-idea-columns) > * { min-width: 0; }
+  .main :is(.card-head, .topbar-actions, .page-nav, .header-sub, .pagination, .pagination-controls) { flex-wrap: wrap; gap: 10px; }
+  .main .page-title { font-size: 23px; line-height: 1.3; overflow-wrap: anywhere; }
+  .main :is(.card, .enterprise-card, .panel-card, .header-card) { padding: 18px; }
+  .main .page-container { padding: 0; }
+  .main-workspace { min-width: 0; width: 100%; }
+  .layout > .main-workspace { padding: 18px 16px 40px; margin: 0; }
+  .main .main-workspace { padding: 0 0 24px; margin: 0; }
+  .main :is(.content-grid, .detail-grid) { grid-template-columns: minmax(0, 1fr); }
+  .main :is(.info-value, .content-text) { overflow-wrap: anywhere; }
+  .main :is(.kpi-value, .financial-value) { overflow-wrap: anywhere; }
+
+  .mobile-table-scroll, .main :is(.table-scroll, .table-responsive, .revenue-table) {
+    width: 100%; max-width: 100%; min-width: 0; overflow-x: auto;
+    overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+  }
+  .mobile-table-scroll:focus-visible { outline: 2px solid #2f80ed; outline-offset: 2px; }
+  .mobile-wide-table { min-width: 760px; }
+  .mobile-wide-table th { white-space: nowrap; }
+  .main :is(.tabs, .tab-nav, .report-tabs) { max-width: 100%; min-width: 0; overflow-x: auto; flex-wrap: nowrap; }
+  .main :is(.tabs, .tab-nav, .report-tabs) > * { flex-shrink: 0; }
+  .main .report-tabs { padding: 8px; gap: 4px; }
+
+  /* Preserve dialog headers/actions while long forms scroll inside the body. */
+  :is(.modal-backdrop, .modal-overlay) { padding: 12px; }
+  :is(.modal-backdrop, .modal-overlay) .modal-card {
+    width: 100% !important; max-width: 100% !important;
+    height: auto !important; max-height: calc(100vh - 24px) !important;
+    max-height: calc(100dvh - 24px) !important; min-width: 0;
+  }
+  .modal-card > form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .modal-card .modal-body { min-height: 0; max-height: none !important; padding: 16px; }
+  .modal-card :is(.modal-header, .modal-footer) { padding: 12px 16px; flex-shrink: 0; }
+  .modal-card .modal-footer { flex-wrap: wrap; gap: 8px; }
+  .modal-card .modal-title { line-height: 1.35; }
+  .modal-card .modal-close { min-width: 44px; min-height: 44px; flex-shrink: 0; }
+  .modal-card :is(input, select, textarea), .main :is(input, select, textarea) { max-width: 100%; min-width: 0; }
+  :is(.main, .modal-card) :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea), #changePasswordModal .cp-overlay .cp-input { font-size: 16px !important; }
+  #changePasswordModal :is(.cp-close, .cp-btn) { min-height: 44px; }
+  #changePasswordModal .cp-close { min-width: 44px; }
+  :is(.main, .modal-card) :is(button, .btn, .btn-primary, .btn-secondary, .btn-primary-blue, .btn-outline, .form-control, .form-control-filter) { min-height: 42px; }
+  .modal-card :is(.idea-progress, .director-progress) { min-width: 0; max-width: 100%; overflow-x: auto; }
+  .modal-card :is(.idea-detail-card, .director-idea-card) { min-width: 0; overflow-wrap: anywhere; }
+
+  @media (max-width: 600px) {
+    .main :is(.form-row, .form-grid, .filter-row, .filters, .info-grid-2),
+    .modal-card :is(.form-row, .form-grid, .checkbox-grid) { grid-template-columns: minmax(0, 1fr) !important; }
+    .modal-card .form-grid > *, .modal-card .form-row > * { grid-column: auto !important; min-width: 0; }
+    .main :is(.filter-group, .task-toolbar, .campaign-toolbar) { width: 100%; }
+    .main .filter-group > :is(input, select), .main .filter-group > form { width: 100% !important; }
+    .main .filter-group { align-items: stretch; }
+    .main form[method="get"] > div { flex: 1 1 100% !important; width: 100%; min-width: 0 !important; max-width: 100%; }
+    .main .dept-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .main .dept-name { width: auto; }
+    .main .dept-count { grid-column: 2; grid-row: 1; width: auto; }
+    .main .dept-bar-track { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+    .main .monitor-row { flex-wrap: wrap; gap: 6px; }
+    .main :is(.ip-rule-form-row, .rule-item) { flex-wrap: wrap; }
+    .main .ip-rule-form-row input { flex-basis: 100% !important; }
+    .main .sticky-footer { position: static; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; border-radius: 12px; }
+    .main .footer-buttons { flex-wrap: wrap; gap: 8px; }
+    .main .footer-buttons > * { flex: 1 1 auto; justify-content: center; }
+    .main .main-workspace { padding-bottom: 24px !important; }
+  }
+}

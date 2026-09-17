@@ -12,14 +12,19 @@ public sealed class AdminITDashboardService : IAdminITDashboardService
     private const string NetworkBlockedAction = "login_blocked_network";
 
     private readonly ApplicationDbContext _context;
+    private readonly ICompanyDashboardService _companyDashboardService;
 
-    public AdminITDashboardService(ApplicationDbContext context)
+    public AdminITDashboardService(
+        ApplicationDbContext context,
+        ICompanyDashboardService companyDashboardService)
     {
         _context = context;
+        _companyDashboardService = companyDashboardService;
     }
 
     public async Task<AdminITDashboardViewModel> GetAsync(
         string? period,
+        string? companyPeriod,
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.Now;
@@ -102,6 +107,7 @@ public sealed class AdminITDashboardService : IAdminITDashboardService
 
         return new AdminITDashboardViewModel
         {
+            CompanyOverview = await _companyDashboardService.GetAsync(companyPeriod, cancellationToken),
             Period = normalizedPeriod,
             PeriodLabel = normalizedPeriod == "week" ? "Tuần này" : "Hôm nay",
             LoginCount = loginCount,

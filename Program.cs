@@ -11,6 +11,7 @@ using HanaMedia.Services.Dashboard;
 using HanaMedia.Services.Security;
 using HanaMedia.Services.Tasks;
 using HanaMedia.Services.Ideas;
+using HanaMedia.Services.Reports;
 
 const string BootstrapAdminArgument = "--bootstrap-admin";
 var bootstrapAdminRequested = args.Any(argument =>
@@ -40,6 +41,8 @@ builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();
 builder.Services.AddScoped<ISystemAuditService, SystemAuditService>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
 builder.Services.AddScoped<IAdminITDashboardService, AdminITDashboardService>();
+builder.Services.AddScoped<ICompanyDashboardService, CompanyDashboardService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IDirectorMonitoringService, DirectorMonitoringService>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<IWorkTaskService, WorkTaskService>();
@@ -48,6 +51,9 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
 builder.Services.AddScoped<IIpAccessControlService, IpAccessControlService>();
 builder.Services.AddSingleton<ISystemConfigService, SystemConfigService>();
+builder.Services.AddScoped<IBusinessConfigService, BusinessConfigService>();
+builder.Services.AddScoped<IIdeaLibraryService, IdeaLibraryService>();
+builder.Services.AddScoped<IDirectorIdeaService, DirectorIdeaService>();
 builder.Services.AddScoped<DevelopmentAdminBootstrapper>();
 builder.Services.AddScoped<AccountCookieEvents>();
 

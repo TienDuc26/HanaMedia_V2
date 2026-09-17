@@ -1,6 +1,6 @@
 {
   "MaxUploadSizeMb": 50,
-  "SessionTimeoutMinutes": 2,
+  "SessionTimeoutMinutes": 15,
   "IpRestrictionEnabled": true,
   "AllowLoopback": false,
   "CurrentClientIpInfo": {
@@ -14,6 +14,6 @@
   "WhitelistRules": [],
   "BlacklistRules": [],
   "WhitelistedIps": [],
-  "UpdatedAt": "2026-09-10T14:53:51.2149028+07:00",
+  "UpdatedAt": "2026-09-14T19:31:00.8499518+07:00",
   "UpdatedBy": "admin_it"
 }

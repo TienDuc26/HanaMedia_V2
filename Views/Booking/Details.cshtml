@@ -1375,7 +1375,7 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const bookingPrice = @Model.BookingPrice;
+    const bookingPrice = @Model.BookingPrice.ToString(System.Globalization.CultureInfo.InvariantCulture);
     const isWritable = @((ViewBag.IsWritable == true).ToString().ToLower());
 
     function updateCalculations() {
@@ -1417,7 +1417,7 @@
             {
                 <text>
                 (function() {
-                  const val = @bw.AllocatedWage;
+                  const val = @bw.AllocatedWage.ToString(System.Globalization.CultureInfo.InvariantCulture);
                   totalAllocated += val;
                   const pctBadge = document.getElementById('pct-@bw.EmployeeId');
                   if (pctBadge) {

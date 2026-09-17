@@ -1,4 +1,5 @@
 using HanaMedia.Constants;
+using HanaMedia.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,9 +15,6 @@ namespace HanaMedia.Controllers
             return View("~/Views/ManageHuman/HumanResources.cshtml");
         }
 
-        public IActionResult Reported()
-        {
-            return View();
-        }
+        public IActionResult Reported() => RedirectToAction("Index", "Reports", new { type = ReportTypes.HumanResources });
     }
 }

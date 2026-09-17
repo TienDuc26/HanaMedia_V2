@@ -47,6 +47,14 @@ public partial class Idea
 
     public string? FeedbackComment { get; set; }
 
+    public string DirectorReviewStatus { get; set; } = "pending";
+
+    public string? DirectorFeedback { get; set; }
+
+    public int? DirectorReviewedByUserId { get; set; }
+
+    public DateTime? DirectorReviewedAt { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

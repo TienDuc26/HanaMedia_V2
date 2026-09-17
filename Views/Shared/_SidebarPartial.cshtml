@@ -17,8 +17,9 @@
 
 <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css" />
 <script src="~/js/session-manager.js"></script>
-
-<aside class="sidebar">
+<partial name="_MobileNavigationPartial" />
+<aside class="sidebar" id="appSidebar" aria-label="Menu điều hướng">
+  <button type="button" class="mobile-menu-close" id="mobileMenuClose" aria-label="Đóng menu điều hướng"><i class="ti ti-x" aria-hidden="true"></i></button>
   <div class="brand">
     <div class="brand-mark">HM</div>
     <div>
@@ -34,7 +35,7 @@
     <div class="nav-section">Tổng quan</div>
     <a href="/Director/Dashboard" class="@ActiveClass("/Director/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Phân công &amp; Duyệt việc</a>
-    <a href="/Director/Report" class="@ActiveClass("/Director/Report")"><i class="ti ti-report-analytics"></i>Báo cáo</a>
+    <a href="/Reports" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo</a>
 
     <div class="nav-section">Nghiệp vụ</div>
     <a href="/Director/HumanResources" class="@ActiveClass("/Director/HumanResources")"><i class="ti ti-users"></i>Nhân sự</a>
@@ -66,7 +67,7 @@
     <div class="nav-section">Vận hành nhân sự</div>
     <a href="/ManageHuman/HumanResources" class="@ActiveClass("/ManageHuman/HumanResources")"><i class="ti ti-users"></i>Hồ sơ nhân sự</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Giao việc &amp; Phân công</a>
-    <a href="/ManageHuman/Repoted" class="@ActiveClass("/ManageHuman/Repoted")"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
+    <a href="/Reports?type=human_resources" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
   }
   else if (role == AppRoles.BookingManager)
   {
@@ -78,7 +79,7 @@
     <a href="/Kols" class="@ActiveClass("/Kols")"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
     <a href="/Bookings" class="@ActiveClass("/Bookings")"><i class="ti ti-star"></i>Quản lý Booking</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
-    <a href="/ManageBooking/Reported" class="@ActiveClass("/ManageBooking/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
+    <a href="/Reports?type=booking" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo Booking</a>
   }
   else if (role == AppRoles.BookingStaff)
   {
@@ -87,7 +88,7 @@
     <a href="/Kols" class="@ActiveClass("/Kols")"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
     <a href="/Bookings" class="@ActiveClass("/Bookings")"><i class="ti ti-star"></i>Nhiệm vụ Booking</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Công việc được giao</a>
-    <a href="/BookingStaff/Reported" class="@ActiveClass("/BookingStaff/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+    <a href="/Reports?type=booking" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
   }
   else if (role == AppRoles.IdeaManager)
   {
@@ -98,7 +99,7 @@
     <a href="/Campaigns" class="@ActiveClass("/Campaigns")"><i class="ti ti-rocket"></i>Chiến dịch liên quan</a>
     <a href="/ManageIdea/Idea" class="@ActiveClass("/ManageIdea/Idea")"><i class="ti ti-bulb"></i>Kho Thư viện Ý tưởng</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Nhân viên &amp; Giao việc</a>
-    <a href="/ManageIdea/Reported" class="@ActiveClass("/ManageIdea/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
+    <a href="/Reports?type=ideas" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo Ý tưởng</a>
   }
   else if (role == AppRoles.IdeaStaff)
   {
@@ -106,7 +107,7 @@
     <a href="/Campaigns" class="@ActiveClass("/Campaigns")"><i class="ti ti-rocket"></i>Chiến dịch liên quan</a>
     <a href="/IdeaStaff/Idea" class="@ActiveClass("/IdeaStaff/Idea")"><i class="ti ti-bulb"></i>Kịch bản &amp; Ý tưởng</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Công việc được giao</a>
-    <a href="/IdeaStaff/Reported" class="@ActiveClass("/IdeaStaff/Reported")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+    <a href="/Reports?type=ideas" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
   }
   else
   {

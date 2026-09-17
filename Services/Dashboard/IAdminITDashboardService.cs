@@ -6,5 +6,6 @@ public interface IAdminITDashboardService
 {
     Task<AdminITDashboardViewModel> GetAsync(
         string? period,
+        string? companyPeriod,
         CancellationToken cancellationToken = default);
 }
