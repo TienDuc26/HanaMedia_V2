@@ -220,6 +220,6 @@ app.MapControllerRoute(
 
 // Lắng nghe trên tất cả IP (để test từ máy khác trong mạng LAN)
 app.Urls.Clear();
-app.Urls.Add("http://0.0.0.0:5028");
+app.Urls.Add("http://0.0.0.0:80");
 
 app.Run();
