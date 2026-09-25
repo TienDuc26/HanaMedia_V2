@@ -34,6 +34,7 @@
   {
     <div class="nav-section">Tổng quan</div>
     <a href="/Director/Dashboard" class="@ActiveClass("/Director/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Phân công &amp; Duyệt việc</a>
     <a href="/Reports" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo</a>
 
@@ -56,6 +57,7 @@
   {
     <div class="nav-section">Tổng quan</div>
     <a href="/AdminIT/Dashboard" class="@ActiveClass("/AdminIT/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
 
     <div class="nav-section">Quản trị hệ thống</div>
     <a href="/AdminIT/Account" class="@ActiveClass("/AdminIT/Account")"><i class="ti ti-users"></i>Quản lý tài khoản</a>
@@ -66,6 +68,7 @@
   {
     <div class="nav-section">Vận hành nhân sự</div>
     <a href="/ManageHuman/HumanResources" class="@ActiveClass("/ManageHuman/HumanResources")"><i class="ti ti-users"></i>Hồ sơ nhân sự</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Giao việc &amp; Phân công</a>
     <a href="/Reports?type=human_resources" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo nhân sự</a>
   }
@@ -73,6 +76,7 @@
   {
     <div class="nav-section">Tổng quan</div>
     <a href="/ManageBooking/Dashboard" class="@ActiveClass("/ManageBooking/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
 
     <div class="nav-section">Nghiệp vụ Booking</div>
     <a href="/Campaigns" class="@ActiveClass("/Campaigns")"><i class="ti ti-rocket"></i>Quản lý Chiến dịch</a>
@@ -84,6 +88,7 @@
   else if (role == AppRoles.BookingStaff)
   {
     <div class="nav-section">Nghiệp vụ của tôi</div>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
     <a href="/Campaigns" class="@ActiveClass("/Campaigns")"><i class="ti ti-rocket"></i>Chiến dịch quảng cáo</a>
     <a href="/Kols" class="@ActiveClass("/Kols")"><i class="ti ti-users-group"></i>Cơ sở dữ liệu KOL/KOC</a>
     <a href="/Bookings" class="@ActiveClass("/Bookings")"><i class="ti ti-star"></i>Nhiệm vụ Booking</a>
@@ -94,6 +99,7 @@
   {
     <div class="nav-section">Tổng quan</div>
     <a href="/ManageIdea/Dashboard" class="@ActiveClass("/ManageIdea/Dashboard")"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
 
     <div class="nav-section">Nghiệp vụ Sáng tạo</div>
     <a href="/Campaigns" class="@ActiveClass("/Campaigns")"><i class="ti ti-rocket"></i>Chiến dịch liên quan</a>
@@ -108,11 +114,35 @@
     <a href="/IdeaStaff/Idea" class="@ActiveClass("/IdeaStaff/Idea")"><i class="ti ti-bulb"></i>Kịch bản &amp; Ý tưởng</a>
     <a href="/Tasks" class="@ActiveClass("/Tasks")"><i class="ti ti-checklist"></i>Công việc được giao</a>
     <a href="/Reports?type=ideas" class="@ActiveClass("/Reports")"><i class="ti ti-report-analytics"></i>Báo cáo hiệu suất</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
+  }
+  else if (role == AppRoles.LegalStaff)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/" class="@ActiveClass("/")"><i class="ti ti-layout-dashboard"></i>Trang chủ</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
+    <div class="nav-section">Nghiệp vụ</div>
+    <div style="padding: 12px 16px; font-size: 12.5px; color: var(--muted);">
+      <i class="ti ti-info-circle" style="margin-right: 4px;"></i>
+      Chức năng nghiệp vụ Pháp lý đang được triển khai.
+    </div>
+  }
+  else if (role == AppRoles.Accountant)
+  {
+    <div class="nav-section">Tổng quan</div>
+    <a href="/" class="@ActiveClass("/")"><i class="ti ti-layout-dashboard"></i>Trang chủ</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
+    <div class="nav-section">Nghiệp vụ</div>
+    <div style="padding: 12px 16px; font-size: 12.5px; color: var(--muted);">
+      <i class="ti ti-info-circle" style="margin-right: 4px;"></i>
+      Chức năng nghiệp vụ Kế toán đang được triển khai.
+    </div>
   }
   else
   {
     <div class="nav-section">Điều hướng</div>
     <a href="/" class="@ActiveClass("/")"><i class="ti ti-layout-dashboard"></i>Trang chủ</a>
+    <a href="/Profile" class="@ActiveClass("/Profile")"><i class="ti ti-user"></i>Hồ sơ cá nhân</a>
   }
   </div>
 

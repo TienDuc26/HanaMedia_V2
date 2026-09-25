@@ -78,3 +78,60 @@ public class EmployeeCreateUpdateDto
     /// </summary>
     public string? AvatarBase64 { get; set; }
 }
+
+public class EmployeeBankAccountDto
+{
+    public string? BankName { get; set; }
+    public string? AccountNumber { get; set; }
+    public string? AccountHolderName { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+
+public class EmployeeBankAccountUpdateDto
+{
+    public string BankName { get; set; } = "";
+    public string AccountNumber { get; set; } = "";
+    public string AccountHolderName { get; set; } = "";
+}
+
+public class EmployeePersonalInfoUpdateDto
+{
+    public string? FullName { get; set; }
+    public DateOnly? Dob { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? AvatarBase64 { get; set; }
+}
+
+public class UserUpdateDto
+{
+    public string? Email { get; set; }
+    public string? AvatarBase64 { get; set; }
+    public string? QrCodeBase64 { get; set; }
+}
+
+public class ProfileViewDto
+{
+    public int EmployeeId { get; set; }
+    public string FullName { get; set; } = "";
+    public string? AvatarUrl { get; set; }
+    public string? QrCodeUrl { get; set; }
+    public DateOnly Dob { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public DateOnly JoinedDate { get; set; }
+    public string Department { get; set; } = "";
+    public string DepartmentName { get; set; } = "";
+    public string Position { get; set; } = "";
+    public string? ManagerName { get; set; }
+    public string ContractType { get; set; } = "";
+    public string ContractTypeLabel { get; set; } = "";
+    public string Status { get; set; } = "";
+    public string StatusLabel { get; set; } = "";
+    public EmployeeBankAccountDto? BankAccount { get; set; }
+    public bool CanEditPersonalInfo { get; set; }
+    public bool CanEditBankAccount { get; set; }
+    public bool CanViewBankAccount { get; set; }
+}

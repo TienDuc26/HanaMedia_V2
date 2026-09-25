@@ -4,6 +4,7 @@ using HanaMedia.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HanaMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260925093428_AddLegalAndAccountantRoles")]
+    partial class AddLegalAndAccountantRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -539,44 +542,6 @@ namespace HanaMedia.Migrations
 
                             t.HasCheckConstraint("chk_emp_status", "[status] IN ('dang_lam_viec', 'thu_viec', 'cho_duyet_nghi', 'ngung_hoat_dong')");
                         });
-                });
-
-            modelBuilder.Entity("HanaMedia.Models.EmployeeBankAccount", b =>
-                {
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("AccountHolderName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("account_holder_name");
-
-                    b.Property<string>("AccountNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)")
-                        .HasColumnName("account_number");
-
-                    b.Property<string>("BankName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("bank_name");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("EmployeeId")
-                        .HasName("PK_employee_bank_accounts");
-
-                    b.HasIndex(new[] { "EmployeeId" }, "UX_employee_bank_accounts_employee_id")
-                        .IsUnique();
-
-                    b.ToTable("employee_bank_accounts", (string)null);
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Idea", b =>
@@ -1115,9 +1080,6 @@ namespace HanaMedia.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
@@ -1147,9 +1109,6 @@ namespace HanaMedia.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("password_hash");
-
-                    b.Property<string>("QrCodeUrl")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -1203,7 +1162,7 @@ namespace HanaMedia.Migrations
 
                     b.ToTable("users", null, t =>
                         {
-                            t.HasCheckConstraint("chk_user_role", "[role] IN ('giam_doc', 'admin_it', 'ql_hcns', 'nv_hcns', 'ql_booking', 'nv_booking', 'ql_y_tuong', 'nv_y_tuong', 'nv_phap_ly', 'nv_ke_toan')");
+                            t.HasCheckConstraint("chk_user_role", "[role] IN ('giam_doc', 'admin_it', 'ql_hcns', 'nv_hcns', 'ql_booking', 'nv_booking', 'ql_y_tuong', 'nv_y_tuong')");
 
                             t.HasCheckConstraint("chk_user_status", "[status] IN ('active', 'locked')");
                         });
@@ -1561,18 +1520,6 @@ namespace HanaMedia.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("HanaMedia.Models.EmployeeBankAccount", b =>
-                {
-                    b.HasOne("HanaMedia.Models.Employee", "Employee")
-                        .WithOne("BankAccount")
-                        .HasForeignKey("HanaMedia.Models.EmployeeBankAccount", "EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_employee_bank_accounts_employees_employee_id");
-
-                    b.Navigation("Employee");
-                });
-
             modelBuilder.Entity("HanaMedia.Models.Idea", b =>
                 {
                     b.HasOne("HanaMedia.Models.Campaign", "Campaign")
@@ -1771,8 +1718,6 @@ namespace HanaMedia.Migrations
             modelBuilder.Entity("HanaMedia.Models.Employee", b =>
                 {
                     b.Navigation("AssignedWorkTasks");
-
-                    b.Navigation("BankAccount");
 
                     b.Navigation("BookingWages");
 

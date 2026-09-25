@@ -67,5 +67,7 @@ public partial class Employee
 
     public virtual User? User { get; set; }
 
+    public virtual EmployeeBankAccount? BankAccount { get; set; }
+
     public virtual ICollection<WorkTask> AssignedWorkTasks { get; set; } = new List<WorkTask>();
 }

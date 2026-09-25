@@ -136,6 +136,120 @@
       margin-top: 8px !important;
     }
 
+    /* ====== DETAIL modal (READ-ONLY) ====== */
+    .detail-section {
+      padding: 12px 18px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .detail-section:last-child { border-bottom: none; }
+    .detail-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .detail-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--blue-200, #bfdbfe);
+      background: var(--blue-50, #eff6ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--blue-600, #2563eb);
+      flex-shrink: 0;
+    }
+    .detail-avatar img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .detail-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0b2545;
+      margin-bottom: 4px;
+    }
+    .detail-sub {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0;
+    }
+    /* Bank card: ép 3 cột cùng 1 hàng như Profile hiện tại */
+    .detail-grid.detail-bank-card {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    @@media (max-width: 720px) {
+      .detail-grid.detail-bank-card {
+        grid-template-columns: 1fr;
+      }
+    }
+    .detail-field {
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .detail-field:nth-last-child(-n+2) { border-bottom: none; }
+    .detail-field .info-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .detail-field .info-value {
+      font-size: 14px;
+      color: #1d2939;
+    }
+    .detail-field .info-value.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+    .detail-qr-wrap {
+      text-align: center;
+      padding: 14px 0 8px !important;
+    }
+    .detail-qr-img {
+      max-width: 220px;
+      max-height: 220px;
+      width: auto;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      object-fit: contain;
+    }
+    .detail-bank-card {
+      border-left: 3px solid var(--green, #16a34a);
+    }
+    @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .ti-loader.spin { animation: spin 1s linear infinite; }
+
     @@media (max-width: 760px) {
       .form-grid { grid-template-columns: 1fr !important; }
       .modal-card { max-width: 100% !important; }
@@ -170,7 +284,6 @@
             <th>Họ và tên</th>
             <th>Phòng ban</th>
             <th>Chức vụ</th>
-            <th>Loại hợp đồng</th>
             <th>Liên hệ (SĐT / Email)</th>
             <th>Ngày vào</th>
             <th>Trạng thái</th>
@@ -178,7 +291,7 @@
           </tr>
         </thead>
         <tbody id="empTbody">
-          <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Đang tải dữ liệu...</td></tr>
+          <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--muted);">Đang tải dữ liệu...</td></tr>
         </tbody>
       </table>
     </div>
@@ -266,6 +379,25 @@
     <div class="modal-footer">
       <button class="btn-mini" onclick="closeModal('addEmpModal')">Hủy</button>
       <button class="btn-mini approve" id="addSaveBtn" onclick="submitAdd()">Thêm nhân viên</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XEM CHI TIẾT NHÂN VIÊN (READ-ONLY) -->
+<div class="modal-backdrop" id="detailEmpModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ti ti-user-circle" style="margin-right:6px;"></i>Chi tiết hồ sơ nhân viên</div>
+      <button class="modal-close" onclick="closeModal('detailEmpModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="detailEmpBody">
+      <div style="padding:40px; text-align:center; color:var(--muted);">
+        <i class="ti ti-loader" style="font-size:28px;"></i>
+        <div style="margin-top:8px;">Đang tải hồ sơ...</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('detailEmpModal')">Đóng</button>
     </div>
   </div>
 </div>
@@ -471,28 +603,29 @@
 
   function renderEmpty(msg) {
     document.getElementById('empTbody').innerHTML =
-      '<tr><td colspan="8" style="text-align:center; padding:30px; color:#b91c1c;">' + escapeHtml(msg || 'Không tải được danh sách.') + '</td></tr>';
+      '<tr><td colspan="7" style="text-align:center; padding:30px; color:#b91c1c;">' + escapeHtml(msg || 'Không tải được danh sách.') + '</td></tr>';
   }
 
   function renderTable(list) {
     if (!list || list.length === 0) {
       document.getElementById('empTbody').innerHTML =
-        '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--muted);">Chưa có nhân viên nào. Hãy bấm "Thêm nhân viên mới".</td></tr>';
+        '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--muted);">Chưa có nhân viên nào. Hãy bấm "Thêm nhân viên mới".</td></tr>';
       return;
     }
     const html = list.map(e => {
+      const safeName = (e.fullName || '').replace(/'/g, "\\'");
       return `
         <tr>
           <td><strong>${escapeHtml(e.fullName)}</strong></td>
           <td><span class="dept-chip">${escapeHtml(e.departmentName || e.department)}</span></td>
           <td>${escapeHtml(e.position)}</td>
-          <td>${escapeHtml(contractLabel(e.contractType))}</td>
           <td>${escapeHtml(e.phone || '')}<br><span style="color:var(--muted); font-size:11.5px;">${escapeHtml(e.email || '')}</span></td>
           <td>${escapeHtml(e.joinedDate || '')}</td>
           <td>${statusBadgeHtml(e.status)}</td>
-          <td style="text-align: right;">
+          <td style="text-align: right; white-space: nowrap;">
+            <button class="btn-mini" onclick="openDetailModal(${e.id})" title="Xem chi tiết"><i class="ti ti-eye"></i> Xem chi tiết</button>
             <button class="btn-mini approve" onclick="openEditModalById(${e.id})">Sửa</button>
-            ${IS_STAFF ? '' : `<button class="btn-mini reject" onclick="deactivateEmp(${e.id}, '${escapeHtml(e.fullName).replace(/'/g, "\\'")}')">Ngừng việc</button>`}
+            ${IS_STAFF ? '' : `<button class="btn-mini reject" onclick="deactivateEmp(${e.id}, '${safeName}')">Ngừng việc</button>`}
           </td>
         </tr>`;
     }).join('');
@@ -728,6 +861,151 @@
       if (!ok || !json.success) { alert((json && json.message) || 'Thất bại.'); return; }
       await loadList();
     } catch (e) { alert(e.message); }
+  }
+
+  // --- Xem chi tiết (modal READ-ONLY) ---
+  function openDetailModal(id) {
+    const modal = document.getElementById('detailEmpModal');
+    const body = document.getElementById('detailEmpBody');
+    if (!modal || !body) return;
+
+    // Reset nội dung cũ để không giữ data của Employee trước
+    body.innerHTML =
+      '<div style="padding:40px; text-align:center; color:var(--muted);">' +
+        '<i class="ti ti-loader spin"></i>' +
+        '<div style="margin-top:8px;">Đang tải hồ sơ...</div>' +
+      '</div>';
+    openModal('detailEmpModal');
+
+    // Disable nút mở để chặn double-click
+    const trigger = document.querySelector('button[onclick="openDetailModal(' + id + ')"]');
+    if (trigger) trigger.disabled = true;
+
+    fetch(API_BASE + '/ApiDetail/' + id, {
+      method: 'GET',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) {
+        if (r.status === 403) throw new Error('Bạn không có quyền xem hồ sơ này.');
+        if (r.status === 404) throw new Error('Không tìm thấy nhân viên.');
+        if (!r.ok) throw new Error('Không thể tải thông tin nhân viên. Vui lòng thử lại.');
+        return r.json();
+      })
+      .then(function (j) {
+        if (!j || !j.success || !j.data) throw new Error('Phản hồi không hợp lệ.');
+        renderDetailIntoModal(j.data, body);
+      })
+      .catch(function (e) {
+        body.innerHTML =
+          '<div style="padding:30px; text-align:center;">' +
+            '<i class="ti ti-alert-triangle" style="font-size:32px; color:#b91c1c;"></i>' +
+            '<div style="margin-top:8px; color:#b91c1c;">' + escapeHtml(e.message) + '</div>' +
+          '</div>';
+      })
+      .finally(function () {
+        if (trigger) trigger.disabled = false;
+      });
+  }
+
+  function fmtDateVi(iso) {
+    if (!iso || (typeof iso === 'string' && iso.indexOf('0001-01-01') === 0)) return '—';
+    try {
+      const d = new Date(iso + 'T00:00:00');
+      if (isNaN(d.getTime())) return escapeHtml(iso);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return dd + '/' + mm + '/' + d.getFullYear();
+    } catch (e) { return escapeHtml(iso); }
+  }
+
+  function renderDetailIntoModal(d, body) {
+    const hasBank = !!(d.bankName || d.accountNumber || d.accountHolderName);
+    const hasAnyBankField = hasBank || !!d.qrCodeUrl;
+
+    const bankSection = (function () {
+      const bankNameHtml = d.bankName ? escapeHtml(d.bankName) : '<span class="empty">Chưa cập nhật</span>';
+      const accHtml = d.accountNumber ? escapeHtml(d.accountNumber) : '<span class="empty">Chưa cập nhật</span>';
+      const holderHtml = d.accountHolderName ? escapeHtml(d.accountHolderName) : '<span class="empty">Chưa cập nhật</span>';
+
+      let qrHtml;
+      if (d.qrCodeUrl) {
+        qrHtml = '<img src="' + escapeHtml(d.qrCodeUrl) + '" alt="QR" class="detail-qr-img" onerror="this.outerHTML=\'<div style=&quot;color:var(--muted);font-size:13.5px;&quot;><i class=&quot;ti ti-qrcode&quot; style=&quot;font-size:48px;opacity:0.3;&quot;></i><div style=&quot;margin-top:8px;&quot;>Chưa cập nhật</div></div>\'">';
+      } else {
+        qrHtml =
+          '<div style="color:var(--muted); font-size:13.5px;">' +
+            '<i class="ti ti-qrcode" style="font-size:48px;opacity:0.3;"></i>' +
+            '<div style="margin-top:8px;">Chưa cập nhật</div>' +
+          '</div>';
+      }
+
+      return '' +
+        '<div class="detail-section">' +
+          '<div class="detail-section-title"><i class="ti ti-building-bank"></i> Tài khoản nhận lương</div>' +
+          '<div class="detail-grid detail-bank-card">' +
+            '<div class="detail-field"><div class="info-label">Tên ngân hàng</div><div class="info-value">' + bankNameHtml + '</div></div>' +
+            '<div class="detail-field"><div class="info-label">Số tài khoản</div><div class="info-value">' + accHtml + '</div></div>' +
+            '<div class="detail-field"><div class="info-label">Tên chủ tài khoản</div><div class="info-value">' + holderHtml + '</div></div>' +
+            '<div class="detail-field detail-qr-wrap" style="grid-column: 1 / -1;">' +
+              '<div class="info-label" style="margin-bottom:8px;">Ảnh QR nhận lương</div>' +
+              qrHtml +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    })();
+
+    const statusChip = statusBadgeHtml(d.status);
+
+    const managerHtml = d.managerName
+      ? escapeHtml(d.managerName) + (d.managerPosition ? ' <span style="color:var(--muted); font-size:12px;">— ' + escapeHtml(d.managerPosition) + '</span>' : '')
+      : '<span class="empty">— chưa có —</span>';
+
+    const html = '' +
+      // HEADER
+      '<div class="detail-header">' +
+        '<div class="detail-avatar">' +
+          (d.avatarUrl
+            ? '<img src="' + escapeHtml(d.avatarUrl) + '" alt="" onerror="this.outerHTML=\'' + escapeHtml((d.fullName || '?').charAt(0).toUpperCase()) + '\'">'
+            : escapeHtml((d.fullName || '?').charAt(0).toUpperCase())) +
+        '</div>' +
+        '<div style="flex:1; min-width:0;">' +
+          '<div class="detail-name">' + escapeHtml(d.fullName || '') + '</div>' +
+          '<div class="detail-sub">' +
+            '<span><i class="ti ti-briefcase"></i> ' + (d.position ? escapeHtml(d.position) : '<span class="empty">—</span>') + '</span>' +
+            '<span><i class="ti ti-building"></i> ' + (d.departmentName ? escapeHtml(d.departmentName) : '<span class="empty">—</span>') + '</span>' +
+            '<span>' + statusChip + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // THÔNG TIN CÁ NHÂN
+      '<div class="detail-section">' +
+        '<div class="detail-section-title"><i class="ti ti-user"></i> Thông tin cá nhân</div>' +
+        '<div class="detail-grid">' +
+          '<div class="detail-field"><div class="info-label">Ngày sinh</div><div class="info-value">' + fmtDateVi(d.dob) + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Số điện thoại</div><div class="info-value">' + (d.phone ? escapeHtml(d.phone) : '<span class="empty">— chưa cập nhật —</span>') + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Email</div><div class="info-value">' + (d.email ? escapeHtml(d.email) : '<span class="empty">— chưa cập nhật —</span>') + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Địa chỉ</div><div class="info-value">' + (d.address ? escapeHtml(d.address) : '<span class="empty">— chưa cập nhật —</span>') + '</div></div>' +
+        '</div>' +
+      '</div>' +
+
+      // THÔNG TIN CÔNG VIỆC
+      '<div class="detail-section">' +
+        '<div class="detail-section-title"><i class="ti ti-briefcase"></i> Thông tin công việc</div>' +
+        '<div class="detail-grid">' +
+          '<div class="detail-field"><div class="info-label">Ngày vào công ty</div><div class="info-value">' + fmtDateVi(d.joinedDate) + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Phòng ban</div><div class="info-value">' + (d.departmentName ? escapeHtml(d.departmentName) : '<span class="empty">—</span>') + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Chức vụ</div><div class="info-value">' + (d.position ? escapeHtml(d.position) : '<span class="empty">—</span>') + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Người quản lý</div><div class="info-value">' + managerHtml + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Loại hợp đồng</div><div class="info-value">' + escapeHtml(contractLabel(d.contractType) || '—') + '</div></div>' +
+          '<div class="detail-field"><div class="info-label">Trạng thái</div><div class="info-value">' + statusChip + '</div></div>' +
+        '</div>' +
+      '</div>' +
+
+      // TÀI KHOẢN NHẬN LƯƠNG
+      bankSection;
+
+    body.innerHTML = html;
   }
 
   // --- Tìm kiếm ---

@@ -1,0 +1,182 @@
+@model HanaMedia.Models.Dto.ProfileViewDto
+@*
+  Partial tái sử dụng cho:
+    - Trang Hồ sơ cá nhân (Profile/Index.cshtml)
+    - Modal "Chi tiết hồ sơ nhân viên" (Xem chi tiết từ DANH SÁCH)
+
+  Tham số:
+    ShowEditButtons (bool, optional, mặc định false): bật nút Sửa nếu cần.
+    ReadOnly (bool, optional, mặc định true): ẩn các nút edit cho modal.
+    ShowEditPersonal (bool, optional, mặc định !ReadOnly && Model.CanEditPersonalInfo).
+    ShowEditBank (bool, optional, mặc định !ReadOnly && Model.CanEditBankAccount).
+
+  Nếu ShowEditButtons = true → hiện nút Sửa avatar/QR + nút Sửa bank account.
+  Mặc định ở modal là read-only nên không hiện nút.
+*@
+@{
+    var readOnly = ViewData["ReadOnly"] as bool? ?? false;
+    var showEditPersonal = ViewData["ShowEditPersonal"] as bool? ?? (!readOnly && Model.CanEditPersonalInfo);
+    var showEditBank = ViewData["ShowEditBank"] as bool? ?? (!readOnly && Model.CanEditBankAccount);
+}
+
+@* ─── HEADER EMPLOYEE ─── *@
+<div class="card" style="padding: 0;">
+    <div class="profile-header">
+        <div class="profile-avatar-wrap">
+            @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+            {
+                <img src="@Model.AvatarUrl" alt="Avatar" class="profile-avatar" data-profile-avatar-img />
+            }
+            else
+            {
+                <div class="profile-avatar">@(string.IsNullOrEmpty(Model.FullName) ? "?" : Model.FullName.Substring(0, 1).ToUpper())</div>
+            }
+            @if (showEditPersonal)
+            {
+                <button class="btn-mini" style="position:absolute;bottom:0;right:0;border-radius:50%;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;" onclick="openEditPersonalModal()" title="Đổi ảnh đại diện">
+                    <i class="ti ti-camera" style="font-size:13px;"></i>
+                </button>
+            }
+        </div>
+        <div class="profile-meta">
+            <div class="profile-name" data-profile-name>@Model.FullName</div>
+            <div class="profile-sub">
+                <span><i class="ti ti-briefcase"></i> @Model.Position</span>
+                <span><i class="ti ti-building"></i> @Model.DepartmentName</span>
+                @if (!string.IsNullOrEmpty(Model.StatusLabel))
+                {
+                    <span class="status-chip @(Model.Status == "dang_lam_viec" ? "status-good" : (Model.Status == "thu_viec" ? "status-warn" : "status-bad"))">@Model.StatusLabel</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ─── THÔNG TIN CÁ NHÂN ─── *@
+@if (Model.EmployeeId > 0)
+{
+    <div class="card info-section" style="padding: 0; margin-top: 16px;">
+        <div class="card-header-custom"><i class="ti ti-user"></i> Thông tin cá nhân</div>
+        <div class="info-grid">
+            <div class="info-field">
+                <div class="info-label">Ngày sinh</div>
+                <div class="info-value @(Model.Dob == default ? "empty" : "")" data-profile-dob>@(Model.Dob == default ? "—" : Model.Dob.ToString("dd/MM/yyyy"))</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Số điện thoại</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.Phone) ? "empty" : "")" data-profile-phone>@(string.IsNullOrEmpty(Model.Phone) ? "— chưa cập nhật —" : Model.Phone)</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Email cá nhân</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.Email) ? "empty" : "")" data-profile-email>@(string.IsNullOrEmpty(Model.Email) ? "— chưa cập nhật —" : Model.Email)</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Địa chỉ</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.Address) ? "empty" : "")" data-profile-address>@(string.IsNullOrEmpty(Model.Address) ? "— chưa cập nhật —" : Model.Address)</div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ─── THÔNG TIN CÔNG VIỆC ─── *@
+@if (Model.EmployeeId > 0)
+{
+    <div class="card info-section" style="padding: 0; margin-top: 16px;">
+        <div class="card-header-custom"><i class="ti ti-briefcase"></i> Thông tin công việc</div>
+        <div class="info-grid">
+            <div class="info-field">
+                <div class="info-label">Ngày vào công ty</div>
+                <div class="info-value @(Model.JoinedDate == default ? "empty" : "")">@(Model.JoinedDate == default ? "—" : Model.JoinedDate.ToString("dd/MM/yyyy"))</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Phòng ban</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.DepartmentName) ? "empty" : "")">@(string.IsNullOrEmpty(Model.DepartmentName) ? "—" : Model.DepartmentName)</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Chức vụ</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.Position) ? "empty" : "")">@(string.IsNullOrEmpty(Model.Position) ? "—" : Model.Position)</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Người quản lý</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.ManagerName) ? "empty" : "")">@(string.IsNullOrEmpty(Model.ManagerName) ? "— chưa có —" : Model.ManagerName)</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Loại hợp đồng</div>
+                <div class="info-value @(string.IsNullOrEmpty(Model.ContractTypeLabel) ? "empty" : "")">@(string.IsNullOrEmpty(Model.ContractTypeLabel) ? "—" : Model.ContractTypeLabel)</div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Trạng thái</div>
+                <div class="info-value">
+                    @if (!string.IsNullOrEmpty(Model.StatusLabel))
+                    {
+                        <span class="status-chip @(Model.Status == "dang_lam_viec" ? "status-good" : (Model.Status == "thu_viec" ? "status-warn" : "status-bad"))">@Model.StatusLabel</span>
+                    }
+                    else
+                    {
+                        <span class="empty">—</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ─── TÀI KHOẢN NHẬN LƯƠNG ─── *@
+@if (Model.EmployeeId > 0)
+{
+    <div class="card info-section" style="padding: 0; margin-top: 16px;">
+        <div class="card-header-custom" style="justify-content: space-between;">
+            <span><i class="ti ti-building-bank"></i> Tài khoản nhận lương</span>
+            @if (showEditBank)
+            {
+                <button class="btn-mini" style="padding: 4px 12px; font-size: 12px;" onclick="openEditBankModal()">
+                    <i class="ti ti-edit"></i> Sửa
+                </button>
+            }
+        </div>
+        @if (Model.BankAccount != null)
+        {
+            <div class="info-grid bank-card">
+                <div class="info-field">
+                    <div class="info-label">Tên ngân hàng</div>
+                    <div class="info-value">@Model.BankAccount.BankName</div>
+                </div>
+                <div class="info-field">
+                    <div class="info-label">Số tài khoản</div>
+                    <div class="info-value">@Model.BankAccount.AccountNumber</div>
+                </div>
+                <div class="info-field">
+                    <div class="info-label">Tên chủ tài khoản</div>
+                    <div class="info-value">@Model.BankAccount.AccountHolderName</div>
+                </div>
+                <div class="info-field bank-qr-wrap" style="grid-column: 1 / -1; text-align:center; padding: 20px 0 12px;">
+                    <div class="info-label" style="margin-bottom: 10px;">Ảnh QR nhận lương</div>
+                    @if (!string.IsNullOrEmpty(Model.QrCodeUrl))
+                    {
+                        <img src="@Model.QrCodeUrl" alt="QR nhận lương" class="qr-preview-img" data-profile-qr-img style="max-width:280px;max-height:280px;width:auto;height:auto;">
+                    }
+                    else
+                    {
+                        <div style="color: var(--muted); font-size:13.5px;">
+                            <i class="ti ti-qrcode" style="font-size:48px;opacity:0.3;"></i>
+                            <div style="margin-top:8px;">Chưa có ảnh QR nhận lương.</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="bank-empty">
+                <i class="ti ti-info-circle" style="color: var(--muted);"></i>
+                Chưa cập nhật thông tin tài khoản nhận lương.
+                @if (showEditBank)
+                {
+                    <button class="btn-mini approve" style="margin-left: 8px; padding: 4px 12px;" onclick="openEditBankModal()">
+                        <i class="ti ti-plus"></i> Cập nhật ngay
+                    </button>
+                }
+            </div>
+        }
+    </div>
+}

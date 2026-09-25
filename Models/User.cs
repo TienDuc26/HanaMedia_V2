@@ -17,6 +17,10 @@ public partial class User
 
     public string Status { get; set; } = "active";
 
+    public string? AvatarUrl { get; set; }
+
+    public string? QrCodeUrl { get; set; }
+
     public string SecurityStamp { get; set; } = string.Empty;
 
     public DateTime? CreatedAt { get; set; }

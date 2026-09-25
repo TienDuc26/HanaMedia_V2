@@ -11,6 +11,7 @@ using HanaMedia.Services.Dashboard;
 using HanaMedia.Services.Security;
 using HanaMedia.Services.Tasks;
 using HanaMedia.Services.Ideas;
+using HanaMedia.Services.Profile;
 using HanaMedia.Services.Reports;
 
 const string BootstrapAdminArgument = "--bootstrap-admin";
@@ -35,6 +36,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<EmployeeAvatarService>();
+builder.Services.AddScoped<IImageProcessingService, ImageProcessingService>();
+builder.Services.AddScoped<UserMediaService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 // Read-only compatibility for existing Identity hashes. New/reset passwords stay SHA-256.
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAccountPasswordService, AccountPasswordService>();
@@ -74,6 +78,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.EventsType = typeof(AccountCookieEvents);
     });
 builder.Services.AddAuthorization();
+
+// Kestrel & Form options cho phép upload file lớn (Avatar/QR cùng form tối đa ~25MB mỗi cái).
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 64 * 1024 * 1024; // 64 MB cho request body
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 64 * 1024 * 1024; // 64 MB
+});
 
 var app = builder.Build();
 
@@ -227,5 +242,5 @@ app.MapControllerRoute(
 // Lắng nghe trên tất cả IP (để test từ máy khác trong mạng LAN)
 app.Urls.Clear();
 app.Urls.Add("http://0.0.0.0:80");
-
+app.Urls.Add("http://0.0.0.0:5028");
 app.Run();

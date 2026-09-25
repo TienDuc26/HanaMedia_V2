@@ -27,6 +27,7 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<Campaign> Campaigns { get; set; }
     public virtual DbSet<Department> Departments { get; set; }
     public virtual DbSet<Employee> Employees { get; set; }
+    public virtual DbSet<EmployeeBankAccount> EmployeeBankAccounts { get; set; }
     public virtual DbSet<Idea> Ideas { get; set; }
 
     public virtual DbSet<IdeaComment> IdeaComments { get; set; }
@@ -681,7 +682,7 @@ public partial class ApplicationDbContext : DbContext
             {
                 table.HasCheckConstraint(
                     "chk_user_role",
-                    "[role] IN ('giam_doc', 'admin_it', 'ql_hcns', 'nv_hcns', 'ql_booking', 'nv_booking', 'ql_y_tuong', 'nv_y_tuong')");
+                    "[role] IN ('giam_doc', 'admin_it', 'ql_hcns', 'nv_hcns', 'ql_booking', 'nv_booking', 'ql_y_tuong', 'nv_y_tuong', 'nv_phap_ly', 'nv_ke_toan')");
                 table.HasCheckConstraint(
                     "chk_user_status",
                     "[status] IN ('active', 'locked')");
@@ -851,6 +852,36 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(e => e.ReviewedByUser).WithMany()
                 .HasForeignKey(e => e.ReviewedByUserId).OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_work_task_submissions_users_reviewed_by_user_id");
+        });
+
+        modelBuilder.Entity<EmployeeBankAccount>(entity =>
+        {
+            entity.ToTable("employee_bank_accounts");
+            entity.HasKey(e => e.EmployeeId).HasName("PK_employee_bank_accounts");
+            entity.HasIndex(e => e.EmployeeId, "UX_employee_bank_accounts_employee_id").IsUnique();
+
+            entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
+            entity.Property(e => e.BankName)
+                .HasMaxLength(100)
+                .HasColumnName("bank_name")
+                .IsRequired();
+            entity.Property(e => e.AccountNumber)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("account_number")
+                .IsRequired();
+            entity.Property(e => e.AccountHolderName)
+                .HasMaxLength(200)
+                .HasColumnName("account_holder_name")
+                .IsRequired();
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime2")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(e => e.Employee).WithOne(p => p.BankAccount)
+                .HasForeignKey<EmployeeBankAccount>(e => e.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_employee_bank_accounts_employees_employee_id");
         });
 
         OnModelCreatingPartial(modelBuilder);

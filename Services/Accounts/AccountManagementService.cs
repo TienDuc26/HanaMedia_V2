@@ -166,6 +166,11 @@ public sealed class AccountManagementService : IAccountManagementService
             return Failure("Vai trò được chọn không hợp lệ.");
         }
 
+        if (input.Role == AppRoles.Director)
+        {
+            return Failure("Không thể gán vai trò Giám đốc cho tài khoản mới.");
+        }
+
         if (string.IsNullOrEmpty(input.InitialPassword) || input.InitialPassword.Length is < 8 or > 100)
         {
             return Failure("Mật khẩu khởi tạo phải có từ 8 đến 100 ký tự.");
@@ -289,6 +294,11 @@ public sealed class AccountManagementService : IAccountManagementService
                 await IsLastActiveAdminAsync(user.Id, cancellationToken))
             {
                 return Failure("Không thể hạ quyền AdminIT đang hoạt động cuối cùng.");
+            }
+
+            if (input.Role == AppRoles.Director)
+            {
+                return Failure("Không thể gán vai trò Giám đốc cho tài khoản khác.");
             }
 
             var previousRole = user.Role;

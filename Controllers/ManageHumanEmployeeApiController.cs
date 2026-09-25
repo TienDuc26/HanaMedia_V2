@@ -203,7 +203,6 @@ namespace HanaMedia.Controllers
                     DepartmentName = deptName ?? e.Department,
                     e.Position,
                     ManagerName = e.ManagerId.HasValue ? managerName : null,
-                    e.ContractType,
                     e.Status,
                     JoinedDate = e.JoinedDate.ToString("yyyy-MM-dd"),
                     e.CreatedAt
@@ -257,6 +256,91 @@ namespace HanaMedia.Controllers
                     e.Status,
                     JoinedDate = e.JoinedDate.ToString("yyyy-MM-dd"),
                     e.CreatedAt
+                }
+            });
+        }
+
+        // GET: /ManageHuman/ApiEmployee/ApiDetail/{id}
+        // Detail đầy đủ cho modal "Xem chi tiết": gồm ngân hàng + QR (chỉ trả về khi user thuộc
+        // nhóm QL HCNS / NV HCNS đã được controller-level Authorize xác nhận).
+        // AsNoTracking + projection để không load graph nặng.
+        [HttpGet("ApiDetail/{id:int}")]
+        public async Task<IActionResult> ApiDetail(int id)
+        {
+            var detail = await _db.Employees.AsNoTracking()
+                .Where(e => e.Id == id)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.FullName,
+                    e.AvatarUrl,
+                    Dob = e.Dob.ToString("yyyy-MM-dd"),
+                    e.Phone,
+                    e.Email,
+                    e.Address,
+                    e.Department,
+                    e.Position,
+                    e.ManagerId,
+                    e.ContractType,
+                    e.Status,
+                    JoinedDate = e.JoinedDate.ToString("yyyy-MM-dd"),
+                    QrCodeUrl = _db.Users
+                        .Where(u => e.UserId != null && u.Id == e.UserId)
+                        .Select(u => u.QrCodeUrl)
+                        .FirstOrDefault(),
+                    Bank = _db.EmployeeBankAccounts
+                        .Where(b => b.EmployeeId == e.Id)
+                        .Select(b => new
+                        {
+                            b.BankName,
+                            b.AccountNumber,
+                            b.AccountHolderName
+                        })
+                        .FirstOrDefault(),
+                    Manager = e.ManagerId == null ? null : _db.Employees
+                        .Where(m => m.Id == e.ManagerId)
+                        .Select(m => new { m.Id, m.FullName, m.Position })
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
+            if (detail == null)
+                return NotFound(new { success = false, message = "Không tìm thấy nhân viên." });
+
+            string? deptName = null;
+            if (!string.IsNullOrEmpty(detail.Department))
+            {
+                deptName = await _db.Departments.AsNoTracking()
+                    .Where(d => d.Code == detail.Department)
+                    .Select(d => d.Name)
+                    .FirstOrDefaultAsync();
+            }
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    detail.Id,
+                    detail.FullName,
+                    detail.AvatarUrl,
+                    detail.Dob,
+                    detail.Phone,
+                    detail.Email,
+                    detail.Address,
+                    detail.Department,
+                    DepartmentName = deptName ?? detail.Department,
+                    detail.Position,
+                    detail.ManagerId,
+                    ManagerName = detail.Manager?.FullName,
+                    ManagerPosition = detail.Manager?.Position,
+                    detail.ContractType,
+                    detail.Status,
+                    detail.JoinedDate,
+                    detail.QrCodeUrl,
+                    BankName = detail.Bank?.BankName,
+                    AccountNumber = detail.Bank?.AccountNumber,
+                    AccountHolderName = detail.Bank?.AccountHolderName
                 }
             });
         }

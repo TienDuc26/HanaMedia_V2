@@ -12,6 +12,8 @@ public static class AppRoles
     public const string BookingStaff = "nv_booking";
     public const string IdeaManager = "ql_y_tuong";
     public const string IdeaStaff = "nv_y_tuong";
+    public const string LegalStaff = "nv_phap_ly";
+    public const string Accountant = "nv_ke_toan";
 
     private static readonly IReadOnlyDictionary<string, string> RoleLabels =
         new ReadOnlyDictionary<string, string>(
@@ -24,7 +26,9 @@ public static class AppRoles
                 [BookingManager] = "Quản lý Booking",
                 [BookingStaff] = "Nhân viên Booking",
                 [IdeaManager] = "Quản lý Ý tưởng",
-                [IdeaStaff] = "Nhân viên Ý tưởng"
+                [IdeaStaff] = "Nhân viên Ý tưởng",
+                [LegalStaff] = "Nhân viên Pháp lý",
+                [Accountant] = "Nhân viên Kế toán"
             });
 
     public static IReadOnlyList<string> All { get; } = Array.AsReadOnly(
@@ -36,7 +40,9 @@ public static class AppRoles
         BookingManager,
         BookingStaff,
         IdeaManager,
-        IdeaStaff
+        IdeaStaff,
+        LegalStaff,
+        Accountant
     ]);
 
     public static IReadOnlyDictionary<string, string> Labels => RoleLabels;

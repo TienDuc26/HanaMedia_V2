@@ -1,0 +1,508 @@
+@model HanaMedia.Models.Dto.ProfileViewDto
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Hồ sơ cá nhân</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/components.css" asp-append-version="true">
+  @Html.AntiForgeryToken()
+  <style>
+    .modal-backdrop {
+      position: fixed !important; inset: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      background: rgba(11, 37, 69, 0.45) !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+      z-index: 10000 !important; padding: 16px !important; box-sizing: border-box !important;
+    }
+    .modal-backdrop.active { pointer-events: auto !important; }
+    .modal-backdrop .modal-card {
+      display: flex !important; flex-direction: column !important;
+      background: #fff !important; border-radius: 12px !important;
+      width: 100% !important; max-width: 640px !important;
+      height: auto !important; max-height: calc(100vh - 32px) !important;
+      min-height: 0 !important; box-sizing: border-box !important;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2) !important; overflow: hidden !important;
+    }
+    .modal-card .modal-header {
+      flex: 0 0 auto !important; display: flex !important;
+      align-items: center !important; justify-content: space-between !important;
+      padding: 14px 18px !important; border-bottom: 1px solid #e5e7eb !important;
+      background: #fff !important;
+    }
+    .modal-title { font-size: 16px !important; font-weight: 700 !important; color: #0b2545 !important; line-height: 1.2 !important; }
+    .modal-close { background: none !important; border: 0 !important; font-size: 20px !important; cursor: pointer !important; color: #6b7280 !important; padding: 4px 8px !important; }
+    .modal-card .modal-body {
+      flex: 1 1 auto !important; min-height: 0 !important;
+      overflow-y: auto !important; overflow-x: hidden !important;
+      padding: 16px 18px !important; background: #fff !important; box-sizing: border-box !important;
+    }
+    .modal-card .modal-footer {
+      flex: 0 0 auto !important; display: flex !important;
+      justify-content: flex-end !important; gap: 8px !important;
+      padding: 12px 18px !important; border-top: 1px solid #e5e7eb !important;
+    }
+    .form-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; column-gap: 14px !important; row-gap: 0 !important; }
+    .form-group { margin-bottom: 12px !important; }
+    .form-control {
+      width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+      padding: 8px 10px !important; font-size: 14px !important;
+      border: 1px solid #d1d5db !important; border-radius: 8px !important; background: #fff !important;
+    }
+    input[type="file"].form-control { padding: 6px 8px !important; font-size: 13px !important; }
+    .form-error {
+      max-height: 140px !important; overflow-y: auto !important; word-break: break-word !important;
+      color: #b91c1c !important; font-size: 12px !important;
+      padding: 8px 10px !important; background: #fef2f2 !important;
+      border: 1px solid #fecaca !important; border-radius: 6px !important; margin-top: 8px !important;
+    }
+    .profile-header { display: flex; align-items: center; gap: 20px; padding: 20px 24px; border-bottom: 1px solid #e5e7eb; }
+    .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+    .profile-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--blue-200, #bfdbfe); background: var(--blue-50, #eff6ff); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: var(--blue-600, #2563eb); }
+    .profile-avatar img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+    .profile-meta { flex: 1; }
+    .profile-name { font-size: 20px; font-weight: 700; color: #0b2545; margin-bottom: 4px; }
+    .profile-sub { font-size: 13.5px; color: var(--muted); }
+    .profile-sub span { margin-right: 12px; }
+    .info-section { margin-top: 0; }
+    .info-section .card-header-custom {
+      padding: 12px 20px; border-bottom: 1px solid #e5e7eb;
+      font-size: 13.5px; font-weight: 700; color: #0b2545;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; padding: 4px 0; }
+    .info-field { padding: 10px 20px; border-bottom: 1px solid #f3f4f6; }
+    .info-field:last-child { border-bottom: none; }
+    .info-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .info-value { font-size: 14px; color: #1d2939; }
+    .info-value.empty { color: var(--muted); font-style: italic; }
+    .bank-card { border-left: 3px solid var(--green, #16a34a); display: flex; flex-wrap: wrap; }
+    .bank-card > .info-field { flex: 1 1 0; min-width: 220px; border-right: 1px solid #f3f4f6; }
+    .bank-card > .info-field:last-child { border-right: none; }
+    .bank-card > .info-field.bank-qr-wrap { flex: 1 1 100%; border-right: none; }
+    .bank-empty { padding: 20px 24px; color: var(--muted); font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+    .avatar-preview-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .account-number-masked { font-family: monospace; letter-spacing: 1px; }
+    .qr-section { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; }
+    .qr-preview-img { max-width: 160px; max-height: 160px; border-radius: 8px; border: 1px solid #e5e7eb; object-fit: contain; background: #f9fafb; }
+    .no-record-banner {
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+      padding: 12px 16px; margin: 16px 20px 0; font-size: 13.5px; color: #92400e;
+      display: flex; align-items: center; gap: 8px;
+    }
+    <text>
+    @@media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr !important; }
+      .profile-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+    </text>
+  </style>
+</head>
+<body>
+<div class="layout">
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Hồ sơ cá nhân</div>
+        <div class="page-sub">Thông tin cá nhân, công việc và tài khoản nhận lương của bạn</div>
+      </div>
+    </div>
+
+    @if (Model.EmployeeId == 0)
+    {
+    <div class="no-record-banner">
+      <i class="ti ti-info-circle"></i>
+      Tài khoản này chưa được liên kết với hồ sơ nhân viên. Vui lòng liên hệ phòng HCNS để được cập nhật.
+    </div>
+    }
+
+    @await Html.PartialAsync("_EmployeeProfileDetails", Model, new ViewDataDictionary(ViewData) { ["ReadOnly"] = false })
+  </main>
+</div>
+
+<!-- MODAL CHỈNH SỬA THÔNG TIN + AVATAR -->
+<div class="modal-backdrop" id="editPersonalModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Chỉnh sửa thông tin cá nhân</div>
+      <button class="modal-close" onclick="closeModal('editPersonalModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      @* Avatar upload *@
+      <div class="form-group">
+        <label>Ảnh đại diện hiện tại</label>
+        <div id="perAvatarPreview" class="avatar-preview-wrap"></div>
+        <label>Thay ảnh đại diện (JPG/PNG/WEBP, tối đa 25 MB) — để trống nếu giữ nguyên</label>
+        <input type="file" id="perAvatar" accept="image/jpeg,image/png,image/webp" class="form-control" onchange="previewAvatarFile(this, 'perAvatarImg')">
+      </div>
+
+      @* QR code upload *@
+      <div class="form-group">
+        <label>QR nhận lương hiện tại</label>
+        <div id="perQrPreview" style="margin-bottom:6px;">
+          @if (!string.IsNullOrEmpty(Model.QrCodeUrl))
+          {
+            <img id="perQrImg" src="@Model.QrCodeUrl" alt="QR" style="height:80px;border-radius:8px;border:1px solid #e5e7eb;object-fit:contain;background:#f9fafb;">
+          }
+          else
+          {
+            <span id="perQrImg" style="color:var(--muted);font-size:12px;">Chưa có ảnh QR.</span>
+          }
+        </div>
+        <label>Thay ảnh QR (JPG/PNG/WEBP, tối đa 25 MB) — để trống nếu giữ nguyên</label>
+        <input type="file" id="perQrCode" accept="image/jpeg,image/png,image/webp" class="form-control" onchange="previewAvatarFile(this, 'perQrImg')">
+      </div>
+
+      @if (Model.EmployeeId == 0)
+      {
+      @* Chỉ hiển thị trường email khi không có Employee *@
+      <div class="form-group">
+        <label>Email cá nhân</label>
+        <input type="email" id="perEmail" class="form-control" placeholder="Nhập email cá nhân...">
+      </div>
+      }
+      else
+      {
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Họ và tên</label>
+          <input type="text" id="perFullName" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Ngày sinh</label>
+          <input type="date" id="perDob" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Số điện thoại</label>
+          <input type="text" id="perPhone" class="form-control" placeholder="Nhập số điện thoại...">
+        </div>
+        <div class="form-group">
+          <label>Email cá nhân</label>
+          <input type="email" id="perEmail" class="form-control" placeholder="Nhập email...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Địa chỉ</label>
+        <input type="text" id="perAddress" class="form-control" placeholder="Nhập địa chỉ...">
+      </div>
+      }
+
+      <div id="perErr" class="form-error" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('editPersonalModal')">Hủy</button>
+      <button class="btn-mini approve" id="perSaveBtn" onclick="submitPersonalInfo()">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHỈNH SỬA TÀI KHOẢN NGÂN HÀNG -->
+<div class="modal-backdrop" id="editBankModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Tài khoản nhận lương</div>
+      <button class="modal-close" onclick="closeModal('editBankModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tên ngân hàng *</label>
+        <input type="text" id="bankName" class="form-control" placeholder="Ví dụ: Vietcombank, BIDV, Techcombank...">
+      </div>
+      <div class="form-group">
+        <label>Số tài khoản *</label>
+        <input type="text" id="bankAccountNumber" class="form-control" placeholder="Nhập số tài khoản...">
+      </div>
+      <div class="form-group">
+        <label>Tên chủ tài khoản *</label>
+        <input type="text" id="bankHolderName" class="form-control" placeholder="Nhập tên chủ tài khoản (đúng tên đăng ký với ngân hàng)...">
+      </div>
+      <div id="bankErr" class="form-error" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-mini" onclick="closeModal('editBankModal')">Hủy</button>
+      <button class="btn-mini approve" id="bankSaveBtn" onclick="submitBankAccount()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var MODEL = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions {
+    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+  }));
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  function showFormError(elId, message) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    if (message) { el.textContent = message; el.style.display = 'block'; }
+    else { el.textContent = ''; el.style.display = 'none'; }
+  }
+
+  function getAntiForgeryToken() {
+    var el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  function previewAvatarFile(input, imgId) {
+    var img = document.getElementById(imgId);
+    if (!img || !input.files || input.files.length === 0) return;
+    var r = new FileReader();
+    r.onload = function () { img.src = r.result; img.style.display = 'block'; };
+    r.readAsDataURL(input.files[0]);
+  }
+
+  async function getBase64(fileInputId, maxBytes) {
+    var inp = document.getElementById(fileInputId);
+    if (!inp || !inp.files || inp.files.length === 0) return null;
+    var f = inp.files[0];
+    var limit = maxBytes || 25 * 1024 * 1024; // default 25 MB cho raw file gốc
+    if (f.size > limit) throw new Error('Ảnh vượt quá dung lượng cho phép.');
+    var allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowed.indexOf(f.type) < 0) throw new Error('Định dạng ảnh không hỗ trợ (chỉ JPG, PNG, WEBP).');
+    return await readFileAsDataUrl(f);
+  }
+
+  async function fetchJson(url, opts) {
+    var headers = Object.assign(
+      { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+      opts.headers || {}
+    );
+    var res = await fetch(url, { method: opts.method || 'GET', headers: headers, credentials: 'same-origin', body: opts.body });
+    var json = null;
+    try { json = await res.json(); } catch (e) { throw new Error('Phản hồi không hợp lệ (HTTP ' + res.status + ').'); }
+    return { ok: res.ok, status: res.status, json: json };
+  }
+
+  function openEditPersonalModal() {
+    var isUserOnly = MODEL.employeeId === 0;
+    document.getElementById('perEmail').value = MODEL.email || '';
+
+    if (!isUserOnly) {
+      document.getElementById('perFullName').value = MODEL.fullName || '';
+      document.getElementById('perDob').value = MODEL.dob ? new Date(MODEL.dob + 'T00:00:00').toISOString().split('T')[0] : '';
+      document.getElementById('perPhone').value = MODEL.phone || '';
+      document.getElementById('perAddress').value = MODEL.address || '';
+    }
+
+    var preview = document.getElementById('perAvatarPreview');
+    if (preview) {
+      if (MODEL.avatarUrl) {
+        preview.innerHTML = '<img id="perAvatarImg" src="' + escapeHtml(MODEL.avatarUrl) + '" alt="avatar" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb;">';
+      } else {
+        preview.innerHTML = '<img id="perAvatarImg" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb;display:none;">';
+      }
+    }
+    var fileInp = document.getElementById('perAvatar');
+    if (fileInp) fileInp.value = '';
+    showFormError('perErr', null);
+    openModal('editPersonalModal');
+  }
+
+  async function submitPersonalInfo() {
+    showFormError('perErr', null);
+    var btn = document.getElementById('perSaveBtn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+    try {
+      var isUserOnly = MODEL.employeeId === 0;
+      var csrf = getAntiForgeryToken();
+
+      // Avatar + QR + email: gọi UpdateUser (cho cả user có và không có Employee)
+      var avatarBase64 = null;
+      try { avatarBase64 = await getBase64('perAvatar', 25 * 1024 * 1024); }
+      catch(e) { showFormError('perErr', e.message); btn.disabled = false; btn.textContent = 'Lưu thay đổi'; return; }
+
+      var qrBase64 = null;
+      try { qrBase64 = await getBase64('perQrCode', 25 * 1024 * 1024); }
+      catch(e) { showFormError('perErr', e.message); btn.disabled = false; btn.textContent = 'Lưu thay đổi'; return; }
+
+      var userPayload = {};
+      if (avatarBase64) userPayload.avatarBase64 = avatarBase64;
+      if (qrBase64) userPayload.qrCodeBase64 = qrBase64;
+
+      // Chỉ gọi UpdateUser nếu có avatar/QR mới (tránh round-trip thừa khi chỉ sửa text)
+      if (avatarBase64 || qrBase64) {
+        var userResult = await fetchJson('/Profile/UpdateUser', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrf },
+          body: JSON.stringify(userPayload)
+        });
+        if (!userResult.ok || !userResult.json.success) {
+          showFormError('perErr', userResult.json && userResult.json.message || 'Cập nhật tài khoản thất bại.');
+          btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+          return;
+        }
+      }
+
+      // Thông tin cá nhân: chỉ gọi khi có Employee record
+      if (!isUserOnly) {
+        var dobVal = document.getElementById('perDob').value;
+        var personalPayload = {
+          fullName: (document.getElementById('perFullName').value || '').trim() || null,
+          dob: dobVal ? dobVal : null,
+          phone: (document.getElementById('perPhone').value || '').trim() || null,
+          email: (document.getElementById('perEmail').value || '').trim() || null,
+          address: (document.getElementById('perAddress').value || '').trim() || null
+        };
+
+        var personalResult = await fetchJson('/Profile/UpdatePersonalInfo', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrf },
+          body: JSON.stringify(personalPayload)
+        });
+        if (!personalResult.ok || !personalResult.json.success) {
+          showFormError('perErr', personalResult.json && personalResult.json.message || 'Cập nhật thông tin cá nhân thất bại.');
+          btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+          return;
+        }
+
+        // Update MODEL in-memory để form mở lần sau hiển thị đúng
+        MODEL.fullName = personalPayload.fullName || MODEL.fullName;
+        MODEL.dob = personalPayload.dob || MODEL.dob;
+        MODEL.phone = personalPayload.phone !== null ? personalPayload.phone : MODEL.phone;
+        MODEL.email = personalPayload.email || MODEL.email;
+        MODEL.address = personalPayload.address !== null ? personalPayload.address : MODEL.address;
+      } else {
+        // User không có Employee → chỉ có email (User update). Cập nhật MODEL.email.
+        // Email cũng đã được xử lý trong UpdatePersonalInfo ở Controller nếu cần, ở đây update UI in-memory.
+      }
+
+      // Update avatar/QR preview nếu có file mới
+      if (avatarBase64) {
+        MODEL.avatarUrl = avatarBase64;
+      }
+      if (qrBase64) {
+        MODEL.qrCodeUrl = qrBase64;
+      }
+
+      // Cập nhật DOM in-place (tránh location.reload() phải vẽ lại page)
+      applyProfileToUi();
+
+      closeModal('editPersonalModal');
+    } catch(e) {
+      showFormError('perErr', e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+    }
+  }
+
+  // Cập nhật DOM hiển thị hồ sơ từ MODEL mà không reload
+  function applyProfileToUi() {
+    // Họ tên: luôn sync từ server
+    var nameEls = document.querySelectorAll('[data-profile-name]');
+    nameEls.forEach(function(el){ el.textContent = MODEL.fullName || ''; });
+
+    // Ngày sinh
+    var dobEls = document.querySelectorAll('[data-profile-dob]');
+    dobEls.forEach(function(el){ el.textContent = MODEL.dob ? formatDob(MODEL.dob) : '—'; });
+
+    // Các trường có thể null: nếu payload có giá trị (kể cả chuỗi rỗng) thì sync, ngược lại giữ nguyên
+    if (typeof MODEL.phone !== 'undefined' && MODEL.phone !== null) {
+      var phoneEls = document.querySelectorAll('[data-profile-phone]');
+      phoneEls.forEach(function(el){ el.textContent = MODEL.phone || '— chưa cập nhật —'; });
+    }
+    if (typeof MODEL.email !== 'undefined' && MODEL.email !== null) {
+      var emailEls = document.querySelectorAll('[data-profile-email]');
+      emailEls.forEach(function(el){ el.textContent = MODEL.email || '— chưa cập nhật —'; });
+    }
+    if (typeof MODEL.address !== 'undefined' && MODEL.address !== null) {
+      var addrEls = document.querySelectorAll('[data-profile-address]');
+      addrEls.forEach(function(el){ el.textContent = MODEL.address || '— chưa cập nhật —'; });
+    }
+
+    // Avatar/QR: chỉ update nếu có base64 mới (MODEL.avatarUrl/qrCodeUrl lúc này là base64 data URL)
+    if (MODEL.avatarUrl && MODEL.avatarUrl.indexOf('data:') === 0) {
+      var avs = document.querySelectorAll('[data-profile-avatar-img]');
+      avs.forEach(function(img){ img.src = MODEL.avatarUrl; });
+    }
+    if (MODEL.qrCodeUrl && MODEL.qrCodeUrl.indexOf('data:') === 0) {
+      var qrs = document.querySelectorAll('[data-profile-qr-img]');
+      qrs.forEach(function(img){ img.src = MODEL.qrCodeUrl; });
+    }
+  }
+
+  function updateTextBySelector(sel, val) {
+    var els = document.querySelectorAll(sel);
+    els.forEach(function(el){ el.textContent = val; });
+  }
+
+  function formatDob(s) {
+    if (!s) return '';
+    var d = new Date(s + 'T00:00:00');
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleDateString('vi-VN');
+  }
+
+  function openEditBankModal() {
+    var b = MODEL.bankAccount;
+    document.getElementById('bankName').value = b ? (b.bankName || '') : '';
+    document.getElementById('bankAccountNumber').value = b ? (b.accountNumber || '') : '';
+    document.getElementById('bankHolderName').value = b ? (b.accountHolderName || '') : '';
+    showFormError('bankErr', null);
+    openModal('editBankModal');
+  }
+
+  async function submitBankAccount() {
+    showFormError('bankErr', null);
+    var payload = {
+      bankName: (document.getElementById('bankName').value || '').trim(),
+      accountNumber: (document.getElementById('bankAccountNumber').value || '').trim(),
+      accountHolderName: (document.getElementById('bankHolderName').value || '').trim()
+    };
+    var btn = document.getElementById('bankSaveBtn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+    try {
+      var csrf = getAntiForgeryToken();
+      var result = await fetchJson('/Profile/UpdateBankAccount', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrf },
+        body: JSON.stringify(payload)
+      });
+      if (!result.ok || !result.json.success) {
+        showFormError('bankErr', result.json && result.json.message || 'Cập nhật thất bại.');
+        return;
+      }
+      closeModal('editBankModal');
+      location.reload();
+    } catch(e) { showFormError('bankErr', e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Lưu'; }
+  }
+</script>
+</body>
+</html>
+
+@functions {
+  public static string MaskAccountNumber(string accountNumber)
+  {
+    if (string.IsNullOrEmpty(accountNumber)) return "—";
+    if (accountNumber.Length <= 4) return accountNumber;
+    var visibleLen = accountNumber.Length <= 8 ? accountNumber.Length : 8;
+    var visible = accountNumber.Substring(accountNumber.Length - visibleLen);
+    var masked = new string('*', Math.Max(0, accountNumber.Length - visibleLen));
+    return masked + visible;
+  }
+}
