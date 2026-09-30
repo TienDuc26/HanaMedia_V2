@@ -29,7 +29,7 @@ public sealed class DirectorIdeaService : IDirectorIdeaService
         var query = _context.Ideas.AsNoTracking()
             .Include(item => item.Campaign)
             .Include(item => item.CreatorEmployee)
-            .Include(item => item.PrimaryStaff)
+            .Include(item => item.PrimaryStaff).Include(item => item.PrimaryKol)
             .Include(item => item.ReviewerEmployee)
             .Include(item => item.MoodboardImages)
             .Include(item => item.Comments).ThenInclude(comment => comment.AuthorUser)
@@ -170,7 +170,7 @@ public sealed class DirectorIdeaService : IDirectorIdeaService
         CreatorName = idea.CreatorEmployee?.FullName ?? "-",
         ClientName = idea.Campaign?.Client ?? idea.ClientName,
         CampaignName = idea.Campaign?.Name ?? idea.CampaignName ?? "-",
-        PrimaryStaffName = idea.PrimaryStaff?.FullName ?? "-",
+        PrimaryStaffName = idea.PrimaryKol?.Name ?? idea.PrimaryStaff?.FullName ?? "-",
         ReviewerName = idea.ReviewerEmployee?.FullName ?? "-",
         Insight = idea.Insight,
         Concept = idea.Concept,

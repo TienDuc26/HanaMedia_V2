@@ -42,7 +42,7 @@ public sealed class WorkTasksController : Controller
         var model = await _service.GetPageAsync(userId, role, module, search, page, employeeId, create, status, reviewerId, overdue, cancellationToken);
         
         ViewBag.Campaigns = await _context.Campaigns
-            .Where(c => c.Status != "cancelled")
+            .Where(c => c.Status != "cancelled" && ((role != AppRoles.IdeaManager && role != AppRoles.IdeaStaff) || c.ConfirmedAt != null))
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
         ViewBag.InitialRelatedType = WorkTaskRelatedTypes.IsValid(relatedType) ? relatedType : null;

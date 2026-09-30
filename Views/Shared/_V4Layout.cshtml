@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>@ViewData["Title"] — HanaMedia</title>
+<link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css"><link rel="stylesheet" href="~/css/design-system.css"><link rel="stylesheet" href="~/css/layout.css"><link rel="stylesheet" href="~/css/components.css">
+<style>.table-scroll{overflow-x:auto}.table-scroll table{min-width:620px}.v4-card .btn-mini{white-space:nowrap}.v4-card h2{margin-bottom:8px}.v4-card p{line-height:1.6}.v4-form{margin-top:12px}.v4-card{padding:24px;margin:20px 0;border:1px solid var(--line);border-radius:14px;background:white}.v4-form{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.v4-form input,.v4-form select,.v4-form textarea{padding:8px;border:1px solid var(--line);border-radius:8px;max-width:100%}.v4-muted{color:var(--muted);font-size:13px}.v4-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}.v4-card td,.v4-card th{padding:12px;text-align:left;border-bottom:1px solid var(--line)}.v4-card table{width:100%}.v4-message{padding:14px;background:#eef5ff;margin:16px 0;border-radius:8px}</style>
+</head><body><div class="layout"><partial name="_SidebarPartial"/><main class="main"><h1>@ViewData["Title"]</h1>
+@if(TempData["SuccessMessage"] is string success){<div class="v4-message" role="status">@success</div>}
+@if(TempData["ErrorMessage"] is string error){<div class="v4-message" role="alert">@error</div>}
+@RenderBody()</main></div></body></html>

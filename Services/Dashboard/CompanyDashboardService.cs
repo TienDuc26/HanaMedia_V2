@@ -27,7 +27,8 @@ public sealed class CompanyDashboardService : ICompanyDashboardService
 
     public async Task<CompanyDashboardViewModel> GetAsync(
         string? period,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool includeDirectorMetrics = false)
     {
         var now = DateTime.Now;
         var normalizedPeriod = NormalizePeriod(period);
@@ -79,10 +80,33 @@ public sealed class CompanyDashboardService : ICompanyDashboardService
                 Status = item.Status,
                 BookingPrice = item.BookingPrice,
                 ActualCost = item.ActualCost,
+                FinanceVersion = item.FinanceVersion,
+                CommissionPercent = item.CommissionPercent,
+                CastPercent = item.CastPercent,
                 CreatedAt = item.CreatedAt
             })
             .ToListAsync(cancellationToken);
         var validBookings = bookings.Where(item => item.Status != "huy").ToList();
+        // Use each Booking's saved rates and round per Booking, just like its payables.
+        // Do not add staff allocations: they are already part of the commission pool.
+        var v4Bookings = validBookings.Where(item => item.FinanceVersion == 1).ToList();
+        int outstandingCount = 0;
+        var outstandingCampaigns = new List<OutstandingCampaignViewModel>();
+        if (includeDirectorMetrics)
+        {
+            // An outstanding balance is current stock, not limited to creations in this period.
+            var outstanding = _context.Campaigns.AsNoTracking()
+                .Where(c => c.Status != CampaignStatuses.Accepted && c.Status != "cancelled");
+            outstandingCount = await outstanding.CountAsync(cancellationToken);
+            outstandingCampaigns = await outstanding
+                .OrderBy(c => c.Status == CampaignStatuses.Completed ? 0 : c.Status == CampaignStatuses.Running ? 1 : 2)
+                .ThenBy(c => c.CreatedAt).ThenBy(c => c.Id).Take(20)
+                .Select(c => new OutstandingCampaignViewModel
+                {
+                    Id = c.Id, Name = c.Name, Client = c.Client, Status = c.Status,
+                    ManagerName = c.ManagerEmployee == null ? "—" : c.ManagerEmployee.FullName
+                }).ToListAsync(cancellationToken);
+        }
 
         var bookingStatusCounts = BookingStatusOrder
             .Select(item => new CompanyDashboardBookingStatusViewModel
@@ -133,6 +157,11 @@ public sealed class CompanyDashboardService : ICompanyDashboardService
             RunningBookings = bookings.Count(item => item.Status == "dang_trien_khai"),
             BookingRevenue = validBookings.Sum(item => item.BookingPrice),
             BookingCost = validBookings.Sum(item => item.ActualCost),
+            BookingRemuneration = includeDirectorMetrics ? v4Bookings.Sum(item => decimal.Round(item.BookingPrice * item.CommissionPercent / 100m, 2, MidpointRounding.AwayFromZero)) : 0,
+            KolRemuneration = includeDirectorMetrics ? v4Bookings.Sum(item => decimal.Round(item.BookingPrice * item.CastPercent / 100m, 2, MidpointRounding.AwayFromZero)) : 0,
+            LegacyRemunerationExcludedCount = includeDirectorMetrics ? validBookings.Count(item => item.FinanceVersion != 1) : 0,
+            OutstandingCampaignCount = outstandingCount,
+            OutstandingCampaigns = outstandingCampaigns,
             RunningCampaigns = await _context.Campaigns.AsNoTracking()
                 .CountAsync(item => item.Status == "running", cancellationToken),
             PendingIdeas = await _context.Ideas.AsNoTracking()
@@ -289,6 +318,9 @@ public sealed class CompanyDashboardService : ICompanyDashboardService
 
     private sealed class BookingMetricRow
     {
+        public int FinanceVersion { get; init; }
+        public decimal CommissionPercent { get; init; }
+        public decimal CastPercent { get; init; }
         public string? Status { get; init; }
         public decimal BookingPrice { get; init; }
         public decimal ActualCost { get; init; }

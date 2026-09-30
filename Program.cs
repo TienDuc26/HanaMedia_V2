@@ -30,7 +30,8 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 });
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+    options.ModelBinderProviders.Insert(0, new HanaMedia.ModelBinding.DecimalFormBinder()));
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<AccountService>();
@@ -149,7 +150,7 @@ using (var dbScope = app.Services.CreateScope())
         var ruleCount = dbContext.IpAccessRules.Count();
         if (ruleCount == 0)
         {
-            var initialCidrsConfig = app.Configuration["AllowedNetworkCidr"] ?? "192.168.110.0/24, 192.168.100.0/24, 192.168.0.0/24, 10.33.0.0/16";
+            var initialCidrsConfig = app.Configuration["AllowedNetworkCidr"] ?? "192.168.1.0/24, 192.168.110.0/24, 192.168.100.0/24, 192.168.0.0/24, 10.33.0.0/16";
             var initialCidrs = initialCidrsConfig
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Distinct(StringComparer.OrdinalIgnoreCase);
@@ -228,7 +229,10 @@ else
     // Development: middleware bắt exception & trả JSON chuẩn cho API
     app.UseGlobalExceptionHandler();
 }
-app.UseStaticFiles();
+// Sensitive documents must pass endpoint authorization, including legacy public URLs.
+app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/uploads/users/qrcodes") &&
+    !ctx.Request.Path.StartsWithSegments("/uploads/bookings") &&
+    !ctx.Request.Path.StartsWithSegments("/uploads/ideas"), branch => branch.UseStaticFiles());
 
 app.UseRouting();
 
@@ -240,7 +244,10 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Lắng nghe trên tất cả IP (để test từ máy khác trong mạng LAN)
-app.Urls.Clear();
-app.Urls.Add("http://0.0.0.0:80");
-app.Urls.Add("http://0.0.0.0:5028");
+if (string.IsNullOrWhiteSpace(app.Configuration["urls"]))
+{
+    app.Urls.Clear();
+    app.Urls.Add("http://0.0.0.0:80");
+    app.Urls.Add("http://0.0.0.0:5028");
+}
 app.Run();

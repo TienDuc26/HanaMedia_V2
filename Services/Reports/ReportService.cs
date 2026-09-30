@@ -41,7 +41,7 @@ public sealed class ReportService : IReportService
                 ? await GetBookingAsync(startAt, endAt, actorUserId, limited, cancellationToken)
                 : null,
             Ideas = type == ReportTypes.Ideas
-                ? await GetIdeasAsync(startAt, endAt, actorUserId, limited, cancellationToken)
+                ? await GetIdeasAsync(startAt, endAt, actorUserId, limited, actorRole == AppRoles.Director, cancellationToken)
                 : null
         };
     }
@@ -147,7 +147,7 @@ public sealed class ReportService : IReportService
         CancellationToken cancellationToken)
     {
         var query = _context.Bookings.AsNoTracking()
-            .Include(item => item.Campaign).Include(item => item.Kol)
+            .Include(item => item.Campaign).Include(item => item.Kol).Include(item => item.BookingKols).ThenInclude(k => k.Kol)
             .Include(item => item.BookingWages).ThenInclude(item => item.Employee)
             .Where(item => item.CreatedAt >= startAt && item.CreatedAt < endAt);
         if (limited)
@@ -158,7 +158,7 @@ public sealed class ReportService : IReportService
         {
             Id = item.Id,
             ClientCampaign = $"{item.ClientName} — {item.Campaign?.Name ?? item.CampaignName}",
-            KolName = item.Kol?.Name ?? "Chưa chọn",
+            KolName = item.KolNames,
             StatusLabel = BookingStatusLabel(item.Status),
             Deadline = item.Deadline,
             Revenue = item.BookingPrice,
@@ -184,21 +184,23 @@ public sealed class ReportService : IReportService
         DateTime endAt,
         int actorUserId,
         bool limited,
+        bool director,
         CancellationToken cancellationToken)
     {
         var query = _context.Ideas.AsNoTracking()
-            .Include(item => item.Campaign).Include(item => item.CreatorEmployee).Include(item => item.PrimaryStaff)
+            .Include(item => item.Campaign).Include(item => item.CreatorEmployee).Include(item => item.PrimaryStaff).Include(item => item.PrimaryKol)
             .Where(item => item.CreatedAt >= startAt && item.CreatedAt < endAt);
         if (limited)
             query = query.Where(item => item.CreatorEmployee!.UserId == actorUserId || item.PrimaryStaff!.UserId == actorUserId);
+        if (!director) query = query.Where(item => item.Campaign != null && item.Campaign.ConfirmedAt != null);
         var ideas = await query.OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt).ToListAsync(cancellationToken);
         var approved = ideas.Count(item => item.Status is IdeaStatuses.Approved or IdeaStatuses.InProgress or IdeaStatuses.Done);
         var revisions = ideas.Count(item => item.Status == IdeaStatuses.NeedRevision || item.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested);
-        var performance = limited ? [] : ideas.GroupBy(item => item.PrimaryStaff ?? item.CreatorEmployee)
+        var performance = limited ? [] : ideas.GroupBy(item => new { EmployeeId = item.PrimaryKolId.HasValue ? (int?)null : (item.PrimaryStaffId ?? item.CreatorEmployeeId), Name = item.PrimaryKol?.Name ?? item.PrimaryStaff?.FullName ?? item.CreatorEmployee?.FullName ?? "Chưa phân công" })
             .Select(group => new IdeaPerformanceReportRowViewModel
             {
-                EmployeeId = group.Key?.Id,
-                EmployeeName = group.Key?.FullName ?? "Chưa phân công",
+                EmployeeId = group.Key.EmployeeId,
+                EmployeeName = group.Key.Name,
                 TotalIdeas = group.Count(),
                 ApprovedIdeas = group.Count(item => item.Status is IdeaStatuses.Approved or IdeaStatuses.InProgress or IdeaStatuses.Done),
                 RevisionIdeas = group.Count(item => item.Status == IdeaStatuses.NeedRevision || item.DirectorReviewStatus == DirectorIdeaReviewStatuses.RevisionRequested),
@@ -218,7 +220,7 @@ public sealed class ReportService : IReportService
                 Id = item.Id,
                 Title = item.Title,
                 ClientCampaign = $"{item.ClientName} — {item.Campaign?.Name ?? item.CampaignName ?? "Không có chiến dịch"}",
-                OwnerName = item.PrimaryStaff?.FullName ?? item.CreatorEmployee?.FullName ?? "Chưa phân công",
+                OwnerName = item.PrimaryKol?.Name ?? item.PrimaryStaff?.FullName ?? item.CreatorEmployee?.FullName ?? "Chưa phân công",
                 StatusLabel = IdeaStatuses.GetLabel(item.Status ?? IdeaStatuses.Idea),
                 DirectorStatusLabel = DirectorIdeaReviewStatuses.GetLabel(item.DirectorReviewStatus),
                 Deadline = item.Deadline

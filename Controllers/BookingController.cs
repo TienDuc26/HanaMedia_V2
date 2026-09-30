@@ -1,459 +1,315 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Data;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using HanaMedia.Constants;
 using HanaMedia.Models;
 using HanaMedia.Services.Auditing;
 using HanaMedia.Services.Config;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace HanaMedia.Controllers
+namespace HanaMedia.Controllers;
+
+[Authorize(Roles = AppRoles.Director + "," + AppRoles.BookingManager + "," + AppRoles.BookingStaff)]
+public class BookingController : Controller
 {
-    public class BookingController : Controller
+    private readonly ApplicationDbContext _context;
+    private readonly ISystemAuditService _auditService;
+    private readonly IBusinessConfigService _businessConfigService;
+    public BookingController(ApplicationDbContext context, ISystemAuditService auditService, IBusinessConfigService businessConfigService)
+    { _context = context; _auditService = auditService; _businessConfigService = businessConfigService; }
+    private string Role => User.FindFirstValue(ClaimTypes.Role) ?? "";
+    private int UserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+    private int EmployeeId => _context.Employees.Where(e => e.UserId == UserId).Select(e => e.Id).FirstOrDefault();
+    private bool Owns(Booking b) => Role == AppRoles.BookingManager && EmployeeId > 0 && b.PrimaryManagerId == EmployeeId;
+    private IQueryable<Booking> Query() => _context.Bookings.Include(b => b.Campaign).Include(b => b.Kol)
+        .Include(b => b.BookingKols).ThenInclude(k => k.Kol).Include(b => b.PrimaryManager)
+        .Include(b => b.BookingWages).ThenInclude(w => w.Employee).Include(b => b.Payments);
+    private IQueryable<Booking> Visible() => Role == AppRoles.BookingStaff
+        ? Query().Where(b => b.BookingWages.Any(w => w.EmployeeId == EmployeeId)) : Query();
+    private void Audit(Booking b, string action, string detail) => _auditService.AddEvent(
+        new AuditEvent(AuditModules.Booking, action, detail, UserId, "Booking", b.Id.ToString()));
+    private IActionResult Result(int id, bool success, string message)
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ISystemAuditService _auditService;
-        private readonly IBusinessConfigService _businessConfigService;
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
+            return Json(new { success, message });
+        TempData[success ? "SuccessMessage" : "ErrorMessage"] = message;
+        return id > 0 ? RedirectToAction(nameof(Details), new { id }) : RedirectToAction(nameof(Index));
+    }
+    private async Task<IActionResult> Persist(Booking b, string action, string message, CancellationToken ct)
+    {
+        b.UpdatedAt = DateTime.Now;
+        Audit(b, action, message);
+        try { await _context.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException) { return Result(b.Id, false, "Dữ liệu vừa được thay đổi. Tải lại trang rồi thử lại."); }
+        return Result(b.Id, true, message);
+    }
 
-        public BookingController(
-            ApplicationDbContext context,
-            ISystemAuditService auditService,
-            IBusinessConfigService businessConfigService)
+    [HttpGet("Bookings")]
+    public async Task<IActionResult> Index(string? search, int? campaignId, int? kolId, string? status, int? managerId, int? participantId, CancellationToken cancellationToken)
+    {
+        var query = Visible();
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(b => b.ClientName.Contains(search) || b.CampaignName.Contains(search) || (b.Notes != null && b.Notes.Contains(search)));
+        if (campaignId.HasValue) query = query.Where(b => b.CampaignId == campaignId);
+        if (kolId.HasValue) query = query.Where(b => b.BookingKols.Any(k => k.KolId == kolId) || b.KolId == kolId);
+        if (managerId.HasValue) query = query.Where(b => b.PrimaryManagerId == managerId);
+        if (participantId.HasValue) query = query.Where(b => b.BookingWages.Any(w => w.EmployeeId == participantId));
+        if (!string.IsNullOrWhiteSpace(status)) query = query.Where(b => b.Status == status);
+        ViewBag.Campaigns = await _context.Campaigns.OrderBy(c => c.Name).ToListAsync(cancellationToken);
+        ViewBag.Kols = await _context.Kols.Where(k => k.IsActive).OrderBy(k => k.Name).ToListAsync(cancellationToken);
+        ViewBag.Employees = await _context.Employees.Include(e => e.User).OrderBy(e => e.FullName).ToListAsync(cancellationToken);
+        ViewBag.Search = search; ViewBag.CampaignId = campaignId; ViewBag.KolId = kolId; ViewBag.Status = status;
+        ViewBag.ManagerId = managerId; ViewBag.ParticipantId = participantId; ViewBag.EmployeeId = EmployeeId;
+        ViewBag.IsWritable = Role == AppRoles.BookingManager;
+        ViewBag.FinanceConfig = await _businessConfigService.GetAsync(cancellationToken);
+        ViewBag.Participants = await EligibleParticipants().OrderBy(e => e.FullName).ToListAsync(cancellationToken);
+        return View(await query.OrderByDescending(b => b.CreatedAt).ToListAsync(cancellationToken));
+    }
+
+    [HttpGet("Bookings/Details/{id}")]
+    [HttpGet("Booking/Details/{id}")]
+    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    {
+        var booking = await Visible().Include(b => b.ContractApprovedBy).Include(b => b.ContractSignedBy).FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+        if (booking == null) return NotFound();
+        if (Role == AppRoles.BookingStaff) booking.BookingWages = booking.BookingWages.Where(w => w.EmployeeId == EmployeeId).ToList();
+        ViewBag.IsWritable = Owns(booking); ViewBag.Role = Role;
+        ViewBag.CanDraft = Owns(booking) || Role == AppRoles.BookingStaff;
+        ViewBag.Participants = await EligibleParticipants().OrderBy(e => e.FullName).ToListAsync(cancellationToken);
+        ViewBag.WagePool = booking.FinanceVersion == 1 ? booking.CommissionPool : decimal.Round(booking.BookingPrice * (await _businessConfigService.GetAsync(cancellationToken)).CommissionPercent / 100m, 2);
+        return View(booking);
+    }
+
+    [HttpPost("Bookings/Create"), ValidateAntiForgeryToken]
+    public Task<IActionResult> Create(Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, [Bind(Prefix = "wages")] Dictionary<int, decimal> wages, CancellationToken cancellationToken)
+        => Save(0, input, kolIds, acceptanceFile, deadlineStr, postingDateStr, cancellationToken, wages);
+    [HttpPost("Bookings/Edit/{id}"), ValidateAntiForgeryToken]
+    public Task<IActionResult> Edit(int id, Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, CancellationToken cancellationToken)
+        => Save(id, input, kolIds, acceptanceFile, deadlineStr, postingDateStr, cancellationToken);
+
+    private IQueryable<Employee> EligibleParticipants() => _context.Employees.Where(e =>
+        e.Status == "dang_lam_viec" || e.Status == "thu_viec");
+
+    private async Task<string?> ValidateWages(Dictionary<int, decimal> wages, decimal pool, CancellationToken ct)
+    {
+        if (ModelState.Any(x => x.Key.StartsWith("wages", StringComparison.OrdinalIgnoreCase) && x.Value!.Errors.Count > 0))
+            return "Số tiền phân bổ không hợp lệ.";
+        var ids = wages.Keys.ToArray();
+        if (wages.Values.Any(v => v < 0 || v > 9999999999999.99m || decimal.Round(v, 2) != v) ||
+            await EligibleParticipants().CountAsync(e => ids.Contains(e.Id), ct) != ids.Length)
+            return "Chọn nhân viên đang làm việc hoặc thử việc ở bất kỳ phòng ban; số tiền không âm, tối đa 2 chữ số thập phân.";
+        return wages.Values.Sum() > pool ? "Tổng thù lao không được vượt quỹ hoa hồng QL Booking." : null;
+    }
+
+    private async Task<IActionResult> Save(int id, Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, CancellationToken ct, Dictionary<int, decimal>? wages = null)
+    {
+        if (Role != AppRoles.BookingManager || EmployeeId == 0) return Forbid();
+        await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        var b = id == 0 ? new Booking() : await Query().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (b == null) return NotFound();
+        if (id != 0 && !Owns(b)) return Forbid();
+        if (id != 0 && (b.ContractStatus is not ("nhap" or "tu_choi") || b.Payments.Any(p => p.IsPaid)))
+            return Result(id, false, "Booking đang duyệt/đã duyệt đã khóa thông tin. Không được thay đổi nội dung hợp đồng đã trình.");
+        var campaign = await _context.Campaigns.FirstOrDefaultAsync(c => c.Id == input.CampaignId && c.Status == "running" && c.ConfirmedAt != null, ct);
+        if (campaign == null) return Result(id, false, "Chỉ chọn chiến dịch đang chạy.");
+        kolIds = kolIds.Distinct().Order().ToArray();
+        if (kolIds.Length == 0 || await _context.Kols.CountAsync(k => kolIds.Contains(k.Id) && k.IsActive, ct) != kolIds.Length)
+            return Result(id, false, "Chọn ít nhất một KOL/KOC đang hoạt động.");
+        if (input.BookingPrice <= 0 || input.BookingPrice > 9999999999999.99m || !DateOnly.TryParse(deadlineStr, out var deadline))
+            return Result(id, false, "Giá Booking hoặc deadline không hợp lệ.");
+        if (!new[] { "dang_cho", "thuong_luong", "da_chot", "huy" }.Contains(input.Status))
+            return Result(id, false, "Trạng thái Booking không hợp lệ.");
+        if (input.JobDescription?.Length > 4000 || input.Notes?.Length > 4000 || input.PostLink?.Length > 255)
+            return Result(id, false, "Nội dung/ghi chú tối đa 4.000 ký tự, link tối đa 255 ký tự.");
+        var config = await _businessConfigService.GetAsync(ct);
+        if (b.FinanceVersion == 0)
+        { b.CompanyPercent = config.CompanyPercent; b.CommissionPercent = config.CommissionPercent; b.CastPercent = config.CastPercent; }
+        b.BookingPrice = decimal.Round(input.BookingPrice, 2, MidpointRounding.AwayFromZero);
+        if (id == 0 && wages != null)
         {
-            _context = context;
-            _auditService = auditService;
-            _businessConfigService = businessConfigService;
+            var error = await ValidateWages(wages, b.CommissionPool, ct);
+            if (error != null) return Result(id, false, error);
+            foreach (var wage in wages)
+                b.BookingWages.Add(new BookingWage { EmployeeId = wage.Key, AllocatedWage = wage.Value, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now });
         }
-
-        private bool IsAuthorized(out string role, out int employeeId, out string userId)
+        if (b.BookingWages.Sum(w => w.AllocatedWage) > b.CommissionPool)
+            return Result(id, false, "Thù lao cũ vượt quỹ hoa hồng. Điều chỉnh phân bổ trước khi chuyển Booking sang công thức mới.");
+        if (acceptanceFile != null)
         {
-            role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
-            userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            
-            var emp = _context.Employees.FirstOrDefault(e => e.Email == User.Identity.Name);
-            employeeId = emp?.Id ?? 0;
-
-            return role == AppRoles.Director || role == AppRoles.BookingManager || role == AppRoles.BookingStaff;
+            var path = await SaveDocument(acceptanceFile, "acceptance", ct);
+            if (path == null) return Result(id, false, "Tài liệu phải là PDF/DOCX/JPG/PNG, tối đa 25 MB.");
+            b.AcceptanceFileUrl = path;
         }
-
-        [HttpGet("Bookings")]
-        public async Task<IActionResult> Index(string? search, int? campaignId, int? kolId, string? status, int? managerId, CancellationToken cancellationToken)
+        b.FinanceVersion = 1; b.ActualCost = b.CommissionPool + b.CastPool;
+        b.CampaignId = campaign.Id; b.CampaignName = campaign.Name; b.ClientName = campaign.Client;
+        b.PrimaryManagerId = EmployeeId; b.KolId = kolIds[0]; b.Deadline = deadline;
+        b.PostingDate = DateOnly.TryParse(postingDateStr, out var posted) ? posted : null;
+        if (!string.IsNullOrWhiteSpace(input.PostLink) && (!Uri.TryCreate(input.PostLink, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
+            return Result(id, false, "Link bài đăng phải là HTTP/HTTPS.");
+        b.JobDescription = input.JobDescription; b.Notes = input.Notes; b.PostLink = input.PostLink; b.Status = input.Status;
+        foreach (var removed in b.BookingKols.Where(k => !kolIds.Contains(k.KolId)).ToList()) _context.BookingKols.Remove(removed);
+        var share = decimal.Floor(b.CastPool / kolIds.Length * 100m) / 100m;
+        foreach (var k in kolIds)
         {
-            if (!IsAuthorized(out var role, out var employeeId, out _))
-            {
-                return Forbid();
-            }
-
-            var query = _context.Bookings
-                .Include(b => b.Campaign)
-                .Include(b => b.Kol)
-                .Include(b => b.PrimaryManager)
-                .Include(b => b.BookingWages)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                query = query.Where(b => b.ClientName.Contains(search) || 
-                                         b.CampaignName.Contains(search) || 
-                                         (b.Notes != null && b.Notes.Contains(search)) ||
-                                         (b.JobDescription != null && b.JobDescription.Contains(search)));
-            }
-
-            if (campaignId.HasValue)
-            {
-                query = query.Where(b => b.CampaignId == campaignId);
-            }
-
-            if (kolId.HasValue)
-            {
-                query = query.Where(b => b.KolId == kolId);
-            }
-
-            if (managerId.HasValue)
-            {
-                query = query.Where(b => b.PrimaryManagerId == managerId);
-            }
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                query = query.Where(b => b.Status == status);
-            }
-
-            var bookings = await query.OrderByDescending(b => b.CreatedAt).ToListAsync(cancellationToken);
-
-            ViewBag.Campaigns = await _context.Campaigns.OrderBy(c => c.Name).ToListAsync(cancellationToken);
-            ViewBag.Kols = await _context.Kols.Where(k => k.IsActive).OrderBy(k => k.Name).ToListAsync(cancellationToken);
-            ViewBag.Employees = await _context.Employees.OrderBy(e => e.FullName).ToListAsync(cancellationToken);
-            
-            ViewBag.Search = search;
-            ViewBag.CampaignId = campaignId;
-            ViewBag.KolId = kolId;
-            ViewBag.Status = status;
-            ViewBag.ManagerId = managerId;
-            
-            ViewBag.IsWritable = role == AppRoles.BookingManager;
-
-            return View(bookings);
+            var row = b.BookingKols.FirstOrDefault(x => x.KolId == k);
+            if (row == null) { row = new BookingKol { KolId = k }; b.BookingKols.Add(row); }
+            row.CastAmount = k == kolIds[^1] ? b.CastPool - share * (kolIds.Length - 1) : share;
         }
+        if (id == 0) { b.ContractStatus = "nhap"; b.CreatedAt = DateTime.Now; _context.Bookings.Add(b); }
+        b.UpdatedAt = DateTime.Now;
+        await _context.SaveChangesAsync(ct);
+        Audit(b, id == 0 ? AuditActions.Created : AuditActions.Updated, $"Lưu Booking #{b.Id}; phân bổ {b.CompanyPercent}/{b.CommissionPercent}/{b.CastPercent}, {kolIds.Length} KOL.");
+        if (id == 0 && b.BookingWages.Count > 0)
+            Audit(b, AuditActions.WageChanged, "Phân bổ khi tạo Booking: " + string.Join("; ", b.BookingWages.Select(w => $"NV #{w.EmployeeId}: {w.AllocatedWage:N2} đ")));
+        await _context.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Result(b.Id, true, "Đã lưu Booking. Có thể quản lý nhân viên và phân bổ tại trang chi tiết.");
+    }
 
-        [HttpGet("Bookings/Details/{id}")]
-        [HttpGet("Booking/Details/{id}")]
-        public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    private async Task<string?> SaveDocument(IFormFile file, string kind, CancellationToken ct)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (file.Length <= 0 || file.Length > 25 * 1024 * 1024 || !new[] { ".pdf", ".docx", ".jpg", ".jpeg", ".png" }.Contains(extension)) return null;
+        var folder = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "booking-documents");
+        Directory.CreateDirectory(folder);
+        var name = $"{kind}_{Guid.NewGuid():N}{extension}";
+        await using var stream = System.IO.File.Create(Path.Combine(folder, name));
+        await file.CopyToAsync(stream, ct);
+        return "/BookingDocuments/" + name;
+    }
+
+    [HttpPost("Bookings/Delete/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (b == null) return NotFound();
+        if (!Owns(b)) return Forbid();
+        if (b.ContractStatus is not ("nhap" or "tu_choi") || b.Payments.Any(p => p.IsPaid)) return Result(id, false, "Không thể hủy Booking đã trình duyệt hoặc đã thanh toán.");
+        b.Status = "huy";
+        return await Persist(b, AuditActions.Deleted, "Đã hủy Booking; giữ lịch sử.", cancellationToken);
+    }
+
+    [HttpPost("Bookings/UpdateWages/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateWages(int id, [Bind(Prefix = "wages")] Dictionary<int, decimal> wages, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return Result(id, false, "Số tiền phân bổ không hợp lệ.");
+        await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (b == null) return NotFound();
+        if (!Owns(b)) return Forbid();
+        if (b.Status == "huy" || b.Payments.Any(p => p.IsPaid)) return Result(id, false, "Đã có thanh toán hoặc Booking đã hủy, không thể đổi phân bổ.");
+        var ids = wages.Keys.ToArray();
+        var pool = b.FinanceVersion == 1 ? b.CommissionPool : decimal.Round(b.BookingPrice * (await _businessConfigService.GetAsync(cancellationToken)).CommissionPercent / 100m, 2);
+        var wageError = await ValidateWages(wages, pool, cancellationToken);
+        if (wageError != null) return Result(id, false, wageError);
+        foreach (var employeeId in ids.Union(b.BookingWages.Select(w => w.EmployeeId)))
         {
-            if (!IsAuthorized(out var role, out var employeeId, out _))
-            {
-                return Forbid();
-            }
-
-            var query = _context.Bookings
-                .Include(b => b.Campaign)
-                .Include(b => b.Kol)
-                .Include(b => b.PrimaryManager)
-                .Include(b => b.ContractApprovedBy)
-                .Include(b => b.ContractSignedBy)
-                .AsQueryable();
-
-            if (role == AppRoles.BookingStaff)
-            {
-                query = query.Include(b => b.BookingWages.Where(bw => bw.EmployeeId == employeeId))
-                             .ThenInclude(bw => bw.Employee);
-            }
-            else
-            {
-                query = query.Include(b => b.BookingWages)
-                             .ThenInclude(bw => bw.Employee);
-            }
-
-            var booking = await query.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            ViewBag.IsWritable = role == AppRoles.BookingManager;
-            ViewBag.Role = role;
-
-            return View(booking);
+            var old = b.BookingWages.FirstOrDefault(w => w.EmployeeId == employeeId)?.AllocatedWage;
+            var next = wages.TryGetValue(employeeId, out var amount) ? amount : (decimal?)null;
+            if (old != next) Audit(b, AuditActions.WageChanged,
+                $"Nhân viên #{employeeId}: {old?.ToString("N2") ?? "chưa tham gia"} → {next?.ToString("N2") ?? "gỡ khỏi Booking"}.");
         }
-
-        [HttpPost("Bookings/Create")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Booking model, int[] participantIds, IFormFile? contractFile, IFormFile? quotationFile, string deadlineStr, string? postingDateStr, CancellationToken cancellationToken)
+        foreach (var removed in b.BookingWages.Where(w => !ids.Contains(w.EmployeeId)).ToList()) _context.BookingWages.Remove(removed);
+        foreach (var item in wages)
         {
-            if (!IsAuthorized(out var role, out _, out var userId) || role != AppRoles.BookingManager)
-            {
-                return Forbid();
-            }
-
-            // Sync Client and Campaign from Campaign model if selected
-            if (model.CampaignId.HasValue)
-            {
-                var campaign = await _context.Campaigns.FindAsync(new object[] { model.CampaignId.Value }, cancellationToken);
-                if (campaign != null)
-                {
-                    model.CampaignName = campaign.Name;
-                    model.ClientName = campaign.Client;
-                }
-            }
-
-            if (DateOnly.TryParse(deadlineStr, out var dl))
-            {
-                model.Deadline = dl;
-            }
-            else
-            {
-                ModelState.AddModelError("Deadline", "Hạn chót không hợp lệ.");
-            }
-
-            if (!string.IsNullOrEmpty(postingDateStr) && DateOnly.TryParse(postingDateStr, out var pd))
-            {
-                model.PostingDate = pd;
-            }
-
-            // File upload logic
-            if (contractFile != null && contractFile.Length > 0)
-            {
-                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings");
-                if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-                var fileName = $"contract_{Guid.NewGuid()}{Path.GetExtension(contractFile.FileName)}";
-                var filePath = Path.Combine(uploadDir, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await contractFile.CopyToAsync(stream, cancellationToken);
-                }
-                model.ContractFileUrl = $"/uploads/bookings/{fileName}";
-            }
-
-            if (quotationFile != null && quotationFile.Length > 0)
-            {
-                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings");
-                if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-                var fileName = $"quotation_{Guid.NewGuid()}{Path.GetExtension(quotationFile.FileName)}";
-                var filePath = Path.Combine(uploadDir, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await quotationFile.CopyToAsync(stream, cancellationToken);
-                }
-                model.QuotationFileUrl = $"/uploads/bookings/{fileName}";
-            }
-            if (model.BookingPrice > 9999999999999.99m || model.BookingPrice < 0)
-            {
-                ModelState.AddModelError("BookingPrice", "Giá trị Booking không hợp lệ hoặc quá lớn.");
-            }
-            if (model.ActualCost > 9999999999999.99m || model.ActualCost < 0)
-            {
-                ModelState.AddModelError("ActualCost", "Chi phí thực tế không hợp lệ hoặc quá lớn.");
-            }
-            ModelState.Remove(nameof(model.Kol));
-            ModelState.Remove(nameof(model.PrimaryManager));
-            ModelState.Remove(nameof(model.Campaign));
-            ModelState.Remove(nameof(model.BookingWages));
-            ModelState.Remove(nameof(model.BookingWageAuditLogs));
-            ModelState.Remove(nameof(model.CampaignName));
-            ModelState.Remove(nameof(model.ClientName));
-
-            if (ModelState.IsValid)
-            {
-                model.CreatedAt = DateTime.Now;
-                model.UpdatedAt = DateTime.Now;
-
-                _context.Bookings.Add(model);
-                await _context.SaveChangesAsync(cancellationToken);
-
-                // Save participating staff into booking_wages
-                if (participantIds != null && participantIds.Length > 0)
-                {
-                    foreach (var empId in participantIds)
-                    {
-                        _context.BookingWages.Add(new BookingWage
-                        {
-                            BookingId = model.Id,
-                            EmployeeId = empId,
-                            AllocatedWage = 0, // Wage distribution is handled in Module 10
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
-                        });
-                    }
-                    await _context.SaveChangesAsync(cancellationToken);
-                }
-
-                TryGetUserId(out var userIdInt);
-                await _auditService.WriteAsync(new AuditEvent(
-                    AuditModules.Booking,
-                    AuditActions.Created,
-                    $"Đã tạo Booking mới cho Client: {model.ClientName} (Campaign: {model.CampaignName})",
-                    userIdInt,
-                    "Booking",
-                    model.Id.ToString()
-                ), cancellationToken);
-
-                TempData["SuccessMessage"] = "Đã tạo Booking mới thành công.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tạo Booking. Vui lòng kiểm tra lại thông tin.";
-            return RedirectToAction(nameof(Index));
+            var row = b.BookingWages.FirstOrDefault(w => w.EmployeeId == item.Key);
+            if (row == null) { row = new BookingWage { EmployeeId = item.Key, CreatedAt = DateTime.Now }; b.BookingWages.Add(row); }
+            row.AllocatedWage = item.Value; row.UpdatedAt = DateTime.Now;
         }
+        var result = await Persist(b, AuditActions.WageChanged, $"Đã phân bổ {wages.Values.Sum():N0} đ cho {ids.Length} NV; phần còn lại thuộc QL phụ trách.", cancellationToken);
+        await tx.CommitAsync(cancellationToken);
+        return result;
+    }
 
-        [HttpPost("Bookings/Edit/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Booking input, int[] participantIds, IFormFile? contractFile, IFormFile? quotationFile, string deadlineStr, string? postingDateStr, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out _, out var userId) || role != AppRoles.BookingManager)
-            {
-                return Forbid();
-            }
+    [HttpPost("Bookings/SubmitApproval/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitApproval(int id, CancellationToken cancellationToken)
+    {
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (b == null) return NotFound();
+        if (!Owns(b)) return Forbid();
+        if (b.ContractStatus is not ("nhap" or "tu_choi") || b.Status == "huy") return Result(id, false, "Chỉ gửi Booking nháp hoặc bị từ chối.");
+        if (b.FinanceVersion != 1 || string.IsNullOrWhiteSpace(b.JobDescription) || b.BookingKols.Count == 0)
+            return Result(id, false, "Cần cập nhật đầy đủ nội dung, KOL và công thức tài chính trước khi gửi duyệt.");
+        b.ContractStatus = "cho_duyet"; b.RejectionReason = null;
+        return await Persist(b, "submitted", "Đã gửi đơn phê duyệt Booking lên Giám đốc.", cancellationToken);
+    }
 
-            var booking = await _context.Bookings
-                .Include(b => b.BookingWages)
-                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+    [HttpPost("Bookings/Approve/{id}"), ValidateAntiForgeryToken]
+    public Task<IActionResult> Approve(int id, CancellationToken cancellationToken) => DirectorDecision(id, true, null, cancellationToken);
+    [HttpPost("Bookings/Reject/{id}"), ValidateAntiForgeryToken]
+    public Task<IActionResult> Reject(int id, string? rejectionReason, CancellationToken cancellationToken) => DirectorDecision(id, false, rejectionReason, cancellationToken);
+    private async Task<IActionResult> DirectorDecision(int id, bool approve, string? reason, CancellationToken ct)
+    {
+        if (Role != AppRoles.Director) return Forbid();
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (b == null) return NotFound();
+        if (b.ContractStatus != "cho_duyet" || b.Status == "huy") return Result(id, false, "Booking không ở bước chờ duyệt.");
+        if (!approve && (string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)) return Result(id, false, "Nhập lý do từ chối, tối đa 1.000 ký tự.");
+        b.ContractStatus = approve ? "da_duyet" : "tu_choi"; b.RejectionReason = reason;
+        if (approve) { b.ContractApprovedAt = DateTime.Now; b.ContractApprovedById = EmployeeId == 0 ? null : EmployeeId; }
+        return await Persist(b, approve ? AuditActions.Approved : AuditActions.Rejected, approve ? "Giám đốc đã duyệt; chờ soạn hợp đồng." : "Giám đốc từ chối: " + reason, ct);
+    }
 
-            if (booking == null)
-            {
-                return NotFound();
-            }
+    [HttpPost("Bookings/UploadContract/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadContract(int id, IFormFile? contractFile, CancellationToken cancellationToken)
+    {
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (b == null) return NotFound();
+        if (!Owns(b) && !(Role == AppRoles.BookingStaff && b.BookingWages.Any(w => w.EmployeeId == EmployeeId))) return Forbid();
+        if (b.ContractStatus is not ("da_duyet" or "phap_ly_tu_choi")) return Result(id, false, "Chỉ soạn/sửa hợp đồng sau duyệt hoặc khi Pháp lý trả sửa.");
+        var path = contractFile == null ? null : await SaveDocument(contractFile, "contract", cancellationToken);
+        if (path == null) return Result(id, false, "Chọn hợp đồng PDF/DOCX/JPG/PNG tối đa 25 MB.");
+        b.ContractFileUrl = path; b.ContractRevision++; b.LegalApprovedRevision = null;
+        b.ContractStatus = "cho_phap_ly";
+        return await Persist(b, "contract_submitted_legal", $"Đã gửi hợp đồng phiên bản {b.ContractRevision} cho Pháp lý kiểm tra.", cancellationToken);
+    }
 
-            if (DateOnly.TryParse(deadlineStr, out var dl))
-            {
-                booking.Deadline = dl;
-            }
-            else
-            {
-                ModelState.AddModelError("Deadline", "Hạn chót không hợp lệ.");
-            }
+    [HttpPost("Bookings/SignContract/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> SignContract(int id, bool confirmed, CancellationToken cancellationToken)
+    {
+        if (Role != AppRoles.Director) return Forbid();
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (b == null) return NotFound();
+        if (!confirmed) return Result(id, false, "Cần tích xác nhận đã kiểm tra hợp đồng trước khi ký.");
+        if (b.ContractStatus != "cho_ky" || b.LegalApprovedRevision != b.ContractRevision || b.LegalReviewedAt == null || string.IsNullOrEmpty(b.ContractFileUrl))
+            return Result(id, false, "Pháp lý phải duyệt đúng phiên bản hợp đồng trước khi ký.");
+        b.ContractStatus = "da_ky"; b.ContractSignedAt = DateTime.Now; b.ContractSignedById = EmployeeId == 0 ? null : EmployeeId;
+        return await Persist(b, AuditActions.ContractSigned, "Giám đốc đã xác nhận ký hợp đồng.", cancellationToken);
+    }
 
-            if (!string.IsNullOrEmpty(postingDateStr) && DateOnly.TryParse(postingDateStr, out var pd))
-            {
-                booking.PostingDate = pd;
-            }
-            else
-            {
-                booking.PostingDate = null;
-            }
+    [HttpPost("Bookings/Acceptance/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> Acceptance(int id, IFormFile? acceptanceFile, string? postLink, CancellationToken ct)
+    {
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (b == null) return NotFound();
+        if (!Owns(b)) return Forbid();
+        if (b.ContractStatus != "da_ky" || b.Status == "huy") return Result(id, false, "Chỉ nghiệm thu sau khi hợp đồng đã ký.");
+        if (postLink?.Length > 255) return Result(id, false, "Link tối đa 255 ký tự.");
+        if (!string.IsNullOrWhiteSpace(postLink) && (!Uri.TryCreate(postLink, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
+            return Result(id, false, "Link phải là HTTP/HTTPS.");
+        var path = acceptanceFile == null ? null : await SaveDocument(acceptanceFile, "acceptance", ct);
+        if (path == null) return Result(id, false, "Chọn bản nghiệm thu hợp lệ.");
+        b.AcceptanceFileUrl = path; b.PostLink = postLink; b.PostingDate = DateOnly.FromDateTime(DateTime.Today); b.Status = "hoan_thanh";
+        return await Persist(b, "accepted", "Đã nghiệm thu và hoàn thành Booking.", ct);
+    }
 
-            // Sync Client and Campaign from Campaign model if selected
-            if (input.CampaignId.HasValue)
-            {
-                var campaign = await _context.Campaigns.FindAsync(new object[] { input.CampaignId.Value }, cancellationToken);
-                if (campaign != null)
-                {
-                    booking.CampaignId = input.CampaignId;
-                    booking.CampaignName = campaign.Name;
-                    booking.ClientName = campaign.Client;
-                }
-            }
-            else
-            {
-                booking.CampaignId = null;
-                booking.CampaignName = input.CampaignName;
-                booking.ClientName = input.ClientName;
-            }
-
-            // File uploads
-            if (contractFile != null && contractFile.Length > 0)
-            {
-                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings");
-                if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-                var fileName = $"contract_{Guid.NewGuid()}{Path.GetExtension(contractFile.FileName)}";
-                var filePath = Path.Combine(uploadDir, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await contractFile.CopyToAsync(stream, cancellationToken);
-                }
-                booking.ContractFileUrl = $"/uploads/bookings/{fileName}";
-            }
-
-            if (quotationFile != null && quotationFile.Length > 0)
-            {
-                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings");
-                if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-                var fileName = $"quotation_{Guid.NewGuid()}{Path.GetExtension(quotationFile.FileName)}";
-                var filePath = Path.Combine(uploadDir, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await quotationFile.CopyToAsync(stream, cancellationToken);
-                }
-                booking.QuotationFileUrl = $"/uploads/bookings/{fileName}";
-            }
-            if (input.BookingPrice > 9999999999999.99m || input.BookingPrice < 0)
-            {
-                ModelState.AddModelError("BookingPrice", "Giá trị Booking không hợp lệ hoặc quá lớn.");
-            }
-            if (input.ActualCost > 9999999999999.99m || input.ActualCost < 0)
-            {
-                ModelState.AddModelError("ActualCost", "Chi phí thực tế không hợp lệ hoặc quá lớn.");
-            }
-            ModelState.Remove(nameof(input.Kol));
-            ModelState.Remove(nameof(input.PrimaryManager));
-            ModelState.Remove(nameof(input.Campaign));
-            ModelState.Remove(nameof(input.BookingWages));
-            ModelState.Remove(nameof(input.BookingWageAuditLogs));
-            ModelState.Remove(nameof(input.CampaignName));
-            ModelState.Remove(nameof(input.ClientName));
-
-            if (ModelState.IsValid)
-            {
-                booking.KolId = input.KolId;
-                booking.JobDescription = input.JobDescription;
-                booking.BookingPrice = input.BookingPrice;
-                booking.ActualCost = input.ActualCost;
-                booking.PrimaryManagerId = input.PrimaryManagerId;
-                booking.Status = input.Status;
-                booking.PostLink = input.PostLink;
-                booking.Notes = input.Notes;
-                booking.UpdatedAt = DateTime.Now;
-
-                // Sync participants in booking_wages
-                var existingParticipants = booking.BookingWages.ToList();
-                _context.BookingWages.RemoveRange(existingParticipants);
-
-                if (participantIds != null && participantIds.Length > 0)
-                {
-                    foreach (var empId in participantIds)
-                    {
-                        var oldAlloc = existingParticipants.FirstOrDefault(x => x.EmployeeId == empId)?.AllocatedWage ?? 0;
-                        _context.BookingWages.Add(new BookingWage
-                        {
-                            BookingId = booking.Id,
-                            EmployeeId = empId,
-                            AllocatedWage = oldAlloc,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
-                        });
-                    }
-                }
-
-                await _context.SaveChangesAsync(cancellationToken);
-
-                TryGetUserId(out var userIdInt);
-                await _auditService.WriteAsync(new AuditEvent(
-                    AuditModules.Booking,
-                    AuditActions.Updated,
-                    $"Đã cập nhật Booking ID: {booking.Id} cho Client: {booking.ClientName}",
-                    userIdInt,
-                    "Booking",
-                    booking.Id.ToString()
-                ), cancellationToken);
-
-                TempData["SuccessMessage"] = "Đã cập nhật Booking thành công.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi cập nhật thông tin Booking.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        [HttpPost("Bookings/Delete/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out _, out var userId) || role != AppRoles.BookingManager)
-            {
-                return Forbid();
-            }
-
-            var booking = await _context.Bookings
-                .Include(b => b.BookingWages)
-                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            _context.BookingWages.RemoveRange(booking.BookingWages);
-            _context.Bookings.Remove(booking);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            TryGetUserId(out var userIdInt);
-            await _auditService.WriteAsync(new AuditEvent(
-                AuditModules.Booking,
-                AuditActions.Deleted,
-                $"Đã xóa Booking ID: {id} của Client: {booking.ClientName}",
-                userIdInt,
-                "Booking",
-                id.ToString()
-            ), cancellationToken);
-
-            TempData["SuccessMessage"] = "Đã xóa Booking thành công.";
-            return RedirectToAction(nameof(Index));
-        }
+    [HttpPost("Bookings/Start/{id}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> Start(int id, CancellationToken ct)
+    {
+        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (b == null) return NotFound();
+        if (!Owns(b)) return Forbid();
+        if (b.ContractStatus != "da_ky" || b.Status is "huy" or "hoan_thanh")
+            return Result(id, false, "Chỉ triển khai Booking đã ký, chưa hủy/hoàn thành.");
+        b.Status = "dang_trien_khai";
+        return await Persist(b, AuditActions.Updated, "Đã bắt đầu triển khai Booking.", ct);
+    }
 
         [HttpGet("Bookings/Dashboard")]
         public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
         {
-            if (!IsAuthorized(out _, out _, out _))
+            if (Role is not (AppRoles.Director or AppRoles.BookingManager))
             {
                 return Forbid();
             }
@@ -498,8 +354,8 @@ namespace HanaMedia.Controllers
                 .GroupBy(b => b.PrimaryManager)
                 .Select(g => new ManagerPerformanceViewModel
                 {
-                    ManagerName = g.Key.FullName,
-                    Position = g.Key.Position,
+                    ManagerName = g.Key?.FullName ?? "—",
+                    Position = g.Key?.Position ?? "—",
                     CompletedCount = g.Count(b => b.Status == "hoan_thanh"),
                     RunningCount = g.Count(b => b.Status == "dang_trien_khai"),
                     TotalCount = g.Count()
@@ -511,349 +367,8 @@ namespace HanaMedia.Controllers
             return View();
         }
 
-        [HttpPost("Bookings/UpdateWages/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateWages(int id, Dictionary<int, decimal> wages, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out _, out _) || role != AppRoles.BookingManager)
-            {
-                return Forbid();
-            }
 
-            var booking = await _context.Bookings
-                .Include(b => b.BookingWages)
-                    .ThenInclude(bw => bw.Employee)
-                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            if (wages.Any(item => item.Value < 0))
-            {
-                TempData["ErrorMessage"] = "Thù lao nhân viên không được là số âm.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            var config = await _businessConfigService.GetAsync(cancellationToken);
-            var proposedTotal = booking.BookingWages.Sum(item =>
-                wages.TryGetValue(item.EmployeeId, out var proposedWage) ? proposedWage : item.AllocatedWage);
-            var wageLimit = booking.BookingPrice * config.BookingWageLimitPercentage / 100m;
-            var exceedsLimit = proposedTotal > wageLimit;
-            if (exceedsLimit && !config.AllowBookingWageOverLimit)
-            {
-                TempData["ErrorMessage"] = $"Tổng thù lao {proposedTotal:N0} đ vượt giới hạn {config.BookingWageLimitPercentage}% ({wageLimit:N0} đ) của Booking. Cấu hình hiện tại không cho phép lưu vượt.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            TryGetUserId(out int currentUserId);
-
-            foreach (var kvp in wages)
-            {
-                var employeeId = kvp.Key;
-                var newWage = kvp.Value;
-
-                var bw = booking.BookingWages.FirstOrDefault(x => x.EmployeeId == employeeId);
-                if (bw != null && bw.AllocatedWage != newWage)
-                {
-                    var oldWage = bw.AllocatedWage;
-                    bw.AllocatedWage = newWage;
-                    bw.UpdatedAt = DateTime.Now;
-
-                    var detail = $"Cập nhật thù lao cho [{bw.Employee.FullName}] từ {oldWage:N0} đ thành {newWage:N0} đ";
-                    
-                    _auditService.AddEvent(new AuditEvent(
-                        Module: AuditModules.Booking,
-                        ActionType: AuditActions.WageChanged,
-                        Detail: detail,
-                        UserId: currentUserId,
-                        TargetType: "BookingWage",
-                        TargetId: id.ToString()
-                    ));
-                }
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-                TempData["SuccessMessage"] = exceedsLimit
-                    ? $"Đã cập nhật. Cảnh báo: tổng thù lao vượt giới hạn {config.BookingWageLimitPercentage}% theo cấu hình nghiệp vụ."
-                    : "Cập nhật phân bổ thù lao thành công.";
-            }
-            catch (DbUpdateException)
-            {
-                TempData["ErrorMessage"] = "Lỗi khi lưu dữ liệu. Có thể do giá trị thù lao vượt quá giới hạn hệ thống.";
-            }
-
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        [HttpPost("Bookings/SubmitApproval/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SubmitApproval(int id, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out _, out _))
-            {
-                return Forbid();
-            }
-
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            if (booking.ContractStatus == "da_ky")
-            {
-                TempData["ErrorMessage"] = "Hợp đồng này đã được ký, không thể gửi duyệt lại.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            booking.ContractStatus = "cho_duyet";
-            booking.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            TryGetUserId(out int currentUserId);
-            var roleLabel = role == AppRoles.BookingManager ? "QL Booking" : (role == AppRoles.BookingStaff ? "NV Booking" : "Giám đốc");
-            await _auditService.WriteAsync(new AuditEvent(
-                AuditModules.Booking,
-                AuditActions.Updated,
-                $"[{roleLabel}] Đã gửi đơn phê duyệt Booking #{booking.Id} ({booking.ClientName}) lên Giám đốc",
-                currentUserId,
-                "Booking",
-                booking.Id.ToString()
-            ), cancellationToken);
-
-            TempData["SuccessMessage"] = "Đã gửi đơn phê duyệt Booking lên Giám đốc thành công.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        [HttpPost("Bookings/Approve/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out var employeeId, out _) || role != AppRoles.Director)
-            {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-                    return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
-                return Forbid();
-            }
-
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-            if (booking == null)
-            {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-                    return Json(new { success = false, message = "Không tìm thấy Booking." });
-                return NotFound();
-            }
-
-            if (booking.ContractStatus != "cho_duyet")
-            {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-                    return Json(new { success = false, message = "Trạng thái hợp đồng không ở bước chờ duyệt." });
-                TempData["ErrorMessage"] = "Trạng thái hợp đồng không ở bước chờ duyệt.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            booking.ContractStatus = "da_duyet";
-            booking.ContractApprovedAt = DateTime.Now;
-            if (employeeId > 0)
-            {
-                booking.ContractApprovedById = employeeId;
-            }
-            booking.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            TryGetUserId(out int currentUserId);
-            await _auditService.WriteAsync(new AuditEvent(
-                AuditModules.Booking,
-                AuditActions.Approved,
-                $"Giám đốc đã duyệt Booking #{booking.Id} ({booking.ClientName}) (Chờ soạn hợp đồng)",
-                currentUserId,
-                "Booking",
-                booking.Id.ToString()
-            ), cancellationToken);
-
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-            {
-                return Json(new { success = true, message = $"Đã duyệt Booking #{booking.Id} thành công!" });
-            }
-
-            TempData["SuccessMessage"] = "Đã duyệt Booking thành công! Chờ nhân viên tải lên hợp đồng.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        [HttpPost("Bookings/Reject/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Reject(int id, string? rejectionReason, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out _, out _) || role != AppRoles.Director)
-            {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-                    return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
-                return Forbid();
-            }
-
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-            if (booking == null)
-            {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-                    return Json(new { success = false, message = "Không tìm thấy Booking." });
-                return NotFound();
-            }
-
-            if (booking.ContractStatus != "cho_duyet")
-            {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-                    return Json(new { success = false, message = "Trạng thái hợp đồng không ở bước chờ duyệt." });
-                TempData["ErrorMessage"] = "Trạng thái hợp đồng không ở bước chờ duyệt.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            booking.ContractStatus = "tu_choi";
-            booking.RejectionReason = rejectionReason;
-            booking.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            TryGetUserId(out int currentUserId);
-            var reasonText = string.IsNullOrWhiteSpace(rejectionReason) ? "Không có" : rejectionReason;
-            await _auditService.WriteAsync(new AuditEvent(
-                AuditModules.Booking,
-                AuditActions.Rejected,
-                $"Giám đốc đã từ chối Booking #{booking.Id} ({booking.ClientName}). Lý do: {reasonText}",
-                currentUserId,
-                "Booking",
-                booking.Id.ToString()
-            ), cancellationToken);
-
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers.Accept.ToString().Contains("json"))
-            {
-                return Json(new { success = true, message = $"Đã từ chối đơn phê duyệt Booking #{booking.Id}." });
-            }
-
-            TempData["SuccessMessage"] = "Đã từ chối đơn phê duyệt Booking.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        [HttpPost("Bookings/UploadContract/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadContract(int id, IFormFile? contractFile, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out _, out _))
-            {
-                return Forbid();
-            }
-
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            if (booking.ContractStatus != "da_duyet" && booking.ContractStatus != "cho_ky")
-            {
-                TempData["ErrorMessage"] = "Booking chưa được duyệt hoặc trạng thái hợp đồng không hợp lệ để tải file.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            if (contractFile == null || contractFile.Length == 0)
-            {
-                TempData["ErrorMessage"] = "Vui lòng chọn file hợp đồng để tải lên.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings");
-            if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-            var fileName = $"contract_{Guid.NewGuid()}{Path.GetExtension(contractFile.FileName)}";
-            var filePath = Path.Combine(uploadDir, fileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await contractFile.CopyToAsync(stream, cancellationToken);
-            }
-
-            booking.ContractFileUrl = $"/uploads/bookings/{fileName}";
-            booking.ContractStatus = "cho_ky";
-            booking.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            TryGetUserId(out int currentUserId);
-            var roleLabel = role == AppRoles.BookingManager ? "QL Booking" : (role == AppRoles.BookingStaff ? "NV Booking" : "Giám đốc");
-            await _auditService.WriteAsync(new AuditEvent(
-                AuditModules.Booking,
-                AuditActions.Updated,
-                $"[{roleLabel}] Đã tải lên và gửi hợp đồng cho Booking #{booking.Id} ({booking.ClientName}) chờ Giám đốc ký",
-                currentUserId,
-                "Booking",
-                booking.Id.ToString()
-            ), cancellationToken);
-
-            TempData["SuccessMessage"] = "Đã tải lên hợp đồng và gửi Giám đốc ký thành công.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        [HttpPost("Bookings/SignContract/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SignContract(int id, CancellationToken cancellationToken)
-        {
-            if (!IsAuthorized(out var role, out var employeeId, out _) || role != AppRoles.Director)
-            {
-                return Forbid();
-            }
-
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            if (booking.ContractStatus == "da_ky")
-            {
-                TempData["ErrorMessage"] = "Hợp đồng này đã được ký thành công trước đó.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            if (booking.ContractStatus != "cho_ky")
-            {
-                TempData["ErrorMessage"] = "Hợp đồng chưa ở trạng thái sẵn sàng để ký.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            booking.ContractStatus = "da_ky";
-            booking.ContractSignedAt = DateTime.Now;
-            if (employeeId > 0)
-            {
-                booking.ContractSignedById = employeeId;
-            }
-            booking.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            TryGetUserId(out int currentUserId);
-            await _auditService.WriteAsync(new AuditEvent(
-                AuditModules.Booking,
-                AuditActions.ContractSigned,
-                $"Giám đốc đã xác nhận ký hợp đồng cho Booking #{booking.Id} ({booking.ClientName}) - Hợp đồng có hiệu lực",
-                currentUserId,
-                "Booking",
-                booking.Id.ToString()
-            ), cancellationToken);
-
-            TempData["SuccessMessage"] = "Giám đốc đã xác nhận ký hợp đồng thành công. Hợp đồng chính thức có hiệu lực!";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        private bool TryGetUserId(out int userId)
-        {
-            return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
-        }
-    }
-
+}
     public class ManagerPerformanceViewModel
     {
         public string ManagerName { get; set; } = null!;
@@ -862,4 +377,3 @@ namespace HanaMedia.Controllers
         public int RunningCount { get; set; }
         public int TotalCount { get; set; }
     }
-}

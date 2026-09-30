@@ -7,6 +7,25 @@ public partial class Booking
 {
     public int Id { get; set; }
 
+    public int FinanceVersion { get; set; }
+    public decimal CompanyPercent { get; set; }
+    public decimal CommissionPercent { get; set; }
+    public decimal CastPercent { get; set; }
+    public string? AcceptanceFileUrl { get; set; }
+    public int ContractRevision { get; set; }
+    public int? LegalApprovedRevision { get; set; }
+    public int? LegalReviewedByUserId { get; set; }
+    public DateTime? LegalReviewedAt { get; set; }
+    public string? LegalFeedback { get; set; }
+    public virtual ICollection<BookingKol> BookingKols { get; set; } = new List<BookingKol>();
+    public virtual ICollection<BookingPayment> Payments { get; set; } = new List<BookingPayment>();
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal CommissionPool => decimal.Round(BookingPrice * CommissionPercent / 100m, 2, MidpointRounding.AwayFromZero);
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal CastPool => decimal.Round(BookingPrice * CastPercent / 100m, 2, MidpointRounding.AwayFromZero);
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string KolNames => BookingKols.Count > 0 ? string.Join(", ", BookingKols.Select(k => k.Kol?.Name ?? $"KOL #{k.KolId}")) : Kol?.Name ?? "—";
+
     public string ClientName { get; set; } = null!;
 
     public string CampaignName { get; set; } = null!;

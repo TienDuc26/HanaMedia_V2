@@ -141,7 +141,7 @@ namespace HanaMedia.Controllers
         }
 
         // PUT /Profile/UpdatePersonalInfo — cập nhật thông tin cá nhân (chính chủ)
-        [HttpPut("Profile/UpdatePersonalInfo")]
+        [HttpPut("Profile/UpdatePersonalInfo"), ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePersonalInfo(
             [FromBody] EmployeePersonalInfoUpdateDto input,
             CancellationToken ct = default)
@@ -222,7 +222,7 @@ namespace HanaMedia.Controllers
         }
 
         // PUT /Profile/UpdateBankAccount — cập nhật tài khoản nhận lương (chính chủ)
-        [HttpPut("Profile/UpdateBankAccount")]
+        [HttpPut("Profile/UpdateBankAccount"), ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateBankAccount(
             [FromBody] EmployeeBankAccountUpdateDto input,
             CancellationToken ct = default)
@@ -245,6 +245,8 @@ namespace HanaMedia.Controllers
                 return BadRequest(new { success = false, message = "Tên chủ tài khoản không được để trống." });
             if (input.AccountNumber.Length > 50)
                 return BadRequest(new { success = false, message = "Số tài khoản quá dài." });
+            if (input.BankName.Length > 100 || input.AccountHolderName.Length > 200)
+                return BadRequest(new { success = false, message = "Tên ngân hàng tối đa 100 ký tự, tên chủ tài khoản tối đa 200 ký tự." });
 
             var ok = await _profileService.UpdateBankAccountAsync(employee.Id, input, ct);
             if (!ok)
@@ -255,7 +257,7 @@ namespace HanaMedia.Controllers
 
         // PUT /Profile/UpdateUser — cập nhật avatar, QR code (chính chủ, không cần Employee record)
         // Email được UpdatePersonalInfo xử lý riêng để check trùng trước SaveChanges.
-        [HttpPut("Profile/UpdateUser")]
+        [HttpPut("Profile/UpdateUser"), ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateUser(
             [FromBody] UserUpdateDto input,
             CancellationToken ct = default)

@@ -1,0 +1,24 @@
+@model HanaMedia.Models.Campaign
+@using HanaMedia.Constants
+@if (User.IsInRole(AppRoles.BookingManager) && Model.ConfirmedAt != null)
+{
+    @if (Model.Status == CampaignStatuses.Running)
+    {
+        <form method="post" action="/Campaigns/Complete/@Model.Id" style="display:inline-block;margin-top:8px;"
+              onsubmit="return confirm('Xác nhận công việc của chiến dịch đã hoàn thành? Bước này chưa xác nhận nhận tiền.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-mini approve">Đánh dấu Hoàn thành</button>
+        </form>
+    }
+    else if (Model.Status == CampaignStatuses.Completed)
+    {
+        <form method="post" action="/Campaigns/Accept/@Model.Id" style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;max-width:100%;">
+            @Html.AntiForgeryToken()
+            <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+                <input type="checkbox" name="receivedPayment" value="true" required>
+                Tôi xác nhận đã nhận được tiền
+            </label>
+            <button type="submit" class="btn-mini approve">Nghiệm thu</button>
+        </form>
+    }
+}

@@ -207,7 +207,7 @@
         <div class="page-title">Giám sát Booking &amp; Thù lao</div>
         <div class="page-sub">Giám sát trạng thái booking KOL và tình hình phân bổ thù lao chi tiết theo nhân sự</div>
       </div>
-      <div class="topbar-actions">
+      <div class="topbar-actions"><a href="/Accounting" class="btn-mini">Đối soát tài chính</a>
         <a href="/Campaigns" class="btn-primary-blue" style="text-decoration:none;"><i class="ti ti-rocket"></i> Xem quản lý Chiến dịch &rarr;</a>
       </div>
     </div>
@@ -255,8 +255,8 @@
               {
                 decimal profit = item.BookingPrice - item.ActualCost;
                 string profitColor = profit >= 0 ? "var(--green)" : "var(--red)";
-                string contractStatus = !string.IsNullOrEmpty(item.ContractFileUrl) ? "Đã ký" : "Chờ ký";
-                string contractChip = !string.IsNullOrEmpty(item.ContractFileUrl) ? "status-good" : "status-warn";
+                string contractStatus = HanaMedia.Constants.ContractWorkflow.Label(item.ContractStatus);
+                string contractChip = item.ContractStatus == "da_ky" ? "status-good" : "status-warn";
 
                 <tr class="booking-row">
                   <td>@(stt++)</td>
@@ -265,7 +265,7 @@
                     <div style="font-size: 12px; color: var(--muted);"><i class="ti ti-target"></i> @(item.Campaign?.Name ?? item.CampaignName)</div>
                   </td>
                   <td>
-                    <div style="font-weight: 600;">@(item.Kol?.Name ?? "N/A")</div>
+                    <div style="font-weight: 600;">@item.KolNames</div>
                     @if (item.Kol != null && !string.IsNullOrEmpty(item.Kol.Platform))
                     {
                       <span class="status-chip status-info" style="font-size: 10.5px; padding: 2px 6px;"><i class="ti ti-brand-tiktok"></i> @item.Kol.Platform</span>
@@ -325,7 +325,7 @@
               <th style="text-align: right;">Giá trị Booking</th>
               <th style="min-width: 250px;">Nhân sự làm booking &amp; Thù lao</th>
               <th style="text-align: right;">Tổng chia</th>
-              <th>Còn lại</th>
+              <th>QL giữ lại (quỹ hoa hồng)</th>
               <th>QL Phụ trách</th>
               <th style="text-align: center;">Chi tiết</th>
             </tr>
@@ -337,9 +337,9 @@
               foreach (var item in Model)
               {
                 decimal totalAllocated = item.BookingWages.Sum(bw => bw.AllocatedWage);
-                decimal remaining = item.BookingPrice - totalAllocated;
+                decimal remaining = item.CommissionPool - totalAllocated;
                 string statusChipClass = remaining < 0 ? "status-warn" : (remaining == 0 ? "status-good" : "status-info");
-                string remainingText = remaining < 0 ? $"Vượt {-remaining:N0} đ" : (remaining == 0 ? "Đã chia đủ" : $"Còn {remaining:N0} đ");
+                string remainingText = item.FinanceVersion == 0 ? "Dữ liệu lịch sử" : remaining < 0 ? $"Vượt {-remaining:N0} đ" : (remaining == 0 ? "Đã chia đủ" : $"Còn {remaining:N0} đ");
                 string allocatedColor = remaining < 0 ? "var(--amber)" : "var(--green)";
 
                 var staffListData = item.BookingWages.Select(bw => new {
@@ -356,7 +356,7 @@
                     <strong>@item.ClientName</strong>
                     <div style="font-size: 12px; color: var(--muted);">@(item.Campaign?.Name ?? item.CampaignName)</div>
                   </td>
-                  <td><strong>@(item.Kol?.Name ?? "N/A")</strong></td>
+                  <td><strong>@item.KolNames</strong></td>
                   <td style="text-align: right; font-weight: 700; color: var(--blue-700);">@item.BookingPrice.ToString("N0") đ</td>
                   <td>
                     @if (item.BookingWages.Any())
@@ -385,7 +385,7 @@
                   <td><span style="font-size: 13px; font-weight: 500;">@(item.PrimaryManager?.FullName ?? "N/A")</span></td>
                   <td style="text-align: center;">
                     <button type="button" class="btn-action-view" 
-                            onclick="openSalaryModal('@item.ClientName', '@(item.Campaign?.Name ?? item.CampaignName)', '@(item.Kol?.Name ?? "N/A")', '@(item.PrimaryManager?.FullName ?? "N/A")', @item.BookingPrice, @staffJson)">
+                            data-salary='@Json.Serialize(new { client = item.ClientName, campaign = item.Campaign?.Name ?? item.CampaignName, kol = item.KolNames, manager = item.PrimaryManager?.FullName ?? "N/A", pool = item.CommissionPool, staff = staffListData, legacy = item.FinanceVersion == 0 })' onclick="openSalaryData(this)">
                       <i class="ti ti-file-text"></i> Xem chi tiết
                     </button>
                   </td>
@@ -413,16 +413,16 @@
       <!-- KPI Summary Cards (Always computed on ALL bookings) -->
       @if (Model != null && Model.Any())
       {
-        decimal sumBookingValues = Model.Sum(m => m.BookingPrice);
-        decimal sumAllocated = Model.Sum(m => m.BookingWages.Sum(bw => bw.AllocatedWage));
+        decimal sumBookingValues = Model.Where(m => m.FinanceVersion == 1).Sum(m => m.CommissionPool);
+        decimal sumAllocated = Model.Where(m => m.FinanceVersion == 1).Sum(m => m.BookingWages.Sum(bw => bw.AllocatedWage));
         decimal sumRemaining = sumBookingValues - sumAllocated;
-        int totalBookings = Model.Count();
-        int totalStaffAllocated = Model.SelectMany(m => m.BookingWages).Select(bw => bw.EmployeeId).Distinct().Count();
+        int totalBookings = Model.Count(m => m.FinanceVersion == 1);
+        int totalStaffAllocated = Model.Where(m => m.FinanceVersion == 1).SelectMany(m => m.BookingWages).Select(bw => bw.EmployeeId).Distinct().Count();
 
         <div class="grid-3">
           <div class="card">
             <div class="card-head">
-              <div class="card-title"><i class="ti ti-cash-banknote" style="color: var(--blue-500);"></i> Tổng giá trị Booking</div>
+              <div class="card-title"><i class="ti ti-cash-banknote" style="color: var(--blue-500);"></i> Tổng quỹ hoa hồng (v4)</div>
             </div>
             <div style="font-size: 28px; font-weight: 800; color: var(--blue-700); margin: 12px 0;">@sumBookingValues.ToString("N0") đ</div>
             <div style="font-size: 12px; color: var(--muted);">Theo dõi trên @totalBookings hợp đồng booking</div>
@@ -436,10 +436,10 @@
           </div>
           <div class="card">
             <div class="card-head">
-              <div class="card-title"><i class="ti ti-clock" style="color: var(--amber);"></i> Còn lại chưa phân bổ</div>
+              <div class="card-title"><i class="ti ti-clock" style="color: var(--amber);"></i> QL phụ trách giữ lại</div>
             </div>
             <div style="font-size: 28px; font-weight: 800; color: var(--amber); margin: 12px 0;">@sumRemaining.ToString("N0") đ</div>
-            <div style="font-size: 12px; color: var(--muted);">Quản lý Booking tiếp tục cập nhật</div>
+            <div style="font-size: 12px; color: var(--muted);">Phần hoa hồng QL giữ lại sau khi chia cho nhân viên</div>
           </div>
         </div>
       }
@@ -470,7 +470,7 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed #BFDBFE; padding-top: 8px;">
           <div>
-            <span style="font-size: 12px; color: var(--muted); display: block;">Giá trị Booking</span>
+            <span style="font-size: 12px; color: var(--muted); display: block;">Quỹ hoa hồng</span>
             <span id="salBookingValue" style="font-size: 15px; font-weight: 800; color: var(--blue-700);">0 đ</span>
           </div>
           <div>
@@ -514,7 +514,7 @@
         <i class="ti ti-alert-triangle" style="color: var(--red); font-size: 20px;"></i>
         <div>
           <div class="alert-title" style="color: #721C24;">Cảnh báo phân bổ vượt định mức!</div>
-          <div class="alert-desc" style="color: #721C24;">Tổng số tiền thù lao phân bổ cho các nhân viên đã vượt quá giá trị hợp đồng booking.</div>
+          <div class="alert-desc" style="color: #721C24;">Tổng số tiền thù lao phân bổ cho các nhân viên đã vượt quá quỹ hoa hồng của booking.</div>
         </div>
       </div>
     </div>
@@ -533,6 +533,12 @@
     const contents = document.querySelectorAll('.tab-content');
     contents.forEach(c => c.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  function openSalaryData(button) {
+    const data = JSON.parse(button.dataset.salary);
+    if (data.legacy) { window.alert("Booking lịch sử giữ nguyên thù lao cũ, chưa có quỹ v4. Xem chi tiết Booking để đối chiếu."); return; }
+    openSalaryModal(data.client, data.campaign, data.kol, data.manager, data.pool, data.staff);
   }
 
   function openSalaryModal(clientName, campaignName, kolName, managerName, totalValue, staffList) {
@@ -554,13 +560,9 @@
         
         let pct = totalValue > 0 ? ((item.val / totalValue) * 100).toFixed(1) + '%' : '0%';
 
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td><strong>${item.name}</strong></td>
-          <td><span style="font-size:12px; color:var(--muted);">${item.position || item.department || 'Nhân viên'}</span></td>
-          <td style="text-align: right; font-weight: 700; color: var(--green);">${fmt.format(item.val)}</td>
-          <td style="text-align: right; font-size: 12px; font-weight: 600; color: var(--blue-700);">${pct}</td>
-        `;
+        [index + 1, item.name, item.position || item.department || "Nhân viên", fmt.format(item.val), pct].forEach(value => {
+          const cell = row.insertCell(); cell.textContent = value;
+        });
       });
     } else {
       let row = tableBody.insertRow();

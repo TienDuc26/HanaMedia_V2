@@ -30,7 +30,7 @@
       <tr data-group="booking">
         <td><span class="approval-tag booking"><i class="ti ti-star"></i>Booking</span></td>
         <td><strong>@booking.ClientName</strong><small>Chiến dịch: @(booking.Campaign?.Name ?? booking.CampaignName)</small></td>
-        <td>@(booking.Kol?.Name ?? "Chưa chọn KOL/KOC")<small>Phòng Booking</small></td>
+        <td>@booking.KolNames<small>Phòng Booking</small></td>
         <td><strong class="money">@Money(booking.BookingPrice)</strong><small>Chi phí: @Money(booking.ActualCost)</small></td>
         <td>@(booking.PrimaryManager?.FullName ?? "Chưa phân công")</td>
         <td>@((booking.UpdatedAt ?? booking.CreatedAt)?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>

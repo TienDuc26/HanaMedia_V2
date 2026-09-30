@@ -35,9 +35,6 @@
   {
     <div class="kpi-grid report-kpis">
       <div class="kpi-card"><div class="kpi-label">Tổng nhân sự</div><div class="kpi-value">@hr.TotalEmployees</div></div>
-      <div class="kpi-card"><div class="kpi-label">Nhân sự mới</div><div class="kpi-value metric-good">@hr.NewEmployees</div></div>
-      <div class="kpi-card"><div class="kpi-label">Nghỉ việc</div><div class="kpi-value metric-bad">@hr.DepartedEmployees</div></div>
-      <div class="kpi-card"><div class="kpi-label">Tỷ lệ duy trì</div><div class="kpi-value">@hr.RetentionRate%</div></div>
     </div>
     <div class="grid-2 report-grid"><partial name="_ReportBreakdown" model='("Nhân sự theo phòng ban", hr.Departments)' /><partial name="_ReportBreakdown" model='("Loại hợp đồng", hr.ContractTypes)' /></div>
     @if (!Model.IsLimited)

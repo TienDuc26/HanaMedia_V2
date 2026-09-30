@@ -4,6 +4,9 @@ namespace HanaMedia.ViewModels;
 
 public sealed class BusinessConfigViewModel
 {
+    [Range(0, 100)] public decimal CompanyPercent { get; set; } = 50m;
+    [Range(0, 100)] public decimal CommissionPercent { get; set; } = 10m;
+    [Range(0, 100)] public decimal CastPercent { get; set; } = 40m;
     [Range(0, 100_000_000_000, ErrorMessage = "Ngưỡng Booking phải từ 0 đến 100 tỷ đồng.")]
     public decimal BookingApprovalThreshold { get; set; } = 100_000_000m;
 

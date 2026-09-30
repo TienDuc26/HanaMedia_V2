@@ -1,9 +1,11 @@
 @model HanaMedia.ViewModels.CompanyDashboardViewModel
 @using System.Globalization
+@using HanaMedia.Constants
 @{
     var basePath = ViewData["DashboardPath"] as string ?? "/Director/Dashboard";
     var queryName = ViewData["PeriodQueryName"] as string ?? "period";
     var readOnly = ViewData["ReadOnly"] as bool? ?? false;
+    var showDirectorMetrics = User.IsInRole(AppRoles.Director);
     var maxDepartmentCount = Math.Max(1, Model.Departments.Select(item => item.EmployeeCount).DefaultIfEmpty(0).Max());
     string Money(decimal value) => value switch
     {
@@ -26,14 +28,33 @@
 
   <div class="kpi-grid company-kpi-grid">
     <div class="kpi-card"><div class="kpi-label">Tổng nhân sự hiện tại</div><div class="kpi-value">@Model.TotalEmployees</div><div class="kpi-note">Đang làm việc, thử việc hoặc chờ duyệt nghỉ</div></div>
-    <div class="kpi-card"><div class="kpi-label">Biến động nhân sự</div><div class="kpi-value">+@Model.NewEmployees / -@Model.DepartedEmployees</div><div class="kpi-note">Nhận việc / nghỉ việc trong @Model.PeriodLabel.ToLowerInvariant()</div></div>
     <div class="kpi-card"><div class="kpi-label">Số booking</div><div class="kpi-value">@Model.BookingCount</div><div class="kpi-note">@Model.RunningBookings booking đang triển khai</div></div>
     <div class="kpi-card"><div class="kpi-label">Doanh thu booking</div><div class="kpi-value money-value">@Money(Model.BookingRevenue)</div><div class="kpi-note">Không tính booking đã hủy</div></div>
     <div class="kpi-card"><div class="kpi-label">Chiến dịch đang chạy</div><div class="kpi-value">@Model.RunningCampaigns</div><div class="kpi-note">Trạng thái hiện tại</div></div>
     <div class="kpi-card"><div class="kpi-label">Ý tưởng chờ duyệt</div><div class="kpi-value">@Model.PendingIdeas</div><div class="kpi-note">Đang ở bước review quản lý</div></div>
     <div class="kpi-card"><div class="kpi-label">Công việc quá hạn</div><div class="kpi-value @(Model.OverdueTasks > 0 ? "metric-danger" : null)">@Model.OverdueTasks</div><div class="kpi-note">Chưa hoàn thành, đã quá deadline</div></div>
     <div class="kpi-card"><div class="kpi-label">Lợi nhuận booking</div><div class="kpi-value money-value">@Money(Model.BookingProfit)</div><div class="kpi-note">Biên lợi nhuận @Model.ProfitMargin%</div></div>
+    @if (showDirectorMetrics)
+    {
+      <div class="kpi-card" data-metric="booking-remuneration" data-value="@Model.BookingRemuneration.ToString(CultureInfo.InvariantCulture)"><div class="kpi-label">Thù lao Booking</div><div class="kpi-value money-value">@Money(Model.BookingRemuneration)</div><div class="kpi-note">Quỹ hoa hồng QL và NV trong kỳ, theo tỷ lệ đã lưu; không cộng trùng phần chia NV.</div></div>
+      <div class="kpi-card" data-metric="kol-remuneration" data-value="@Model.KolRemuneration.ToString(CultureInfo.InvariantCulture)"><div class="kpi-label">Thù lao KOL/KOC</div><div class="kpi-value money-value">@Money(Model.KolRemuneration)</div><div class="kpi-note">Quỹ cast trong kỳ, theo tỷ lệ đã lưu. Không tính Booking đã hủy.</div></div>
+      <div class="kpi-card" data-metric="outstanding-campaigns" data-value="@Model.OutstandingCampaignCount"><div class="kpi-label">Công nợ</div><div class="kpi-value">@Model.OutstandingCampaignCount</div><div class="kpi-note">Chiến dịch chưa nghiệm thu tại thời điểm hiện tại, gồm cả kỳ trước; không tính đã hủy.</div></div>
+    }
   </div>
+
+  @if (showDirectorMetrics)
+  {
+    <section class="card" aria-label="Công nợ chiến dịch" id="outstandingCampaigns">
+      <div class="card-head"><div><div class="card-title">Công nợ — chiến dịch chưa nghiệm thu (@Model.OutstandingCampaignCount)</div><div class="card-sub">Chờ ký, đang chạy hoặc hoàn thành nhưng chưa xác nhận nhận tiền. Khi QL Booking nghiệm thu, chiến dịch tự rời danh sách này.</div></div></div>
+      <p class="kpi-note">Thù lao là quỹ phân bổ, không phải số đã thanh toán. Công nợ ở đây theo dõi chiến dịch, không quy đổi ngân sách thành số tiền phải thu.</p>
+      @if (Model.LegacyRemunerationExcludedCount > 0) { <p class="kpi-note">Có @Model.LegacyRemunerationExcludedCount Booking lịch sử trong kỳ chưa có tỷ lệ hoa hồng/cast đã lưu, không được cộng vào hai tổng thù lao.</p> }
+      <div class="table-scroll"><table><thead><tr><th>ID</th><th>Chiến dịch</th><th>Khách hàng</th><th>QL phụ trách</th><th>Trạng thái</th><th></th></tr></thead><tbody>
+      @if (Model.OutstandingCampaigns.Count == 0) { <tr><td colspan="6" class="dashboard-empty">Không có chiến dịch chưa nghiệm thu.</td></tr> }
+      else { @foreach (var c in Model.OutstandingCampaigns) { <tr><td>#@c.Id</td><td>@c.Name</td><td>@c.Client</td><td>@c.ManagerName</td><td>@c.StatusLabel</td><td><a class="btn-mini" href="/Campaigns/Details/@c.Id">Chi tiết</a></td></tr> } }
+      </tbody></table></div>
+      <p class="kpi-note">Hiển thị @Model.OutstandingCampaigns.Count / @Model.OutstandingCampaignCount chiến dịch · <a href="/Campaigns?pendingAcceptance=true">Xem danh sách đầy đủ</a></p>
+    </section>
+  }
 
   <div class="grid-2 company-dashboard-grid">
     <div class="card">
@@ -71,15 +92,6 @@
     </div>
   </div>
 
-  @if (!readOnly)
-  {
-    <div class="card"><div class="card-head"><div><div class="card-title">Nhân sự mới và nghỉ việc</div><div class="card-sub">Các biến động gần nhất trong @Model.PeriodLabel.ToLowerInvariant()</div></div><a class="link-btn" href="/Director/HumanResources">Xem hồ sơ nhân sự</a></div>
-      <div class="table-scroll"><table><thead><tr><th>ID</th><th>Nhân sự</th><th>Phòng ban</th><th>Chức vụ</th><th>Biến động</th><th>Ngày</th></tr></thead><tbody>
-      @if (Model.EmployeeChanges.Count == 0) { <tr><td colspan="6" class="dashboard-empty">Không có biến động nhân sự trong kỳ.</td></tr> }
-      else { @foreach (var change in Model.EmployeeChanges) { <tr><td>#@change.EmployeeId</td><td><strong>@change.FullName</strong></td><td>@change.DepartmentName</td><td>@change.Position</td><td><span class="change-chip @change.ChangeType">@change.ChangeLabel</span></td><td>@change.EventDate.ToString("dd/MM/yyyy")</td></tr> } }
-      </tbody></table></div>
-    </div>
-  }
 </section>
 
 <style>

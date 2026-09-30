@@ -33,7 +33,7 @@
   @if (TempData["SuccessMessage"] is string success){<div class="message message-ok"><i class="ti ti-circle-check"></i> @success</div>}
   @if (TempData["ErrorMessage"] is string error){<div class="message message-error"><i class="ti ti-alert-circle"></i> @error</div>}
   @if (Model.Reviewers.Count == 0){<div class="message message-error"><i class="ti ti-user-exclamation"></i> Chưa có tài khoản Quản lý Ý tưởng liên kết với hồ sơ nhân sự đang hoạt động. Cần hoàn thiện dữ liệu Module 5 trước khi gửi review.</div>}
-  @if (Model.Campaigns.Count == 0){<div class="message message-error"><i class="ti ti-rocket-off"></i> Chưa có chiến dịch đang hoạt động. Cần tạo Campaign trước khi tạo ý tưởng.</div>}
+  @if (Model.Campaigns.Count == 0){<div class="message message-error"><i class="ti ti-rocket-off"></i> Chưa có chiến dịch được Giám đốc chốt. Cần Giám đốc chốt chiến dịch trước khi tạo ý tưởng.</div>}
   <div class="card"><form method="get" action="@pageAction" class="idea-toolbar"><div class="idea-filters">
     <input class="form-control" name="search" value="@Model.Search" placeholder="Tìm tên ý tưởng, client, chiến dịch...">
     <select class="form-control" name="status"><option value="">Tất cả trạng thái</option>@foreach(var item in IdeaStatuses.All){<option value="@item" selected="@(Model.Status == item)">@IdeaStatuses.GetLabel(item)</option>}</select>
@@ -55,7 +55,7 @@
     <div class="form-group"><label>Tên ý tưởng *</label><input class="form-control" name="Title" maxlength="150" required></div>
     <div class="form-group"><label>Campaign *</label><select class="form-control" name="CampaignId" required><option value="">-- Chọn chiến dịch --</option>@foreach(var c in Model.Campaigns){<option value="@c.Id">@c.Client — @c.Name</option>}</select><div class="idea-sub">Client tự lấy theo Campaign, không nhập trùng.</div></div>
     <div class="form-group"><label>Deadline *</label><input class="form-control" type="date" name="Deadline" min="@DateTime.Today.ToString("yyyy-MM-dd")" required></div>
-    @if(Model.IsManager){<div class="form-group"><label>Người phụ trách *</label><select class="form-control" name="PrimaryStaffId" required><option value="">-- Chọn nhân sự --</option>@foreach(var s in Model.Staff){<option value="@s.Id">@s.Name (@s.OpenTaskCount việc mở)</option>}</select></div>}
+    @if(Model.IsManager){<div class="form-group"><label>Content Creator phụ trách *</label><select class="form-control" name="PrimaryStaffId" required><option value="">-- Chọn nhân viên nội bộ hoặc KOL/KOC --</option>@foreach(var s in Model.Staff){<option value="@s.Id">@s.Name (@s.OpenTaskCount việc mở)</option>}</select></div>}
     <div class="form-group"><label>Người review *</label><select class="form-control" name="ReviewerEmployeeId" required><option value="">-- Chọn QL Ý tưởng --</option>@foreach(var r in Model.Reviewers){<option value="@r.Id">@r.Name</option>}</select></div>
     <div class="form-group wide"><label>Insight</label><textarea class="form-control" name="Insight" rows="2" maxlength="2000"></textarea></div><div class="form-group wide"><label>Concept</label><textarea class="form-control" name="Concept" rows="2" maxlength="4000"></textarea></div><div class="form-group wide"><label>Nội dung</label><textarea class="form-control" name="ContentDetails" rows="3" maxlength="8000"></textarea></div>
     <div class="form-group"><label>Reference link</label><input class="form-control" type="url" name="ReferenceLink" maxlength="255" placeholder="https://..."></div><div class="form-group"><label>Upload reference (tối đa 10 MB)</label><input class="form-control" type="file" name="ReferenceFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.webp"></div>
@@ -113,7 +113,7 @@
             <div class="idea-detail-card-head"><h3 class="idea-detail-card-title"><i class="ti ti-users"></i> Phụ trách &amp; tiến độ</h3></div>
             <div class="idea-side-grid">
               <div class="form-group"><label>Deadline *</label><input class="form-control" type="date" name="Deadline" id="editDeadline" required></div>
-              @if(Model.IsManager){<div class="form-group"><label>Người phụ trách *</label><select class="form-control" name="PrimaryStaffId" id="editPrimaryStaffId" required>@foreach(var s in Model.Staff){<option value="@s.Id">@s.Name (@s.OpenTaskCount việc mở)</option>}</select></div>}else{<input type="hidden" name="PrimaryStaffId" id="editPrimaryStaffId">}
+              @if(Model.IsManager){<div class="form-group"><label>Content Creator phụ trách *</label><select class="form-control" name="PrimaryStaffId" id="editPrimaryStaffId" required>@foreach(var s in Model.Staff){<option value="@s.Id">@s.Name (@s.OpenTaskCount việc mở)</option>}</select></div>}else{<input type="hidden" name="PrimaryStaffId" id="editPrimaryStaffId">}
               <div class="form-group"><label>Người review *</label><select class="form-control" name="ReviewerEmployeeId" id="editReviewerEmployeeId" required @(!Model.IsManager?"disabled":null)>@foreach(var r in Model.Reviewers){<option value="@r.Id">@r.Name</option>}</select>@if(!Model.IsManager){<input type="hidden" name="ReviewerEmployeeId" id="editReviewerHidden">}</div>
               <div class="form-group"><label>Trạng thái</label><input class="form-control" id="detailStatus" readonly></div>
             </div>
@@ -206,6 +206,7 @@
     setValue('commentIdeaId', idea.Id);
     setValue('deleteIdeaId', idea.Id);
     const task = document.getElementById('assignTaskLink');
+    if (task) task.hidden = (idea.PrimaryStaffId ?? 0) <= 0;
     if (task) task.href = `/Tasks?module=Y_Tuong&employeeId=${idea.PrimaryStaffId ?? ''}&create=true&relatedType=Idea&relatedId=${idea.Id}`;
     document.getElementById('commentList').innerHTML = idea.Comments.length
       ? idea.Comments.map(comment => `<div class="comment"><div class="comment-meta"><strong>${escapeHtml(comment.AuthorName)}</strong> · ${escapeHtml(comment.AuthorRole)} · ${new Date(comment.CreatedAt).toLocaleString('vi-VN')}</div><div>${escapeHtml(comment.Content)}</div></div>`).join('')

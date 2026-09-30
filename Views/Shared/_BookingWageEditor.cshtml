@@ -1,0 +1,49 @@
+@model HanaMedia.Models.Booking
+@using HanaMedia.Models
+@using System.Globalization
+@{
+    var available = (ViewBag.Participants as IEnumerable<Employee> ?? Enumerable.Empty<Employee>()).ToList();
+    var staff = available.Concat(Model.BookingWages.Select(w => w.Employee)).DistinctBy(e => e.Id).OrderBy(e => e.FullName).ToList();
+    var pool = (decimal?)ViewBag.WagePool ?? Model.CommissionPool;
+}
+<link rel="stylesheet" href="~/css/booking-wages.css" asp-append-version="true" />
+<div class="wage-editor" data-pool="@pool.ToString(CultureInfo.InvariantCulture)">
+    <h3>Chọn nhân viên &amp; chia thù lao</h3>
+    <p>Chọn người tham gia rồi tự nhập số tiền (VNĐ). Phần chưa chia thuộc QL phụ trách; có thể chia sau tại Chi tiết.</p>
+    <div class="wage-summary" aria-live="polite">
+        <div>Quỹ hoa hồng<strong data-wage-pool></strong></div>
+        <div>Đã chia cho nhân viên<strong data-wage-total></strong></div>
+        <div>QL còn lại<strong data-wage-remaining></strong></div>
+    </div>
+    <div class="wage-filters">
+        <label>Tìm nhân viên<input type="search" data-wage-search placeholder="Nhập tên hoặc mã nhân viên…" /></label>
+        <label>Phòng ban<select data-wage-department><option value="">Tất cả phòng ban</option>
+            @foreach (var department in staff.Select(e => e.Department).Distinct().OrderBy(d => d))
+            { <option value="@department">@department</option> }
+        </select></label>
+        <label class="wage-selected-filter"><input type="checkbox" data-wage-selected /> Chỉ người đã chọn</label>
+    </div>
+    <div class="wage-count" aria-live="polite"></div>
+    <div class="wage-people">
+        @foreach (var emp in staff)
+        {
+            var wage = Model.BookingWages.FirstOrDefault(w => w.EmployeeId == emp.Id);
+            var eligible = available.Any(e => e.Id == emp.Id);
+            <div class="wage-person" data-name="@emp.FullName #@emp.Id" data-department="@emp.Department">
+                <label class="wage-person-name"><input type="checkbox" data-wage-choice checked="@(wage != null)" aria-label="Chọn @emp.FullName" />
+                    <span><strong>@emp.FullName</strong><small>#@emp.Id · @emp.Department</small>
+                        @if (!eligible) { <small>Không còn đủ điều kiện — bỏ chọn trước khi lưu.</small> }
+                    </span>
+                </label>
+                <label class="wage-amount-label">Thù lao (VNĐ)
+                    <input id="wage-@emp.Id" data-wage-amount name="wages[@emp.Id]" type="number" inputmode="decimal" min="0" max="9999999999999.99" step="0.01" required value="@((wage?.AllocatedWage ?? 0).ToString(CultureInfo.InvariantCulture))" disabled="@(wage == null)" aria-label="Thù lao @emp.FullName" />
+                    <small data-wage-formatted></small>
+                </label>
+            </div>
+        }
+        <p data-wage-empty hidden>Không tìm thấy nhân viên phù hợp. Thử đổi tên hoặc phòng ban.</p>
+    </div>
+    <p class="wage-error" role="alert" hidden></p>
+    <p class="wage-hint">Lọc danh sách không bỏ chọn nhân viên. Bỏ tích một người sẽ gỡ người đó và khoản chia khi lưu. Nhân viên đang làm việc hoặc thử việc ở tất cả phòng ban đều có thể được chọn.</p>
+</div>
+<script src="~/js/booking-wages.js" asp-append-version="true" defer></script>

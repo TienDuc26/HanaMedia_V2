@@ -8,13 +8,15 @@
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="validation-errors"></div>
     <div class="card-head"><div><div class="card-title">Tham số vận hành nghiệp vụ</div><div class="card-sub">Thay đổi được lưu vào database và ghi Audit log</div></div></div>
+    <p>Ba tỷ lệ phải có tổng bằng 100%. Áp dụng cho Booking mới; tỷ lệ Booking đã lưu không tự đổi.</p>
     <div class="config-grid">
+      <div class="form-group"><label asp-for="CompanyPercent">Phần công ty (%)</label><input asp-for="CompanyPercent" type="number" min="0" max="100" step="0.01" class="form-control"></div>
+      <div class="form-group"><label asp-for="CommissionPercent">Quỹ hoa hồng QL Booking (%)</label><input asp-for="CommissionPercent" type="number" min="0" max="100" step="0.01" class="form-control"></div>
+      <div class="form-group"><label asp-for="CastPercent">Quỹ cát-xê KOL (%)</label><input asp-for="CastPercent" type="number" min="0" max="100" step="0.01" class="form-control"></div>
       <div class="form-group"><label asp-for="BookingApprovalThreshold">Giá trị Booking cần Giám đốc phê duyệt trực tiếp</label><div class="input-suffix"><input asp-for="BookingApprovalThreshold" type="number" min="0" step="1000000" class="form-control"><span>đ</span></div><span asp-validation-for="BookingApprovalThreshold" class="field-error"></span><small>Booking từ ngưỡng này được xác định là Booking quan trọng.</small></div>
       <div class="form-group"><label asp-for="CampaignApprovalThreshold">Ngân sách chiến dịch cần Giám đốc duyệt</label><div class="input-suffix"><input asp-for="CampaignApprovalThreshold" type="number" min="0" step="1000000" class="form-control"><span>đ</span></div><span asp-validation-for="CampaignApprovalThreshold" class="field-error"></span><small>Áp dụng cho chiến dịch/ý tưởng quan trọng cần Giám đốc xem xét.</small></div>
-      <div class="form-group"><label asp-for="BookingWageLimitPercentage">Giới hạn tổng thù lao trên giá trị Booking</label><div class="input-suffix"><input asp-for="BookingWageLimitPercentage" type="number" min="1" max="500" step="1" class="form-control"><span>%</span></div><span asp-validation-for="BookingWageLimitPercentage" class="field-error"></span><small>Hệ thống đối chiếu tổng tiền phân bổ cho team với giới hạn này.</small></div>
       <div class="form-group"><label asp-for="EmployeeHandoverDays">Số ngày bàn giao hồ sơ khi nghỉ việc</label><div class="input-suffix"><input asp-for="EmployeeHandoverDays" type="number" min="1" max="365" class="form-control"><span>ngày</span></div><span asp-validation-for="EmployeeHandoverDays" class="field-error"></span><small>Thời hạn bàn giao tiêu chuẩn sau khi nghỉ việc được duyệt.</small></div>
     </div>
-    <label class="policy-switch"><input asp-for="AllowBookingWageOverLimit" type="checkbox"><span><strong>Cho phép QL Booking lưu phân bổ vượt giới hạn</strong><small>Nếu tắt, hệ thống chặn lưu. Nếu bật, hệ thống vẫn lưu nhưng hiển thị cảnh báo.</small></span></label>
     <div class="config-footer"><span>@(Model.UpdatedAt.HasValue ? $"Cập nhật gần nhất: {Model.UpdatedAt:HH:mm dd/MM/yyyy}" : "Đang dùng giá trị mặc định")</span><button type="submit" class="btn-primary-blue"><i class="ti ti-device-floppy"></i>Lưu thiết lập</button></div>
   </form>
 </main></div>

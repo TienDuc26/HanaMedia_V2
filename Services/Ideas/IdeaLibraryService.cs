@@ -119,7 +119,7 @@ public sealed class IdeaLibraryService : IIdeaLibraryService
         if (!IdeaLibraryCategories.IsValid(category))
             return IdeaOperationResult.Failure("Phân loại kho ý tưởng không hợp lệ.");
 
-        var idea = await _context.Ideas.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+        var idea = await _context.Ideas.FirstOrDefaultAsync(item => item.Id == id && item.Campaign != null && item.Campaign.ConfirmedAt != null, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
 
         var oldIndustry = idea.Industry;
@@ -144,10 +144,11 @@ public sealed class IdeaLibraryService : IIdeaLibraryService
         var query = _context.Ideas.AsNoTracking()
             .Include(item => item.Campaign)
             .Include(item => item.CreatorEmployee)
-            .Include(item => item.PrimaryStaff)
+            .Include(item => item.PrimaryStaff).Include(item => item.PrimaryKol)
             .Include(item => item.MoodboardImages)
             .AsQueryable();
 
+        if (actorRole != AppRoles.Director) query = query.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null);
         if (actorRole is AppRoles.Director or AppRoles.IdeaManager) return query;
         if (actorRole != AppRoles.IdeaStaff || !actorEmployeeId.HasValue)
             return query.Where(_ => false);
@@ -189,7 +190,7 @@ public sealed class IdeaLibraryService : IIdeaLibraryService
             .Select(image => new IdeaMoodboardImageViewModel(image.Id, image.FileUrl, image.SortOrder)).ToList(),
         Script = idea.ScriptText,
         CreatorName = idea.CreatorEmployee?.FullName ?? "-",
-        PrimaryStaffName = idea.PrimaryStaff?.FullName ?? "-",
+        PrimaryStaffName = idea.PrimaryKol?.Name ?? idea.PrimaryStaff?.FullName ?? "-",
         Deadline = idea.Deadline,
         UpdatedAt = idea.UpdatedAt
     };

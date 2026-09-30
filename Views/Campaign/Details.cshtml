@@ -12,18 +12,11 @@
         "running" => "status-running",
         "paused" => "status-paused",
         "completed" => "status-completed",
+        "accepted" => "status-completed",
         "cancelled" => "status-cancelled",
         _ => "status-planning"
     };
-    var statusLabel = Model.Status switch
-    {
-        "planning" => "Lên kế hoạch",
-        "running" => "Đang chạy",
-        "paused" => "Tạm dừng",
-        "completed" => "Hoàn thành",
-        "cancelled" => "Đã hủy",
-        _ => Model.Status
-    };
+    var statusLabel = CampaignStatuses.Label(Model.Status);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -164,6 +157,15 @@
         <div class="page-sub" style="margin-top: 6px;">Client: <strong style="color: var(--primary-blue);">@Model.Client</strong></div>
       </div>
     </div>
+
+    @if (TempData["SuccessMessage"] != null) { <p role="status">@TempData["SuccessMessage"]</p> }
+    <section class="card" style="margin-bottom:20px;">
+      <p>Chờ ký → Đang chạy → Hoàn thành → Đã nghiệm thu</p>
+      @if (Model.CompletedAt.HasValue) { <p>Hoàn thành lúc @Model.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm") · Tài khoản #@Model.CompletedByUserId</p> }
+      @if (Model.Status == CampaignStatuses.Completed) { <p>Đã hoàn thành công việc, chờ QL Booking xác nhận nhận được tiền để nghiệm thu.</p> }
+      @if (Model.AcceptedAt.HasValue) { <p>Đã xác nhận nhận tiền và nghiệm thu lúc @Model.AcceptedAt.Value.ToString("dd/MM/yyyy HH:mm") · Tài khoản #@Model.AcceptedByUserId</p> }
+      <partial name="_CampaignLifecycleActions" model="Model" />
+    </section>
 
     <div class="detail-grid">
       <!-- Left side: Details and links -->

@@ -57,3 +57,7 @@ pdf/
 
 # appsettings.Development.json (Optional: some teams ignore it to avoid local connection strings leaking)
 # appsettings.Development.json
+
+# Private uploaded documents and local QA artifacts
+App_Data/
+tests/artifacts/

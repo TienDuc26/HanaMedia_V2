@@ -1,0 +1,11 @@
+@model List<HanaMedia.Models.Booking>
+@{Layout="_V4Layout";ViewData["Title"]="Kiểm tra hợp đồng — Pháp lý";}
+<p class="v4-muted">Kiểm tra đúng phiên bản hợp đồng. Trả sửa phải ghi rõ lý do; QL Booking phụ trách nhận phản hồi tại trang chi tiết.</p>
+<nav class="v4-form"><a class="btn-mini" href="/Legal">Chờ kiểm tra</a><a class="btn-mini" href="/Legal?status=all">Lịch sử</a></nav>
+@if(Model.Count==0){<div class="v4-card">Không có hợp đồng trong danh sách.</div>}
+@foreach(var b in Model){<section class="v4-card"><h2>Booking #@b.Id — @b.ClientName</h2><p>@b.CampaignName · QL phụ trách: @b.PrimaryManager?.FullName · Phiên bản @b.ContractRevision</p>
+<p>Trạng thái: @HanaMedia.Constants.ContractWorkflow.Label(b.ContractStatus)</p>
+@if(!string.IsNullOrEmpty(b.ContractFileUrl)){<a class="btn-mini" href="@b.ContractFileUrl">Tải hợp đồng để kiểm tra</a>}
+@if(!string.IsNullOrWhiteSpace(b.LegalFeedback)){<p>Phản hồi: @b.LegalFeedback</p>}
+@if(b.ContractStatus=="cho_phap_ly"){<form method="post" action="/Legal/Review/@b.Id" class="v4-form">@Html.AntiForgeryToken()<input type="hidden" name="revision" value="@b.ContractRevision"><label>Ghi chú / lý do trả sửa<textarea name="feedback" maxlength="2000"></textarea></label><button class="btn-mini approve" name="approve" value="true">Hợp lệ — chuyển Giám đốc ký</button><button class="btn-mini" name="approve" value="false">Trả sửa</button></form>}
+</section>}

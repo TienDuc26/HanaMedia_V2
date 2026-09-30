@@ -1,0 +1,28 @@
+@model HanaMedia.Models.Booking
+@using HanaMedia.Constants
+@{var owner=ViewBag.IsWritable==true;var director=User.IsInRole(AppRoles.Director);}
+<section class="enterprise-card">
+ <h2 class="card-title-text">DUYỆT BOOKING &amp; HỢP ĐỒNG</h2>
+ <p class="card-subtitle-text">Gửi Booking → Giám đốc duyệt → Soạn hợp đồng → Pháp lý kiểm tra → Giám đốc ký</p>
+ <p><strong>@ContractWorkflow.Label(Model.ContractStatus)</strong> · Phiên bản hợp đồng @Model.ContractRevision</p>
+ @if(!string.IsNullOrWhiteSpace(Model.RejectionReason)){<p style="color:var(--danger)">Giám đốc: @Model.RejectionReason</p>}
+ @if(!string.IsNullOrWhiteSpace(Model.LegalFeedback)){<p style="color:var(--danger)">Pháp lý: @Model.LegalFeedback</p>}
+ @if(Model.ContractFileUrl!=null){<p><a href="@Model.ContractFileUrl" class="btn-mini">Tải hợp đồng hiện tại</a></p>}
+ @if(owner && Model.ContractStatus is "nhap" or "tu_choi"){
+  <form action="/Bookings/SubmitApproval/@Model.Id" method="post">@Html.AntiForgeryToken()<button class="btn-mini approve">Gửi Giám đốc duyệt Booking</button></form>
+ }
+ @if(director && Model.ContractStatus=="cho_duyet"){
+  <form action="/Bookings/Approve/@Model.Id" method="post">@Html.AntiForgeryToken()<button class="btn-mini approve">Duyệt Booking</button></form>
+  <form action="/Bookings/Reject/@Model.Id" method="post">@Html.AntiForgeryToken()<label>Lý do từ chối<input class="form-control" name="rejectionReason" required maxlength="1000"></label><button class="btn-mini">Từ chối</button></form>
+ }
+ @if(ViewBag.CanDraft==true && Model.ContractStatus is "da_duyet" or "phap_ly_tu_choi"){
+  <form action="/Bookings/UploadContract/@Model.Id" method="post" enctype="multipart/form-data">@Html.AntiForgeryToken()<label>Hợp đồng soạn/sửa (PDF/DOCX/JPG/PNG, tối đa 25 MB)<input class="form-control" type="file" name="contractFile" accept=".pdf,.docx,.jpg,.jpeg,.png" required></label><button class="btn-mini approve">Gửi Pháp lý kiểm tra</button></form>
+ }
+ @if(director && Model.ContractStatus=="cho_ky"){
+  <form action="/Bookings/SignContract/@Model.Id" method="post">@Html.AntiForgeryToken()<label><input type="checkbox" name="confirmed" value="true" required> Tôi đã kiểm tra và xác nhận ký hợp đồng này</label><button class="btn-mini approve">Xác nhận ký</button></form>
+ }
+ @if(owner && Model.ContractStatus=="da_ky" && Model.Status is not ("huy" or "hoan_thanh")){
+  @if(Model.Status!="dang_trien_khai"){<form action="/Bookings/Start/@Model.Id" method="post">@Html.AntiForgeryToken()<button class="btn-mini approve">Bắt đầu triển khai</button></form>}
+  <form action="/Bookings/Acceptance/@Model.Id" method="post" enctype="multipart/form-data">@Html.AntiForgeryToken()<h3>Nghiệm thu</h3><input class="form-control" name="postLink" type="url" value="@Model.PostLink" placeholder="Link sản phẩm"><label>Bản nghiệm thu<input class="form-control" type="file" name="acceptanceFile" accept=".pdf,.docx,.jpg,.jpeg,.png" required></label><button class="btn-mini approve">Lưu nghiệm thu &amp; hoàn thành</button></form>
+ }
+</section>

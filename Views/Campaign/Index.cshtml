@@ -294,17 +294,17 @@
     <div class="card">
       <div class="campaign-toolbar">
         <form method="get" action="/Campaigns" class="filter-group">
+          @if (ViewBag.PendingAcceptance == true) { <input type="hidden" name="pendingAcceptance" value="true"><span>Chiến dịch chưa nghiệm thu</span> }
           <input type="text" name="search" value="@ViewBag.Search" placeholder="Tìm tên chiến dịch, client..." class="form-control-filter" style="width: 260px;">
           <select name="status" class="form-control-filter">
             <option value="">-- Tất cả trạng thái hoạt động --</option>
-            <option value="planning" selected="@(ViewBag.Status == "planning")">Lên kế hoạch</option>
-            <option value="running" selected="@(ViewBag.Status == "running")">Đang chạy</option>
-            <option value="paused" selected="@(ViewBag.Status == "paused")">Tạm dừng</option>
-            <option value="completed" selected="@(ViewBag.Status == "completed")">Hoàn thành</option>
-            <option value="cancelled" selected="@(ViewBag.Status == "cancelled")">Hủy / Lưu trữ</option>
+            <option value="@CampaignStatuses.AwaitingSignature" selected="@(ViewBag.Status == CampaignStatuses.AwaitingSignature)">@CampaignStatuses.Label(CampaignStatuses.AwaitingSignature)</option>
+            <option value="@CampaignStatuses.Running" selected="@(ViewBag.Status == CampaignStatuses.Running)">@CampaignStatuses.Label(CampaignStatuses.Running)</option>
+            <option value="@CampaignStatuses.Completed" selected="@(ViewBag.Status == CampaignStatuses.Completed)">@CampaignStatuses.Label(CampaignStatuses.Completed)</option>
+            <option value="@CampaignStatuses.Accepted" selected="@(ViewBag.Status == CampaignStatuses.Accepted)">@CampaignStatuses.Label(CampaignStatuses.Accepted)</option>
           </select>
           <button type="submit" class="btn-primary-blue"><i class="ti ti-filter"></i>Lọc</button>
-          @if (!string.IsNullOrEmpty(ViewBag.Search) || !string.IsNullOrEmpty(ViewBag.Status))
+          @if (!string.IsNullOrEmpty(ViewBag.Search) || !string.IsNullOrEmpty(ViewBag.Status) || ViewBag.PendingAcceptance == true)
           {
             <a href="/Campaigns" class="btn-secondary" style="text-decoration: none; padding: 8px 14px; font-size: 13.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-refresh"></i>Xóa bộ lọc</a>
           }
@@ -345,18 +345,11 @@
                 "running" => "status-running",
                 "paused" => "status-paused",
                 "completed" => "status-completed",
+                "accepted" => "status-completed",
                 "cancelled" => "status-cancelled",
                 _ => "status-planning"
               };
-              var statusLabel = item.Status switch
-              {
-                "planning" => "Lên kế hoạch",
-                "running" => "Đang chạy",
-                "paused" => "Tạm dừng",
-                "completed" => "Hoàn thành",
-                "cancelled" => "Đã hủy",
-                _ => item.Status
-              };
+              var statusLabel = CampaignStatuses.Label(item.Status);
 
               <tr>
                 <td style="font-weight: 700; color: var(--primary-blue);"><a href="/Campaigns/Details/@item.Id" style="text-decoration: none; color: inherit;">@item.Name</a></td>
@@ -373,14 +366,23 @@
                 <td><span class="status-badge @statusClass">@statusLabel</span></td>
                 <td style="text-align: right;">
                   <a href="/Campaigns/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Xem chi tiết</a>
-                  @if (isBookingManager)
+                  <span class="status-badge">@(item.ConfirmedAt.HasValue ? "Giám đốc đã chốt" : "Chưa chốt")</span>
+                  @if(role == AppRoles.Director && item.ConfirmedAt == null && item.Status == CampaignStatuses.AwaitingSignature){
+                    <form method="post" action="/Campaigns/Confirm/@item.Id" style="display:inline">@Html.AntiForgeryToken()<button class="btn-action btn-action-edit">Chốt chiến dịch</button></form>
+                  }
+                  @if (isBookingManager && item.Status != CampaignStatuses.Accepted)
                   {
-                    <button class="btn-action btn-action-edit" onclick="openEditModal(@Json.Serialize(new { id = item.Id, name = item.Name, client = item.Client, budget = item.Budget, status = item.Status, managerEmployeeId = item.ManagerEmployeeId, description = item.Description, notes = item.Notes }), '@item.StartDate.ToString("yyyy-MM-dd")', '@item.EndDate.ToString("yyyy-MM-dd")')"><i class="ti ti-edit"></i>Sửa</button>
+                    <button type="button" class="btn-action btn-action-edit"
+                            data-campaign="@System.Text.Json.JsonSerializer.Serialize(new { id = item.Id, name = item.Name, client = item.Client, budget = item.Budget, status = item.Status, statusLabel = CampaignStatuses.Label(item.Status), managerEmployeeId = item.ManagerEmployeeId, description = item.Description, notes = item.Notes })"
+                            onclick="openEditModal(JSON.parse(this.dataset.campaign), '@item.StartDate.ToString("yyyy-MM-dd")', '@item.EndDate.ToString("yyyy-MM-dd")')"><i class="ti ti-edit"></i>Sửa</button>
+                    @if (item.Status != CampaignStatuses.Completed) {
                     <form method="post" action="/Campaigns/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy/ngừng hoạt động chiến dịch này?');">
                       @Html.AntiForgeryToken()
                       <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Hủy</button>
                     </form>
+                    }
                   }
+                  <partial name="_CampaignLifecycleActions" model="item" />
                 </td>
               </tr>
             }
@@ -426,13 +428,8 @@
           </div>
           <div>
             <label class="form-label" for="campaignStatus">Trạng thái</label>
-            <select id="campaignStatus" name="Status" class="form-control">
-              <option value="planning">Lên kế hoạch</option>
-              <option value="running">Đang chạy</option>
-              <option value="paused">Tạm dừng</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="cancelled">Hủy / Lưu trữ</option>
-            </select>
+            <input id="campaignStatus" type="text" class="form-control" readonly value="@CampaignStatuses.Label(CampaignStatuses.AwaitingSignature)" aria-describedby="campaignStatusHelp">
+            <small id="campaignStatusHelp">Chờ ký → Giám đốc chốt → Đang chạy → Hoàn thành → Đã nghiệm thu (đã nhận tiền).</small>
           </div>
         </div>
         <div class="form-group">
@@ -473,7 +470,7 @@
     var today = new Date().toISOString().split('T')[0];
     document.getElementById('startDate').value = today;
     document.getElementById('endDate').value = today;
-    document.getElementById('campaignStatus').value = 'planning';
+    document.getElementById('campaignStatus').value = 'Đang chờ ký';
     
     modal.classList.add('active');
   }
@@ -489,7 +486,7 @@
     document.getElementById('startDate').value = startDateStr;
     document.getElementById('endDate').value = endDateStr;
     document.getElementById('campaignBudget').value = campaign.budget;
-    document.getElementById('campaignStatus').value = campaign.status;
+    document.getElementById('campaignStatus').value = campaign.statusLabel;
     document.getElementById('managerId').value = campaign.managerEmployeeId;
     document.getElementById('campaignDescription').value = campaign.description || '';
     document.getElementById('campaignNotes').value = campaign.notes || '';

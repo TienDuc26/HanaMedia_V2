@@ -49,6 +49,10 @@ public sealed class WorkTaskService : IWorkTaskService
             .Include(task => task.Campaign)
             .Where(task => task.Module == selectedModule);
 
+        if (actorRole is AppRoles.IdeaManager or AppRoles.IdeaStaff)
+            query = query.Where(t => (t.CampaignId == null || t.Campaign!.ConfirmedAt != null) &&
+                (t.RelatedType != WorkTaskRelatedTypes.Idea || _context.Ideas.Any(i => i.Id == t.RelatedId && i.Campaign != null && i.Campaign.ConfirmedAt != null)));
+
         if (!IsManagerRole(actorRole) && actorRole != AppRoles.Director)
         {
             query = query.Where(task => task.AssignedEmployee.UserId == actorUserId);
@@ -183,6 +187,10 @@ public sealed class WorkTaskService : IWorkTaskService
         if (relatedType is not null && relatedType != WorkTaskRelatedTypes.None && (!input.RelatedId.HasValue || input.RelatedId <= 0))
             return WorkTaskOperationResult.Failure("Cần chọn đối tượng liên kết khi đã chọn loại liên kết.");
 
+        if (module == WorkTaskModules.Ideas && input.CampaignId.HasValue && !await _context.Campaigns.AnyAsync(c => c.Id == input.CampaignId && c.ConfirmedAt != null, cancellationToken))
+            return WorkTaskOperationResult.Failure("Chiến dịch chưa được Giám đốc chốt.");
+        if (module == WorkTaskModules.Ideas && relatedType == WorkTaskRelatedTypes.Idea && !await _context.Ideas.AnyAsync(i => i.Id == input.RelatedId && i.Campaign != null && i.Campaign.ConfirmedAt != null, cancellationToken))
+            return WorkTaskOperationResult.Failure("Ý tưởng không thuộc chiến dịch đã được chốt.");
         var department = WorkTaskModules.GetDepartment(module);
         var employee = await _context.Employees
             .FirstOrDefaultAsync(item => item.Id == input.AssignedEmployeeId, cancellationToken);
@@ -309,6 +317,13 @@ public sealed class WorkTaskService : IWorkTaskService
         if (task is null)
         {
             throw new KeyNotFoundException("Không tìm thấy công việc.");
+        }
+
+        if (actorRole is AppRoles.IdeaManager or AppRoles.IdeaStaff)
+        {
+            if ((task.CampaignId.HasValue && !await _context.Campaigns.AnyAsync(c => c.Id == task.CampaignId && c.ConfirmedAt != null, cancellationToken)) ||
+                (task.RelatedType == WorkTaskRelatedTypes.Idea && !await _context.Ideas.AnyAsync(i => i.Id == task.RelatedId && i.Campaign != null && i.Campaign.ConfirmedAt != null, cancellationToken)))
+                throw new UnauthorizedAccessException("Chiến dịch chưa được Giám đốc chốt.");
         }
 
         // Validate access
@@ -439,9 +454,9 @@ public sealed class WorkTaskService : IWorkTaskService
         {
             var idea = await _context.Ideas
                 .Include(i => i.CreatorEmployee)
-                .Include(i => i.PrimaryStaff)
+                .Include(i => i.PrimaryStaff).Include(i => i.PrimaryKol)
                 .Include(i => i.ReviewerEmployee)
-                .FirstOrDefaultAsync(i => i.Id == task.RelatedId.Value, cancellationToken);
+                .FirstOrDefaultAsync(i => i.Id == task.RelatedId.Value && i.Campaign != null && i.Campaign.ConfirmedAt != null, cancellationToken);
             if (idea != null)
             {
                 ideaContext = new WorkspaceIdeaContext
@@ -467,7 +482,7 @@ public sealed class WorkTaskService : IWorkTaskService
                     ScriptText = idea.ScriptText,
                     Deadline = idea.Deadline.ToString("dd/MM/yyyy"),
                     CreatorName = idea.CreatorEmployee?.FullName,
-                    PrimaryStaffName = idea.PrimaryStaff?.FullName,
+                    PrimaryStaffName = idea.PrimaryKol?.Name ?? idea.PrimaryStaff?.FullName,
                     ReviewerName = idea.ReviewerEmployee?.FullName,
                     Status = idea.Status switch
                     {

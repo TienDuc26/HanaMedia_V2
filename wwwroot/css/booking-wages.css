@@ -1,0 +1,24 @@
+.wage-editor { border:1px solid #dce6f3; border-radius:14px; padding:20px; background:#f8fbff; color:#17385d; min-width:0; }
+.wage-editor h3 { font-size:18px; margin:0 0 8px; }
+.wage-editor p { font-size:13px; line-height:1.6; }
+.wage-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0; }
+.wage-summary>div { background:white; border:1px solid #dce6f3; padding:12px; border-radius:10px; font-size:12px; }
+.wage-summary strong { display:block; font-size:17px; margin-top:7px; overflow-wrap:anywhere; color:#1263be; }
+.wage-filters { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
+.wage-editor label { font-size:13px; min-width:0; text-transform:none; font-weight:500; color:#405b7c; }
+.wage-person-name strong { color:#17385d; }
+.wage-editor input:not([type=checkbox]),.wage-editor select { display:block; width:100%; box-sizing:border-box; padding:10px; border:1px solid #cddbeb; border-radius:8px; background:white; color:#17385d; font:inherit; margin-top:6px; min-width:0; }
+.wage-editor input:focus,.wage-editor select:focus { outline:2px solid #3182f6; outline-offset:1px; }
+.wage-editor input:disabled { background:#edf1f6; color:#7b8797; }
+.wage-editor input[type=checkbox] { width:18px; height:18px; accent-color:#287de3; flex-shrink:0; }
+.wage-selected-filter { display:flex; align-items:center; gap:8px; grid-column:1/-1; }
+.wage-count { margin:12px 0; font-size:13px; }
+.wage-people { max-height:340px; overflow:auto; padding:2px; }
+.wage-person { display:grid; grid-template-columns:minmax(0,1fr) 190px; align-items:center; gap:16px; padding:12px; margin-bottom:8px; border:1px solid #dce6f3; border-radius:10px; background:white; }
+.wage-person[hidden],.wage-editor [hidden] { display:none!important; }
+.wage-person:has([data-wage-choice]:checked) { border-color:#69a4ef; background:#f0f7ff; }
+.wage-person-name { display:flex; align-items:center; gap:10px; cursor:pointer; overflow-wrap:anywhere; }
+.wage-person small { display:block; margin-top:5px; color:#60758e; }
+.wage-error { color:#b42318; font-weight:600; }
+.wage-hint { color:#60758e; margin-bottom:0; }
+@media(max-width:600px) { .wage-editor { padding:12px; } .wage-summary,.wage-filters { grid-template-columns:1fr; } .wage-person { grid-template-columns:1fr; gap:8px; } }

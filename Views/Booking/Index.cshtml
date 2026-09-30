@@ -311,6 +311,7 @@
     <!-- BỘ LỌC TÌM KIẾM -->
     <div class="card" style="padding: 16px 20px; margin-bottom: 24px;">
       <form method="get" action="/Bookings" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <div><label class="form-label">Nhân viên tham gia</label><select class="form-control" name="participantId"><option value="">Tất cả nhân viên</option>@foreach(var emp in employees){<option value="@emp.Id" selected="@((int?)ViewBag.ParticipantId==emp.Id)">@emp.FullName — @emp.Department</option>}</select></div>
         <div style="flex: 2; min-width: 200px;">
           <label class="form-label" style="margin-bottom: 4px;">Tìm kiếm</label>
           <input class="form-control" name="search" value="@searchKeyword" placeholder="Tìm client, chiến dịch, ghi chú...">
@@ -412,8 +413,8 @@
                   <div style="font-size: 12.5px; color: var(--muted-text);">Chiến dịch: @(item.Campaign?.Name ?? item.CampaignName)</div>
                 </td>
                 <td>
-                  <div style="font-weight: 600;">@(item.Kol?.Name ?? "N/A")</div>
-                  <div style="font-size: 11px; color: var(--muted-text);">@item.Kol?.Platform</div>
+                  <div style="font-weight: 600;">@item.KolNames</div>
+                  <div style="font-size: 11px; color: var(--muted-text);">@(string.Join(", ", item.BookingKols.Select(k=>k.Kol?.Platform).Where(p=>!string.IsNullOrWhiteSpace(p)).Distinct()))</div>
                 </td>
                 <td style="font-size: 13.5px; font-weight: 550;">
                   <div>@item.Deadline.ToString("dd/MM/yyyy")</div>
@@ -448,7 +449,7 @@
                       "cho_ky" => "HĐ: Chờ ký",
                       "da_ky" => "HĐ: Đã ký",
                       "tu_choi" => "HĐ: Từ chối",
-                      _ => "HĐ: Chờ duyệt"
+                      _ => HanaMedia.Constants.ContractWorkflow.Label(item.ContractStatus)
                     };
                   }
                   <div style="margin-top: 4px;">
@@ -458,12 +459,12 @@
                 <td style="text-align: right; white-space: nowrap;">
                   <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
                     <a href="/Bookings/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Chi tiết</a>
-                    @if (ViewBag.IsWritable)
+                    @if (ViewBag.IsWritable && item.PrimaryManagerId == (int)ViewBag.EmployeeId && (item.ContractStatus is "nhap" or "tu_choi"))
                     {
-                      <button class="btn-action btn-action-edit" data-booking='@Json.Serialize(new { id = item.Id, clientName = item.ClientName, campaignName = item.CampaignName, campaignId = item.CampaignId, kolId = item.KolId, jobDescription = item.JobDescription, bookingPrice = item.BookingPrice, actualCost = item.ActualCost, primaryManagerId = item.PrimaryManagerId, status = item.Status, postLink = item.PostLink, notes = item.Notes, participantIds = item.BookingWages.Select(x => x.EmployeeId).ToArray() })' data-deadline="@item.Deadline.ToString("yyyy-MM-dd")" data-postingdate="@(item.PostingDate?.ToString("yyyy-MM-dd") ?? "")" onclick="openEditModal(this)"><i class="ti ti-edit"></i>Sửa</button>
-                      <form method="post" action="/Bookings/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa Booking này?');">
+                      <button class="btn-action btn-action-edit" data-booking='@Json.Serialize(new { id = item.Id, clientName = item.ClientName, campaignName = item.CampaignName, campaignId = item.CampaignId, kolId = item.KolId, kolIds = item.BookingKols.Select(k => k.KolId).ToArray(), jobDescription = item.JobDescription, bookingPrice = item.BookingPrice, actualCost = item.ActualCost, financeVersion = item.FinanceVersion, commissionPercent = item.CommissionPercent, castPercent = item.CastPercent, primaryManagerId = item.PrimaryManagerId, status = item.Status, postLink = item.PostLink, notes = item.Notes, participantIds = item.BookingWages.Select(x => x.EmployeeId).ToArray() })' data-deadline="@item.Deadline.ToString("yyyy-MM-dd")" data-postingdate="@(item.PostingDate?.ToString("yyyy-MM-dd") ?? "")" onclick="openEditModal(this)"><i class="ti ti-edit"></i>Sửa</button>
+                      <form method="post" action="/Bookings/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Hủy Booking này và giữ lại lịch sử?');">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Xóa</button>
+                        <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Hủy</button>
                       </form>
                     }
                   </div>
@@ -491,9 +492,9 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Chọn Chiến dịch quảng bá</label>
-            <select class="form-control" name="CampaignId" id="bookingCampaignId" onchange="syncCampaignDetails(this)">
+            <select class="form-control" name="CampaignId" id="bookingCampaignId" required onchange="syncCampaignDetails(this)">
               <option value="">-- Chọn chiến dịch có sẵn --</option>
-              @foreach (var camp in campaigns)
+              @foreach (var camp in campaigns.Where(c => c.Status == "running" && c.ConfirmedAt != null))
               {
                 <option value="@camp.Id" data-client="@camp.Client">@camp.Name</option>
               }
@@ -501,19 +502,19 @@
           </div>
           <div class="form-group">
             <label class="form-label">Khách hàng (Client) *</label>
-            <input class="form-control" name="ClientName" id="bookingClientName" required placeholder="Nhập tên đối tác/Client">
+            <input class="form-control" name="ClientName" id="bookingClientName" readonly placeholder="Nhập tên đối tác/Client">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Chiến dịch tự nhập (nếu không chọn sẵn)</label>
-            <input class="form-control" name="CampaignName" id="bookingCampaignName" placeholder="Nhập tên chiến dịch">
+            <label class="form-label">Chiến dịch (tự lấy theo lựa chọn)</label>
+            <input class="form-control" name="CampaignName" id="bookingCampaignName" readonly placeholder="Nhập tên chiến dịch">
           </div>
           <div class="form-group">
             <label class="form-label">KOL / KOC quảng cáo *</label>
-            <select class="form-control" name="KolId" id="bookingKolId" required>
-              <option value="">-- Chọn KOL/KOC hợp tác --</option>
+            <select class="form-control" name="kolIds" id="bookingKolId" required multiple size="4">
+
               @foreach (var kol in kols)
               {
                 <option value="@kol.Id">@kol.Name (@kol.Platform)</option>
@@ -541,22 +542,22 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Giá trị hợp đồng Booking (VNĐ) *</label>
-            <input class="form-control" type="number" name="BookingPrice" id="bookingPrice" required placeholder="Ví dụ: 10000000">
+            <input class="form-control" type="number" name="BookingPrice" id="bookingPrice" min="0.01" step="0.01" required placeholder="Ví dụ: 10000000">
           </div>
           <div class="form-group">
-            <label class="form-label">Chi phí thực tế phát sinh (VNĐ) *</label>
-            <input class="form-control" type="number" name="ActualCost" id="bookingActualCost" required placeholder="Ví dụ: 8000000">
+            <label class="form-label">Chi phí tự tính (cát-xê + hoa hồng)</label>
+            <input class="form-control" type="number" id="bookingActualCost" readonly placeholder="Ví dụ: 8000000">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">File Hợp đồng (Contract File)</label>
-            <input class="form-control" type="file" name="contractFile" id="bookingContractFile">
+            <p>Soạn hợp đồng sau khi Giám đốc duyệt Booking.</p>
           </div>
           <div class="form-group">
-            <label class="form-label">File Báo giá (Quotation File)</label>
-            <input class="form-control" type="file" name="quotationFile" id="bookingQuotationFile">
+            <label class="form-label">Bản nghiệm thu</label>
+            <p>Tải bản nghiệm thu tại trang chi tiết khi hoàn thành Booking đã ký.</p>
           </div>
         </div>
 
@@ -568,28 +569,19 @@
           <div class="form-group">
             <label class="form-label">Người phụ trách (Manager) *</label>
             <select class="form-control" name="PrimaryManagerId" id="bookingPrimaryManagerId" required>
-              <option value="">-- Chọn nhân viên phụ trách --</option>
-              @foreach (var emp in employees)
+              <option value="">-- QL Booking phụ trách --</option>
+              @foreach (var emp in employees.Where(e => e.Id == (int)ViewBag.EmployeeId))
               {
-                <option value="@emp.Id">@emp.FullName (@emp.Position)</option>
+                <option value="@emp.Id" selected>@emp.FullName (@emp.Position)</option>
               }
             </select>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Nhân sự tham gia Booking (Chọn nhiều)</label>
-          <div class="checkbox-grid">
-            @foreach (var emp in employees)
-            {
-              <label class="checkbox-item">
-                <input type="checkbox" name="participantIds" value="@emp.Id">
-                <span>@emp.FullName</span>
-              </label>
-            }
-          </div>
-        </div>
-
+        <fieldset id="createWageAllocation" style="border:0;padding:0;margin:0 0 20px;min-width:0">
+          <partial name="_BookingWageEditor" model="new HanaMedia.Models.Booking()" />
+        </fieldset>
+        <p id="editWageHint" hidden>Quản lý nhân viên và chia thù lao tại trang Chi tiết. Sửa thông tin ở đây không thay đổi các khoản đã chia.</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Trạng thái Booking</label>
@@ -597,8 +589,6 @@
               <option value="dang_cho">Chờ</option>
               <option value="thuong_luong">Thương lượng</option>
               <option value="da_chot">Chốt</option>
-              <option value="dang_trien_khai">Triển khai</option>
-              <option value="hoan_thanh">Hoàn thành</option>
               <option value="huy">Hủy</option>
             </select>
           </div>
@@ -618,6 +608,17 @@
 </div>
 
 <script>
+const defaultCommission = @(((HanaMedia.ViewModels.BusinessConfigViewModel)ViewBag.FinanceConfig).CommissionPercent.ToString(System.Globalization.CultureInfo.InvariantCulture));
+const defaultCast = @(((HanaMedia.ViewModels.BusinessConfigViewModel)ViewBag.FinanceConfig).CastPercent.ToString(System.Globalization.CultureInfo.InvariantCulture));
+let commissionRate = defaultCommission, castRate = defaultCast;
+document.addEventListener('DOMContentLoaded', () => {
+ const price = document.getElementById('bookingPrice');
+ price.addEventListener('input', () => {
+   document.getElementById('bookingActualCost').value = (Math.round(Number(price.value) * commissionRate) / 100 + Math.round(Number(price.value) * castRate) / 100).toFixed(2);
+   document.querySelector('#createWageAllocation .wage-editor').wageEditor?.setPool(Math.round(Number(price.value) * commissionRate) / 100);
+ });
+});
+
   function syncCampaignDetails(select) {
     const selectedOption = select.options[select.selectedIndex];
     const clientNameInput = document.getElementById('bookingClientName');
@@ -628,15 +629,21 @@
       campaignNameInput.value = selectedOption.text;
       campaignNameInput.readOnly = true;
     } else {
-      campaignNameInput.readOnly = false;
+      campaignNameInput.readOnly = true;
     }
   }
 
   function openCreateModal() {
+    commissionRate = defaultCommission; castRate = defaultCast;
     document.getElementById('modalTitle').innerText = 'Tạo Booking mới';
     document.getElementById('bookingForm').action = '/Bookings/Create';
     document.getElementById('bookingForm').reset();
-    document.getElementById('bookingCampaignName').readOnly = false;
+    const allocation = document.getElementById('createWageAllocation');
+    allocation.hidden = false; allocation.disabled = false;
+    document.getElementById('editWageHint').hidden = true;
+    allocation.querySelector('.wage-editor').wageEditor?.reset();
+    document.getElementById('bookingPrice').dispatchEvent(new Event('input'));
+    document.getElementById('bookingCampaignName').readOnly = true;
     
     // Uncheck participants
     const checkboxes = document.querySelectorAll('#bookingForm input[name="participantIds"]');
@@ -649,6 +656,9 @@
     const booking = JSON.parse(btn.getAttribute('data-booking'));
     const deadline = btn.getAttribute('data-deadline');
     const postingDate = btn.getAttribute('data-postingdate');
+    const allocation = document.getElementById('createWageAllocation');
+    allocation.hidden = true; allocation.disabled = true;
+    document.getElementById('editWageHint').hidden = false;
 
     document.getElementById('modalTitle').innerText = 'Cập nhật Booking ID: ' + booking.id;
     document.getElementById('bookingForm').action = '/Bookings/Edit/' + booking.id;
@@ -656,12 +666,14 @@
     document.getElementById('bookingCampaignId').value = booking.campaignId || '';
     document.getElementById('bookingClientName').value = booking.clientName || '';
     document.getElementById('bookingCampaignName').value = booking.campaignName || '';
-    document.getElementById('bookingKolId').value = booking.kolId || '';
+    Array.from(document.getElementById('bookingKolId').options).forEach(o => o.selected = (booking.kolIds?.length ? booking.kolIds : [booking.kolId]).includes(Number(o.value)));
     document.getElementById('bookingJobDescription').value = booking.jobDescription || '';
     document.getElementById('bookingDeadline').value = deadline || '';
     document.getElementById('bookingPostingDate').value = postingDate || '';
     document.getElementById('bookingPrice').value = booking.bookingPrice || 0;
-    document.getElementById('bookingActualCost').value = booking.actualCost || 0;
+    commissionRate = booking.financeVersion === 1 ? booking.commissionPercent : defaultCommission;
+    castRate = booking.financeVersion === 1 ? booking.castPercent : defaultCast;
+    document.getElementById('bookingPrice').dispatchEvent(new Event('input'));
     document.getElementById('bookingPostLink').value = booking.postLink || '';
     document.getElementById('bookingPrimaryManagerId').value = booking.primaryManagerId || '';
     document.getElementById('bookingStatus').value = booking.status || 'dang_cho';
@@ -670,7 +682,7 @@
     if (booking.campaignId) {
       document.getElementById('bookingCampaignName').readOnly = true;
     } else {
-      document.getElementById('bookingCampaignName').readOnly = false;
+      document.getElementById('bookingCampaignName').readOnly = true;
     }
 
     // Set participating checkboxes

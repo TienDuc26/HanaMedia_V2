@@ -88,7 +88,8 @@ namespace HanaMedia.Services
                 _ => ".jpg"
             };
 
-            var root = Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), folder);
+            var root = isAvatar ? Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), folder)
+                : Path.Combine(_env.ContentRootPath, "App_Data", "qrcodes");
             Directory.CreateDirectory(root);
 
             // Ghi file mới trước
@@ -113,7 +114,7 @@ namespace HanaMedia.Services
                 }
             }
 
-            return $"/{folder}/{fileName}";
+            return isAvatar ? $"/{folder}/{fileName}" : $"/private-qr/{fileName}";
         }
 
         private async Task<(byte[] bytes, string mime)> ProcessQrAsync(byte[] rawBytes, string mime)

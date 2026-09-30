@@ -6,5 +6,6 @@ public interface ICompanyDashboardService
 {
     Task<CompanyDashboardViewModel> GetAsync(
         string? period,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool includeDirectorMetrics = false);
 }

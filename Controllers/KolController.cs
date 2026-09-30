@@ -85,6 +85,8 @@ public sealed class KolController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        kol.Bookings = await _context.Bookings.Where(b => b.KolId == id || b.BookingKols.Any(k => k.KolId == id))
+            .Include(b => b.Campaign).Include(b => b.PrimaryManager).ToListAsync(cancellationToken);
         return View(kol);
     }
 

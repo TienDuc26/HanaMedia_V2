@@ -15,6 +15,11 @@ public sealed class CompanyDashboardViewModel
     public int RunningBookings { get; init; }
     public decimal BookingRevenue { get; init; }
     public decimal BookingCost { get; init; }
+    public decimal BookingRemuneration { get; init; }
+    public decimal KolRemuneration { get; init; }
+    public int LegacyRemunerationExcludedCount { get; init; }
+    public int OutstandingCampaignCount { get; init; }
+    public IReadOnlyList<OutstandingCampaignViewModel> OutstandingCampaigns { get; init; } = [];
     public int RunningCampaigns { get; init; }
     public int PendingIdeas { get; init; }
     public int OverdueTasks { get; init; }
@@ -29,6 +34,16 @@ public sealed class CompanyDashboardViewModel
     public decimal ProfitMargin => BookingRevenue == 0
         ? 0
         : Math.Round(BookingProfit * 100m / BookingRevenue, 1);
+}
+
+public sealed class OutstandingCampaignViewModel
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Client { get; init; } = string.Empty;
+    public string ManagerName { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
+    public string StatusLabel => HanaMedia.Constants.CampaignStatuses.Label(Status);
 }
 
 public sealed class CompanyDashboardDepartmentViewModel

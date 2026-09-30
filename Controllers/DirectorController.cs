@@ -35,13 +35,13 @@ namespace HanaMedia.Controllers
             _context = context;
         }
         public async Task<IActionResult> Dashboard(string? period, CancellationToken cancellationToken)
-            => View(await _dashboardService.GetAsync(period, cancellationToken));
+            => View(await _dashboardService.GetAsync(period, cancellationToken, includeDirectorMetrics: true));
 
         public async Task<IActionResult> Approve(CancellationToken cancellationToken)
         {
             var pendingBookings = await _context.Bookings
                 .Include(b => b.Campaign)
-                .Include(b => b.Kol)
+                .Include(b => b.Kol).Include(b => b.BookingKols).ThenInclude(k => k.Kol)
                 .Include(b => b.PrimaryManager)
                 .Where(b => b.ContractStatus == "cho_duyet")
                 .OrderByDescending(b => b.CreatedAt)
@@ -89,7 +89,7 @@ namespace HanaMedia.Controllers
         {
             var bookings = await _context.Bookings
                 .Include(b => b.Campaign)
-                .Include(b => b.Kol)
+                .Include(b => b.Kol).Include(b => b.BookingKols).ThenInclude(k => k.Kol)
                 .Include(b => b.PrimaryManager)
                 .Include(b => b.BookingWages)
                     .ThenInclude(bw => bw.Employee)
@@ -224,7 +224,7 @@ namespace HanaMedia.Controllers
         {
             var bookings = await _context.Bookings
                 .Include(b => b.Campaign)
-                .Include(b => b.Kol)
+                .Include(b => b.Kol).Include(b => b.BookingKols).ThenInclude(k => k.Kol)
                 .Include(b => b.PrimaryManager)
                 .Include(b => b.ContractSignedBy)
                 .Where(b => b.ContractStatus == "cho_ky" || b.ContractStatus == "da_ky" || b.ContractStatus == "tu_choi")

@@ -784,7 +784,7 @@ public partial class ApplicationDbContext : DbContext
         {
             entity.ToTable("campaigns", table =>
             {
-                table.HasCheckConstraint("chk_campaign_status", "[status] IN ('planning', 'running', 'paused', 'completed', 'cancelled')");
+                table.HasCheckConstraint("chk_campaign_status", "[status] IN ('planning', 'running', 'paused', 'completed', 'accepted', 'cancelled')");
             });
             entity.HasKey(e => e.Id).HasName("PK_campaigns");
             entity.Property(e => e.Id).HasColumnName("id");

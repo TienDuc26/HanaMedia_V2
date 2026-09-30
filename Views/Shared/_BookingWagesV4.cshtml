@@ -1,0 +1,13 @@
+@model HanaMedia.Models.Booking
+@using HanaMedia.Models
+@using System.Globalization
+@{var writable=ViewBag.IsWritable==true && !Model.Payments.Any(p=>p.IsPaid) && Model.Status!="huy";var staff=ViewBag.Participants as IEnumerable<Employee> ?? Enumerable.Empty<Employee>();}
+<section class="enterprise-card"><h2 class="card-title-text">NHÂN VIÊN THAM GIA &amp; HOA HỒNG</h2>
+@if(Model.FinanceVersion==1){<p>Quỹ hoa hồng @Model.CommissionPercent%: <strong>@Model.CommissionPool.ToString("N0") đ</strong>. QL phụ trách giữ phần còn lại sau khi chia nhân viên.</p>}
+else{<p>Dữ liệu lịch sử: chưa áp dụng công thức v4. Nếu muốn chuyển, cần điều chỉnh thù lao không vượt quỹ mới rồi sửa Booking.</p>}
+@if(writable){<form method="post" action="/Bookings/UpdateWages/@Model.Id">@Html.AntiForgeryToken()
+ <partial name="_BookingWageEditor" model="Model" />
+ <button class="btn-mini approve" style="margin-top:16px">Lưu nhân viên &amp; phân bổ</button></form>}
+else{<div class="table-responsive"><table class="ledger-table"><thead><tr><th>Nhân viên</th><th>Thù lao</th></tr></thead><tbody>@foreach(var wage in Model.BookingWages){<tr><td>@wage.Employee?.FullName</td><td>@wage.AllocatedWage.ToString("N0") đ</td></tr>}</tbody></table></div>}
+@if(Model.FinanceVersion==1 && !User.IsInRole(HanaMedia.Constants.AppRoles.BookingStaff)){<p>Đã chia: @Model.BookingWages.Sum(w=>w.AllocatedWage).ToString("N0") đ · QL phụ trách còn: @((Model.CommissionPool-Model.BookingWages.Sum(w=>w.AllocatedWage)).ToString("N0")) đ</p>}
+</section>

@@ -6,6 +6,12 @@ namespace HanaMedia.Models;
 public partial class Campaign
 {
     public int Id { get; set; }
+    public DateTime? ConfirmedAt { get; set; }
+    public int? ConfirmedByUserId { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public int? CompletedByUserId { get; set; }
+    public DateTime? AcceptedAt { get; set; }
+    public int? AcceptedByUserId { get; set; }
     public string Name { get; set; } = null!;
     public string Client { get; set; } = null!;
     public string? Description { get; set; }

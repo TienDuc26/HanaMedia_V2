@@ -31,6 +31,9 @@ namespace HanaMedia.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AcceptanceFileUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("ActualCost")
                         .HasColumnType("decimal(15, 2)")
                         .HasColumnName("actual_cost");
@@ -49,11 +52,23 @@ namespace HanaMedia.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("campaign_name");
 
+                    b.Property<decimal>("CastPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("ClientName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("client_name");
+
+                    b.Property<decimal>("CommissionPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("CompanyPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime?>("ContractApprovedAt")
                         .HasColumnType("datetime")
@@ -69,6 +84,9 @@ namespace HanaMedia.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("contract_file_url");
 
+                    b.Property<int>("ContractRevision")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("ContractSignedAt")
                         .HasColumnType("datetime")
                         .HasColumnName("contract_signed_at");
@@ -78,6 +96,7 @@ namespace HanaMedia.Migrations
                         .HasColumnName("contract_signed_by_id");
 
                     b.Property<string>("ContractStatus")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .IsUnicode(false)
@@ -95,6 +114,9 @@ namespace HanaMedia.Migrations
                         .HasColumnType("date")
                         .HasColumnName("deadline");
 
+                    b.Property<int>("FinanceVersion")
+                        .HasColumnType("int");
+
                     b.Property<string>("JobDescription")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("job_description");
@@ -102,6 +124,19 @@ namespace HanaMedia.Migrations
                     b.Property<int?>("KolId")
                         .HasColumnType("int")
                         .HasColumnName("kol_id");
+
+                    b.Property<int?>("LegalApprovedRevision")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LegalFeedback")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("LegalReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("LegalReviewedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)")
@@ -141,6 +176,7 @@ namespace HanaMedia.Migrations
                         .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at")
@@ -165,6 +201,56 @@ namespace HanaMedia.Migrations
                         {
                             t.HasCheckConstraint("chk_booking_status", "[status] IN ('dang_cho', 'thuong_luong', 'da_chot', 'dang_trien_khai', 'hoan_thanh', 'huy')");
                         });
+                });
+
+            modelBuilder.Entity("HanaMedia.Models.BookingKol", b =>
+                {
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("KolId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CastAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("BookingId", "KolId");
+
+                    b.HasIndex("KolId");
+
+                    b.ToTable("booking_kols", (string)null);
+                });
+
+            modelBuilder.Entity("HanaMedia.Models.BookingPayment", b =>
+                {
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("PayeeId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("BookingId", "Kind", "PayeeId");
+
+                    b.ToTable("booking_payments", (string)null);
                 });
 
             modelBuilder.Entity("HanaMedia.Models.BookingWage", b =>
@@ -281,6 +367,12 @@ namespace HanaMedia.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("AcceptedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Budget")
                         .HasColumnType("decimal(18, 2)")
                         .HasColumnName("budget");
@@ -290,6 +382,19 @@ namespace HanaMedia.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("client");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CompletedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ConfirmedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -324,6 +429,7 @@ namespace HanaMedia.Migrations
                         .HasColumnName("start_date");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(30)
@@ -345,7 +451,7 @@ namespace HanaMedia.Migrations
 
                     b.ToTable("campaigns", null, t =>
                         {
-                            t.HasCheckConstraint("chk_campaign_status", "[status] IN ('planning', 'running', 'paused', 'completed', 'cancelled')");
+                            t.HasCheckConstraint("chk_campaign_status", "[status] IN ('planning', 'running', 'paused', 'completed', 'accepted', 'cancelled')");
                         });
                 });
 
@@ -678,6 +784,9 @@ namespace HanaMedia.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("moodboard_file_url");
 
+                    b.Property<int?>("PrimaryKolId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("PrimaryStaffId")
                         .HasColumnType("int")
                         .HasColumnName("primary_staff_id");
@@ -730,6 +839,8 @@ namespace HanaMedia.Migrations
                     b.HasIndex("CreatorEmployeeId");
 
                     b.HasIndex("DirectorReviewedByUserId");
+
+                    b.HasIndex("PrimaryKolId");
 
                     b.HasIndex("PrimaryStaffId");
 
@@ -1491,6 +1602,36 @@ namespace HanaMedia.Migrations
                     b.Navigation("PrimaryManager");
                 });
 
+            modelBuilder.Entity("HanaMedia.Models.BookingKol", b =>
+                {
+                    b.HasOne("HanaMedia.Models.Booking", "Booking")
+                        .WithMany("BookingKols")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HanaMedia.Models.Kol", "Kol")
+                        .WithMany()
+                        .HasForeignKey("KolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Kol");
+                });
+
+            modelBuilder.Entity("HanaMedia.Models.BookingPayment", b =>
+                {
+                    b.HasOne("HanaMedia.Models.Booking", "Booking")
+                        .WithMany("Payments")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
             modelBuilder.Entity("HanaMedia.Models.BookingWage", b =>
                 {
                     b.HasOne("HanaMedia.Models.Booking", "Booking")
@@ -1592,6 +1733,11 @@ namespace HanaMedia.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("FK_ideas_users_director_reviewed_by_user_id");
 
+                    b.HasOne("HanaMedia.Models.Kol", "PrimaryKol")
+                        .WithMany()
+                        .HasForeignKey("PrimaryKolId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("HanaMedia.Models.Employee", "PrimaryStaff")
                         .WithMany("IdeaPrimaryStaffs")
                         .HasForeignKey("PrimaryStaffId")
@@ -1605,6 +1751,8 @@ namespace HanaMedia.Migrations
                     b.Navigation("Campaign");
 
                     b.Navigation("CreatorEmployee");
+
+                    b.Navigation("PrimaryKol");
 
                     b.Navigation("PrimaryStaff");
 
@@ -1754,9 +1902,13 @@ namespace HanaMedia.Migrations
 
             modelBuilder.Entity("HanaMedia.Models.Booking", b =>
                 {
+                    b.Navigation("BookingKols");
+
                     b.Navigation("BookingWageAuditLogs");
 
                     b.Navigation("BookingWages");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("HanaMedia.Models.Campaign", b =>

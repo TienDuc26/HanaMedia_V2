@@ -29,6 +29,9 @@ public sealed class BusinessConfigService : IBusinessConfigService
         var rows = await _context.BusinessConfigs.AsNoTracking().ToDictionaryAsync(item => item.ConfigKey, cancellationToken);
         return new BusinessConfigViewModel
         {
+            CompanyPercent = Decimal(rows, "company_percent", 50m),
+            CommissionPercent = Decimal(rows, "commission_percent", 10m),
+            CastPercent = Decimal(rows, "cast_percent", 40m),
             BookingApprovalThreshold = Decimal(rows, BookingApprovalThresholdKey, 100_000_000m),
             CampaignApprovalThreshold = Decimal(rows, CampaignApprovalThresholdKey, 500_000_000m),
             BookingWageLimitPercentage = Decimal(rows, BookingWageLimitPercentageKey, 100m),
@@ -40,17 +43,24 @@ public sealed class BusinessConfigService : IBusinessConfigService
 
     public async Task<BusinessConfigUpdateResult> UpdateAsync(BusinessConfigViewModel input, int actorUserId, CancellationToken cancellationToken = default)
     {
+        if (input.CompanyPercent is < 0 or > 100 || input.CommissionPercent is < 0 or > 100 || input.CastPercent is < 0 or > 100 ||
+            input.CompanyPercent + input.CommissionPercent + input.CastPercent != 100m ||
+            new[] { input.CompanyPercent, input.CommissionPercent, input.CastPercent }.Any(x => decimal.Round(x, 2) != x))
+            return new(false, "Ba tỷ lệ phải có tối đa 2 chữ số thập phân, không âm và tổng bằng 100%.");
         if (input.BookingApprovalThreshold is < 0 or > 100_000_000_000m || input.CampaignApprovalThreshold is < 0 or > 1_000_000_000_000m || input.BookingWageLimitPercentage is < 1 or > 500 || input.EmployeeHandoverDays is < 1 or > 365)
             return new(false, "Giá trị cấu hình nghiệp vụ không hợp lệ.");
 
         var now = DateTime.Now;
+        await Upsert("company_percent", input.CompanyPercent.ToString(CultureInfo.InvariantCulture), "Phần công ty (%)", now, cancellationToken);
+        await Upsert("commission_percent", input.CommissionPercent.ToString(CultureInfo.InvariantCulture), "Quỹ hoa hồng QL Booking (%)", now, cancellationToken);
+        await Upsert("cast_percent", input.CastPercent.ToString(CultureInfo.InvariantCulture), "Quỹ cát-xê KOL (%)", now, cancellationToken);
         await Upsert(BookingApprovalThresholdKey, input.BookingApprovalThreshold.ToString(CultureInfo.InvariantCulture), "Ngưỡng giá trị Booking cần Giám đốc phê duyệt", now, cancellationToken);
         await Upsert(CampaignApprovalThresholdKey, input.CampaignApprovalThreshold.ToString(CultureInfo.InvariantCulture), "Ngưỡng ngân sách chiến dịch cần Giám đốc duyệt", now, cancellationToken);
         await Upsert(BookingWageLimitPercentageKey, input.BookingWageLimitPercentage.ToString(CultureInfo.InvariantCulture), "Tỷ lệ tối đa tổng thù lao trên giá trị Booking", now, cancellationToken);
         await Upsert(AllowBookingWageOverLimitKey, input.AllowBookingWageOverLimit ? "true" : "false", "Cho phép lưu phân bổ thù lao vượt giới hạn", now, cancellationToken);
         await Upsert(EmployeeHandoverDaysKey, input.EmployeeHandoverDays.ToString(CultureInfo.InvariantCulture), "Số ngày bàn giao hồ sơ khi nghỉ việc", now, cancellationToken);
         _auditService.AddEvent(new AuditEvent(AuditModules.Configuration, AuditActions.Updated,
-            $"Cập nhật cấu hình nghiệp vụ: ngưỡng Booking {input.BookingApprovalThreshold:N0}đ, ngưỡng chiến dịch {input.CampaignApprovalThreshold:N0}đ, giới hạn thù lao {input.BookingWageLimitPercentage}%, cho phép vượt: {(input.AllowBookingWageOverLimit ? "có" : "không")}, bàn giao {input.EmployeeHandoverDays} ngày.",
+            $"Cập nhật cấu hình nghiệp vụ: công ty/hoa hồng/cát-xê {input.CompanyPercent}/{input.CommissionPercent}/{input.CastPercent}%; ngưỡng Booking {input.BookingApprovalThreshold:N0}đ, ngưỡng chiến dịch {input.CampaignApprovalThreshold:N0}đ, giới hạn thù lao {input.BookingWageLimitPercentage}%, cho phép vượt: {(input.AllowBookingWageOverLimit ? "có" : "không")}, bàn giao {input.EmployeeHandoverDays} ngày.",
             actorUserId, "BusinessConfig", "module18"));
         await _context.SaveChangesAsync(cancellationToken);
         return new(true, "Đã lưu cấu hình nghiệp vụ.");

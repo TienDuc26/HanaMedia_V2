@@ -40,6 +40,8 @@ public partial class Idea
     public DateOnly Deadline { get; set; }
 
     public int? PrimaryStaffId { get; set; }
+    public int? PrimaryKolId { get; set; }
+    public virtual Kol? PrimaryKol { get; set; }
 
     public int? ReviewerEmployeeId { get; set; }
 

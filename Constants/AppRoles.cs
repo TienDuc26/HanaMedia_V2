@@ -26,7 +26,7 @@ public static class AppRoles
                 [BookingManager] = "Quản lý Booking",
                 [BookingStaff] = "Nhân viên Booking",
                 [IdeaManager] = "Quản lý Ý tưởng",
-                [IdeaStaff] = "Nhân viên Ý tưởng",
+                [IdeaStaff] = "Content Creator",
                 [LegalStaff] = "Nhân viên Pháp lý",
                 [Accountant] = "Nhân viên Kế toán"
             });

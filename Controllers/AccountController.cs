@@ -406,8 +406,8 @@ public sealed class AccountController : Controller
             AppRoles.BookingStaff => RedirectToAction("Booking", "BookingStaff"),
             AppRoles.IdeaManager => RedirectToAction("Dashboard", "ManageIdea"),
             AppRoles.IdeaStaff => RedirectToAction("Idea", "IdeaStaff"),
-            AppRoles.LegalStaff => RedirectToAction("Index", "Home"),
-            AppRoles.Accountant => RedirectToAction("Index", "Home"),
+            AppRoles.LegalStaff => RedirectToAction("Index", "Legal"),
+            AppRoles.Accountant => RedirectToAction("Index", "Accounting"),
             _ => RedirectToAction("Index", "Home")
         };
 

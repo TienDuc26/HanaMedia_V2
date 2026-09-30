@@ -37,10 +37,10 @@ public sealed class IdeaService : IIdeaService
         var normalizedSearch = search?.Trim();
         page = Math.Max(1, page);
 
-        var query = _context.Ideas.AsNoTracking()
+        var query = _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).AsNoTracking()
             .Include(i => i.Campaign)
             .Include(i => i.CreatorEmployee)
-            .Include(i => i.PrimaryStaff)
+            .Include(i => i.PrimaryStaff).Include(i => i.PrimaryKol)
             .Include(i => i.ReviewerEmployee)
             .Include(i => i.Comments).ThenInclude(c => c.AuthorUser).ThenInclude(u => u!.Employee)
             .Include(i => i.MoodboardImages)
@@ -86,6 +86,8 @@ public sealed class IdeaService : IIdeaService
             .Select(e => new { e.Id, e.FullName })
             .ToListAsync(cancellationToken);
 
+        var kols = await _context.Kols.AsNoTracking().Where(k => k.IsActive).OrderBy(k => k.Name).Select(k => new IdeaEmployeeOptionViewModel(-k.Id, k.Name + " (KOL/KOC bên ngoài)", 0)).ToListAsync(cancellationToken);
+
         var reviewers = await _context.Employees.AsNoTracking()
             .Where(e => e.User != null && e.User.Status == AccountStatuses.Active &&
                         e.User.Role == AppRoles.IdeaManager && activeStatuses.Contains(e.Status!))
@@ -102,12 +104,12 @@ public sealed class IdeaService : IIdeaService
             TotalItems = totalItems,
             IsManager = isManager,
             Campaigns = await _context.Campaigns.AsNoTracking()
-                .Where(c => c.Status != "cancelled")
+                .Where(c => c.Status != "cancelled" && c.ConfirmedAt != null)
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new IdeaCampaignOptionViewModel(c.Id, c.Name, c.Client))
                 .ToListAsync(cancellationToken),
             Staff = staff.Select(e => new IdeaEmployeeOptionViewModel(e.Id, e.FullName,
-                openTaskCounts.GetValueOrDefault(e.Id))).ToList(),
+                openTaskCounts.GetValueOrDefault(e.Id))).Concat(kols).ToList(),
             Reviewers = reviewers.Select(e => new IdeaEmployeeOptionViewModel(e.Id, e.FullName,
                 openTaskCounts.GetValueOrDefault(e.Id))).ToList(),
             Items = ideas.Select(i => MapItem(i, actorEmployeeId, isManager)).ToList()
@@ -128,12 +130,14 @@ public sealed class IdeaService : IIdeaService
             return IdeaOperationResult.Failure("Tài khoản chưa liên kết với hồ sơ nhân sự nên chưa thể tạo ý tưởng.");
 
         var campaign = await _context.Campaigns.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == input.CampaignId && c.Status != "cancelled", cancellationToken);
-        if (campaign is null) return IdeaOperationResult.Failure("Chiến dịch không tồn tại hoặc đã bị hủy.");
+            .FirstOrDefaultAsync(c => c.Id == input.CampaignId && c.Status != "cancelled" && c.ConfirmedAt != null, cancellationToken);
+        if (campaign is null) return IdeaOperationResult.Failure("Chiến dịch chưa được Giám đốc chốt, không tồn tại hoặc đã bị hủy.");
 
         var primaryStaffId = actorRole == AppRoles.IdeaManager ? input.PrimaryStaffId ?? actorEmployeeId : actorEmployeeId;
         var reviewerId = actorRole == AppRoles.IdeaManager ? input.ReviewerEmployeeId ?? actorEmployeeId : input.ReviewerEmployeeId;
-        var peopleError = await ValidatePeopleAsync(primaryStaffId, reviewerId, cancellationToken);
+        int? primaryKolId = primaryStaffId < 0 ? -primaryStaffId : null;
+        if (primaryKolId.HasValue) primaryStaffId = null;
+        var peopleError = await ValidatePeopleAsync(primaryStaffId, primaryKolId, reviewerId, cancellationToken);
         if (peopleError is not null) return IdeaOperationResult.Failure(peopleError);
 
         var now = DateTime.Now;
@@ -154,6 +158,7 @@ public sealed class IdeaService : IIdeaService
             Deadline = input.Deadline,
             CreatorEmployeeId = actorEmployeeId,
             PrimaryStaffId = primaryStaffId,
+            PrimaryKolId = primaryKolId,
             ReviewerEmployeeId = reviewerId,
             Status = IdeaStatuses.Idea,
             CreatedAt = now,
@@ -177,7 +182,7 @@ public sealed class IdeaService : IIdeaService
     {
         var validation = ValidateFiles(input);
         if (validation is not null) return IdeaOperationResult.Failure(validation);
-        var idea = await _context.Ideas.Include(i => i.MoodboardImages)
+        var idea = await _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).Include(i => i.MoodboardImages)
             .FirstOrDefaultAsync(i => i.Id == input.Id, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
 
@@ -191,12 +196,14 @@ public sealed class IdeaService : IIdeaService
         if (!canEdit) return IdeaOperationResult.Failure("Bạn không có quyền chỉnh sửa ý tưởng ở trạng thái hiện tại.");
 
         var campaign = await _context.Campaigns.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == input.CampaignId && c.Status != "cancelled", cancellationToken);
-        if (campaign is null) return IdeaOperationResult.Failure("Chiến dịch không tồn tại hoặc đã bị hủy.");
+            .FirstOrDefaultAsync(c => c.Id == input.CampaignId && c.Status != "cancelled" && c.ConfirmedAt != null, cancellationToken);
+        if (campaign is null) return IdeaOperationResult.Failure("Chiến dịch chưa được Giám đốc chốt, không tồn tại hoặc đã bị hủy.");
 
-        var primaryStaffId = isManager ? input.PrimaryStaffId ?? idea.PrimaryStaffId : idea.PrimaryStaffId;
+        var primaryStaffId = isManager ? input.PrimaryStaffId ?? (idea.PrimaryKolId.HasValue ? -idea.PrimaryKolId : idea.PrimaryStaffId) : (idea.PrimaryKolId.HasValue ? -idea.PrimaryKolId : idea.PrimaryStaffId);
         var reviewerId = isManager ? input.ReviewerEmployeeId ?? idea.ReviewerEmployeeId : idea.ReviewerEmployeeId;
-        var peopleError = await ValidatePeopleAsync(primaryStaffId, reviewerId, cancellationToken);
+        int? primaryKolId = primaryStaffId < 0 ? -primaryStaffId : null;
+        if (primaryKolId.HasValue) primaryStaffId = null;
+        var peopleError = await ValidatePeopleAsync(primaryStaffId, primaryKolId, reviewerId, cancellationToken);
         if (peopleError is not null) return IdeaOperationResult.Failure(peopleError);
 
         idea.Title = input.Title.Trim();
@@ -211,6 +218,7 @@ public sealed class IdeaService : IIdeaService
         idea.ScriptText = Normalize(input.ScriptText);
         idea.Deadline = input.Deadline;
         idea.PrimaryStaffId = primaryStaffId;
+        idea.PrimaryKolId = primaryKolId;
         idea.ReviewerEmployeeId = reviewerId;
         idea.UpdatedAt = DateTime.Now;
         idea.ReferenceFileUrl = await SaveFileAsync(input.ReferenceFile, idea.Id, "reference", cancellationToken) ?? idea.ReferenceFileUrl;
@@ -224,7 +232,7 @@ public sealed class IdeaService : IIdeaService
 
     public async Task<IdeaOperationResult> SubmitAsync(int id, int actorUserId, string actorRole, CancellationToken cancellationToken = default)
     {
-        var idea = await _context.Ideas.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        var idea = await _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
         var actorEmployeeId = await GetActorEmployeeIdAsync(actorUserId, cancellationToken);
         if (!CanAccess(idea, actorEmployeeId, actorRole == AppRoles.IdeaManager))
@@ -259,7 +267,7 @@ public sealed class IdeaService : IIdeaService
         CancellationToken cancellationToken = default)
     {
         if (actorRole != AppRoles.IdeaManager) return IdeaOperationResult.Failure("Chỉ Quản lý Ý tưởng được review trong Module 13.");
-        var idea = await _context.Ideas.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        var idea = await _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
         if (idea.Status != IdeaStatuses.Review) return IdeaOperationResult.Failure("Ý tưởng không ở trạng thái chờ review.");
 
@@ -282,7 +290,7 @@ public sealed class IdeaService : IIdeaService
 
     public async Task<IdeaOperationResult> AdvanceAsync(int id, int actorUserId, string actorRole, CancellationToken cancellationToken = default)
     {
-        var idea = await _context.Ideas.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        var idea = await _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
         var actorEmployeeId = await GetActorEmployeeIdAsync(actorUserId, cancellationToken);
         if (!CanAccess(idea, actorEmployeeId, actorRole == AppRoles.IdeaManager))
@@ -312,7 +320,7 @@ public sealed class IdeaService : IIdeaService
         var normalized = Normalize(content);
         if (string.IsNullOrWhiteSpace(normalized)) return IdeaOperationResult.Failure("Nội dung bình luận không được để trống.");
         if (normalized.Length > 2000) return IdeaOperationResult.Failure("Bình luận không được vượt quá 2000 ký tự.");
-        var idea = await _context.Ideas.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        var idea = await _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
         var actorEmployeeId = await GetActorEmployeeIdAsync(actorUserId, cancellationToken);
         if (!CanAccess(idea, actorEmployeeId, actorRole == AppRoles.IdeaManager))
@@ -328,7 +336,7 @@ public sealed class IdeaService : IIdeaService
     public async Task<IdeaOperationResult> DeleteAsync(int id, int actorUserId, string actorRole, CancellationToken cancellationToken = default)
     {
         if (actorRole != AppRoles.IdeaManager) return IdeaOperationResult.Failure("Chỉ Quản lý Ý tưởng được xóa ý tưởng.");
-        var idea = await _context.Ideas.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        var idea = await _context.Ideas.Where(i => i.Campaign != null && i.Campaign.ConfirmedAt != null).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         if (idea is null) return IdeaOperationResult.Failure("Không tìm thấy ý tưởng.");
         if (await _context.WorkTasks.AnyAsync(t => t.RelatedType == WorkTaskRelatedTypes.Idea && t.RelatedId == id, cancellationToken))
             return IdeaOperationResult.Failure("Không thể xóa ý tưởng đã liên kết với công việc. Hãy giữ lại để bảo toàn lịch sử.");
@@ -346,7 +354,7 @@ public sealed class IdeaService : IIdeaService
         if (actorRole != AppRoles.IdeaManager)
             return IdeaOperationResult.Failure("Chỉ Quản lý Ý tưởng được xóa ảnh moodboard.");
         var image = await _context.IdeaMoodboardImages.Include(item => item.Idea)
-            .FirstOrDefaultAsync(item => item.Id == imageId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.Id == imageId && item.Idea.Campaign != null && item.Idea.Campaign.ConfirmedAt != null, cancellationToken);
         if (image is null) return IdeaOperationResult.Failure("Không tìm thấy ảnh moodboard.");
 
         _context.IdeaMoodboardImages.Remove(image);
@@ -361,11 +369,11 @@ public sealed class IdeaService : IIdeaService
         await _context.Employees.AsNoTracking().Where(e => e.UserId == userId)
             .Select(e => (int?)e.Id).FirstOrDefaultAsync(cancellationToken);
 
-    private async Task<string?> ValidatePeopleAsync(int? primaryStaffId, int? reviewerId, CancellationToken cancellationToken)
+    private async Task<string?> ValidatePeopleAsync(int? primaryStaffId, int? primaryKolId, int? reviewerId, CancellationToken cancellationToken)
     {
-        if (!primaryStaffId.HasValue) return "Cần chọn người phụ trách ý tưởng.";
+        if (!primaryStaffId.HasValue && !primaryKolId.HasValue) return "Cần chọn người phụ trách ý tưởng.";
         if (!reviewerId.HasValue) return "Cần chọn Quản lý Ý tưởng review.";
-        var primaryValid = await _context.Employees.AnyAsync(e => e.Id == primaryStaffId && e.User != null &&
+        var primaryValid = primaryKolId.HasValue ? await _context.Kols.AnyAsync(k => k.Id == primaryKolId && k.IsActive, cancellationToken) : await _context.Employees.AnyAsync(e => e.Id == primaryStaffId && e.User != null &&
             e.User.Status == AccountStatuses.Active && (e.User.Role == AppRoles.IdeaStaff || e.User.Role == AppRoles.IdeaManager), cancellationToken);
         if (!primaryValid) return "Người phụ trách không phải nhân sự Ý tưởng đang hoạt động.";
         var reviewerValid = await _context.Employees.AnyAsync(e => e.Id == reviewerId && e.User != null &&
@@ -394,10 +402,10 @@ public sealed class IdeaService : IIdeaService
                 .Select(image => new IdeaMoodboardImageViewModel(image.Id, image.FileUrl, image.SortOrder)).ToList(),
             ScriptText = idea.ScriptText,
             Deadline = idea.Deadline,
-            PrimaryStaffId = idea.PrimaryStaffId,
+            PrimaryStaffId = idea.PrimaryKolId.HasValue ? -idea.PrimaryKolId : idea.PrimaryStaffId,
             ReviewerEmployeeId = idea.ReviewerEmployeeId,
             CreatorName = idea.CreatorEmployee?.FullName ?? "-",
-            PrimaryStaffName = idea.PrimaryStaff?.FullName ?? "-",
+            PrimaryStaffName = idea.PrimaryKol != null ? idea.PrimaryKol.Name + " (KOL/KOC)" : idea.PrimaryStaff?.FullName ?? "-",
             ReviewerName = idea.ReviewerEmployee?.FullName ?? "-",
             Status = idea.Status ?? IdeaStatuses.Idea,
             StatusLabel = IdeaStatuses.GetLabel(idea.Status ?? IdeaStatuses.Idea),
