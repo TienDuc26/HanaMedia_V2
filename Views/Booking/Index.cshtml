@@ -176,11 +176,6 @@
       display: flex;
       flex-direction: column;
       max-height: 90vh;
-      transform: scale(0.95);
-      transition: transform 0.2s ease;
-    }
-    .modal-overlay.active .modal-card {
-      transform: scale(1);
     }
     .modal-header {
       padding: 18px 24px;
@@ -209,12 +204,14 @@
       display: flex;
       flex-direction: column;
       flex: 1;
-      overflow: hidden;
+      min-height: 0;
     }
     .modal-body {
       padding: 24px;
       overflow-y: auto;
       flex: 1;
+      min-height: 0;
+      overscroll-behavior: contain;
     }
     .modal-footer {
       padding: 16px 24px;
@@ -272,6 +269,100 @@
       font-weight: 550;
       cursor: pointer;
     }
+
+    .kol-multiselect {
+      width: 100%; padding: 10px 14px; border: 1px solid #d2ddec; border-radius: 8px;
+      background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      font-size: 14px; color: var(--text-color); transition: border-color 0.15s;
+    }
+    .kol-multiselect:hover, .kol-multiselect.active { border-color: var(--secondary-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .kol-multiselect-panel {
+      position: fixed; z-index: 9999; background: white; border: 1px solid var(--line);
+      border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); margin-top: 4px;
+      width: 420px; max-height: 380px; display: none; flex-direction: column;
+    }
+    .kol-multiselect-panel.open { display: flex; }
+    .kol-search-row { padding: 10px; border-bottom: 1px solid var(--line); }
+    .kol-list { flex: 1; overflow-y: auto; padding: 6px 0; max-height: 260px; }
+    .kol-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .kol-item:hover { background: var(--blue-50); }
+    .kol-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--secondary-blue); cursor: pointer; }
+    .kol-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--blue-50); color: var(--blue-600);
+      display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+    }
+    .kol-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .kol-meta strong { font-size: 13.5px; color: var(--primary-blue); }
+    .kol-platform { font-size: 11.5px; color: var(--muted-text); }
+    .kol-item.hidden { display: none; }
+    .kol-footer {
+      padding: 8px 14px; border-top: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center; background: #f8fafc;
+    }
+    .form-hint { color: var(--muted-text); font-size: 11.5px; margin-top: 6px; display: block; }
+    .kol-multiselect.has-selection { border-color: var(--secondary-blue); }
+
+    .finance-legend {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 12px 16px; margin: 4px 0 16px;
+      background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+      border: 1px solid #bfdbfe; border-left: 4px solid var(--secondary-blue);
+      border-radius: 8px; font-size: 13px; color: var(--text-color); line-height: 1.55;
+    }
+    .finance-legend i { margin-top: 2px; flex-shrink: 0; }
+    .finance-legend strong { color: var(--primary-blue); }
+
+    /* KOL SECTION (cuối form) */
+    .kol-section-wrapper {
+      margin-top: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+    .kol-section-header {
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 14px; margin-bottom: 14px;
+      border-bottom: 2px solid var(--secondary-blue);
+    }
+
+    /* KOL WAGE TABLE */
+    .kol-wage-table-wrapper {
+      margin-top: 16px;
+      background: white;
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kol-wage-table {
+      width: 100%; border-collapse: collapse; font-size: 13.5px;
+    }
+    .kol-wage-table th, .kol-wage-table td {
+      padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left;
+    }
+    .kol-wage-table th {
+      background: #f1f5f9; font-weight: 700; font-size: 11.5px;
+      text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted);
+    }
+    .kol-wage-table td.num, .kol-wage-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .kol-wage-table tfoot td {
+      background: #f8fafc; border-top: 2px solid var(--primary-blue);
+      border-bottom: none; color: var(--primary-blue);
+    }
+    .kol-wage-amount {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid #d2ddec; border-radius: 6px; font-size: 13.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .kol-wage-amount:focus { outline: none; border-color: var(--secondary-blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+    .kol-wage-remove {
+      background: transparent; border: none; color: var(--danger);
+      cursor: pointer; padding: 4px 8px; border-radius: 4px;
+    }
+    .kol-wage-remove:hover { background: var(--danger-bg); }
   </style>
 </head>
 <body>
@@ -459,9 +550,9 @@
                 <td style="text-align: right; white-space: nowrap;">
                   <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
                     <a href="/Bookings/Details/@item.Id" class="btn-action btn-action-view"><i class="ti ti-eye"></i>Chi tiết</a>
-                    @if (ViewBag.IsWritable && item.PrimaryManagerId == (int)ViewBag.EmployeeId && (item.ContractStatus is "nhap" or "tu_choi"))
+                    @if (ViewBag.IsWritable && (item.ContractStatus is "nhap" or "tu_choi"))
                     {
-                      <button class="btn-action btn-action-edit" data-booking='@Json.Serialize(new { id = item.Id, clientName = item.ClientName, campaignName = item.CampaignName, campaignId = item.CampaignId, kolId = item.KolId, kolIds = item.BookingKols.Select(k => k.KolId).ToArray(), jobDescription = item.JobDescription, bookingPrice = item.BookingPrice, actualCost = item.ActualCost, financeVersion = item.FinanceVersion, commissionPercent = item.CommissionPercent, castPercent = item.CastPercent, primaryManagerId = item.PrimaryManagerId, status = item.Status, postLink = item.PostLink, notes = item.Notes, participantIds = item.BookingWages.Select(x => x.EmployeeId).ToArray() })' data-deadline="@item.Deadline.ToString("yyyy-MM-dd")" data-postingdate="@(item.PostingDate?.ToString("yyyy-MM-dd") ?? "")" onclick="openEditModal(this)"><i class="ti ti-edit"></i>Sửa</button>
+                      <button class="btn-action btn-action-edit" data-booking='@Json.Serialize(new { id = item.Id, clientName = item.ClientName, campaignName = item.CampaignName, campaignId = item.CampaignId, kolId = item.KolId, kolIds = item.BookingKols.Select(k => k.KolId).ToArray(), bookingKols = item.BookingKols.Select(k => new { kolId = k.KolId, castAmount = k.CastAmount }).ToArray(), jobDescription = item.JobDescription, bookingPrice = item.BookingPrice, actualCost = item.ActualCost, financeVersion = item.FinanceVersion, commissionPercent = item.CommissionPercent, castPercent = item.CastPercent, primaryManagerId = item.PrimaryManagerId, status = item.Status, postLink = item.PostLink, notes = item.Notes })' data-deadline="@item.Deadline.ToString("yyyy-MM-dd")" data-postingdate="@(item.PostingDate?.ToString("yyyy-MM-dd") ?? "")" onclick="openEditModal(this)"><i class="ti ti-edit"></i>Sửa</button>
                       <form method="post" action="/Bookings/Delete/@item.Id" style="display:inline;" onsubmit="return confirm('Hủy Booking này và giữ lại lịch sử?');">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn-action btn-action-delete"><i class="ti ti-trash"></i>Hủy</button>
@@ -507,19 +598,9 @@
         </div>
 
         <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Chiến dịch (tự lấy theo lựa chọn)</label>
-            <input class="form-control" name="CampaignName" id="bookingCampaignName" readonly placeholder="Nhập tên chiến dịch">
-          </div>
-          <div class="form-group">
-            <label class="form-label">KOL / KOC quảng cáo *</label>
-            <select class="form-control" name="kolIds" id="bookingKolId" required multiple size="4">
-
-              @foreach (var kol in kols)
-              {
-                <option value="@kol.Id">@kol.Name (@kol.Platform)</option>
-              }
-            </select>
+          <div class="form-group" style="grid-column: span 2;">
+            <label class="form-label">Chiến dịch (tự lấy theo lựa chọn, có thể chỉnh sửa) <span style="color:var(--muted-text);font-weight:normal;font-size:12.5px;">(dùng khi không có sẵn trong dropdown)</span></label>
+            <input class="form-control" name="CampaignName" id="bookingCampaignName" placeholder="Tên chiến dịch sẽ tự điền khi chọn ở trên — có thể sửa lại">
           </div>
         </div>
 
@@ -545,19 +626,35 @@
             <input class="form-control" type="number" name="BookingPrice" id="bookingPrice" min="0.01" step="0.01" required placeholder="Ví dụ: 10000000">
           </div>
           <div class="form-group">
-            <label class="form-label">Chi phí tự tính (cát-xê + hoa hồng)</label>
-            <input class="form-control" type="number" id="bookingActualCost" readonly placeholder="Ví dụ: 8000000">
+            <label class="form-label">Phân bổ tự động (theo Booking Price)</label>
+            <input class="form-control" id="bookingActualCost" readonly placeholder="Sẽ tự tính">
           </div>
+        </div>
+
+        @* Hidden finance fields — set cứng theo quy tắc 50% lợi nhuận công ty · 10% QL · 40% KOL/KOC *@
+        <input type="hidden" name="FinanceVersion" value="1" />
+        <input type="hidden" name="CompanyPercent" value="50" id="bookingCompanyPercent" />
+        <input type="hidden" name="CommissionPercent" value="10" id="bookingCommissionPercent" />
+        <input type="hidden" name="CastPercent" value="40" id="bookingCastPercent" />
+
+        <div class="finance-legend">
+          <i class="ti ti-info-circle" style="color: var(--secondary-blue);"></i>
+          <span>
+            Tổng giá trị booking sẽ được phân bổ tự động:
+            <strong>50%</strong> lợi nhuận công ty,
+            <strong>10%</strong> hoa hồng QL Booking phụ trách,
+            <strong>40%</strong> chia cho các KOL/KOC đã chọn (mặc định chia đều, có thể chỉnh tay bên dưới).
+          </span>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">File Hợp đồng (Contract File)</label>
-            <p>Soạn hợp đồng sau khi Giám đốc duyệt Booking.</p>
+            <p style="font-size:13px; color:var(--text-muted); margin:0;">Upload hợp đồng tại trang chi tiết sau khi Giám đốc duyệt Booking.</p>
           </div>
           <div class="form-group">
             <label class="form-label">Bản nghiệm thu</label>
-            <p>Tải bản nghiệm thu tại trang chi tiết khi hoàn thành Booking đã ký.</p>
+            <p style="font-size:13px; color:var(--text-muted); margin:0;">Upload bản nghiệm thu tại trang chi tiết khi hoàn thành Booking đã ký.</p>
           </div>
         </div>
 
@@ -567,21 +664,13 @@
             <input class="form-control" type="url" name="PostLink" id="bookingPostLink" placeholder="https://tiktok.com/...">
           </div>
           <div class="form-group">
-            <label class="form-label">Người phụ trách (Manager) *</label>
-            <select class="form-control" name="PrimaryManagerId" id="bookingPrimaryManagerId" required>
-              <option value="">-- QL Booking phụ trách --</option>
-              @foreach (var emp in employees.Where(e => e.Id == (int)ViewBag.EmployeeId))
-              {
-                <option value="@emp.Id" selected>@emp.FullName (@emp.Position)</option>
-              }
-            </select>
+            <label class="form-label">Người phụ trách (QL Booking)</label>
+            <input type="hidden" name="PrimaryManagerId" id="bookingPrimaryManagerId" value="@ViewBag.EmployeeId" />
+            <input class="form-control" value="@(employees.FirstOrDefault(e => e.Id == (int)ViewBag.EmployeeId)?.FullName ?? "Bạn")" readonly />
+            <small class="form-hint">Tự gán theo tài khoản đang đăng nhập.</small>
           </div>
         </div>
 
-        <fieldset id="createWageAllocation" style="border:0;padding:0;margin:0 0 20px;min-width:0">
-          <partial name="_BookingWageEditor" model="new HanaMedia.Models.Booking()" />
-        </fieldset>
-        <p id="editWageHint" hidden>Quản lý nhân viên và chia thù lao tại trang Chi tiết. Sửa thông tin ở đây không thay đổi các khoản đã chia.</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Trạng thái Booking</label>
@@ -598,6 +687,76 @@
           </div>
         </div>
 
+        @* === KOL/KOC + CHIA THÙ LAO THỦ CÔNG (đặt cuối form) === *@
+        <div class="kol-section-wrapper">
+          <div class="kol-section-header">
+            <i class="ti ti-users-group" style="color: var(--secondary-blue); font-size: 18px;"></i>
+            <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--primary-blue);">KOL / KOC THAM GIA &amp; CHIA THÙ LAO</h3>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Chọn KOL / KOC quảng cáo * <span style="color:var(--muted-text);font-weight:normal;font-size:12.5px;">(chọn 1 hoặc nhiều, tối đa 10)</span></label>
+            <button type="button" class="kol-multiselect" id="kolDropdownBtn" onclick="toggleKolDropdown(event)" aria-haspopup="listbox" aria-expanded="false">
+              <span id="kolDropdownLabel"><i class="ti ti-users-group" style="margin-right:6px;color:var(--blue-500);"></i>-- Chọn KOL/KOC --</span>
+              <i class="ti ti-chevron-down" style="color:var(--muted-text);"></i>
+            </button>
+            <div class="kol-multiselect-panel" id="kolDropdownPanel" role="listbox">
+              <div class="kol-search-row">
+                <input type="text" class="form-control" id="kolSearchInput" placeholder="Tìm theo tên hoặc nền tảng..." oninput="filterKolList()" />
+              </div>
+              <div class="kol-list" id="kolList">
+                @foreach (var kol in kols)
+                {
+                  <label class="kol-item" data-name="@(kol.Name.ToLower()) @kol.Platform.ToLower()" data-kol-id="@kol.Id">
+                    <input type="checkbox" name="kolIds" value="@kol.Id" class="kol-checkbox" onchange="updateKolSelection()" />
+                    <div class="kol-avatar"><i class="ti ti-user-star"></i></div>
+                    <div class="kol-meta">
+                      <strong>@kol.Name</strong>
+                      <span class="kol-platform">@kol.Platform</span>
+                    </div>
+                  </label>
+                }
+                @if (!kols.Any())
+                {
+                  <div style="padding:14px;color:var(--muted-text);font-style:italic;text-align:center;">Chưa có KOL/KOC hoạt động. Vào Cơ sở dữ liệu KOL để thêm.</div>
+                }
+              </div>
+              <div class="kol-footer">
+                <button type="button" class="btn-mini" onclick="clearKolSelection()" style="color:var(--muted-text);">Bỏ chọn</button>
+                <button type="button" class="btn-mini approve" onclick="closeKolDropdown()">Xong</button>
+              </div>
+            </div>
+            <small class="form-hint" id="kolHint">Có thể chọn nhiều KOL; cát-xê sẽ chia đều theo quy tắc booking — có thể chỉnh tay bên dưới.</small>
+          </div>
+
+          <div class="kol-wage-table-wrapper" id="kolWageTableWrapper" hidden>
+            <table class="kol-wage-table">
+              <thead>
+                <tr>
+                  <th style="width:36px;">#</th>
+                  <th>KOL / KOC</th>
+                  <th>Nền tảng</th>
+                  <th style="width:200px;">Cát-xê (VNĐ)</th>
+                  <th style="width:80px;" class="num">%</th>
+                  <th style="width:80px;"></th>
+                </tr>
+              </thead>
+              <tbody id="kolWageTableBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3"><strong>Tổng cát-xê</strong></td>
+                  <td><strong id="kolWageTotal">0 đ</strong></td>
+                  <td colspan="2" id="kolWageTotalPct" class="num">0%</td>
+                </tr>
+                <tr>
+                  <td colspan="6" style="font-size:12px; color:var(--text-muted);">
+                    <i class="ti ti-info-circle"></i> Nhập số tiền cát-xê thủ công cho từng KOL/KOC. Tổng không bắt buộc khớp 40%.
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="closeModal()">Hủy</button>
@@ -608,47 +767,51 @@
 </div>
 
 <script>
-const defaultCommission = @(((HanaMedia.ViewModels.BusinessConfigViewModel)ViewBag.FinanceConfig).CommissionPercent.ToString(System.Globalization.CultureInfo.InvariantCulture));
-const defaultCast = @(((HanaMedia.ViewModels.BusinessConfigViewModel)ViewBag.FinanceConfig).CastPercent.ToString(System.Globalization.CultureInfo.InvariantCulture));
-let commissionRate = defaultCommission, castRate = defaultCast;
+const COMPANY_PCT = 50, COMMISSION_PCT = 10, CAST_PCT = 40;
+// Danh sách KOL active (từ server) để build bảng thù lao
+const KOL_CATALOG = [
+  @foreach (var kol in kols)
+  {
+    @:{ id: @kol.Id, name: "@Html.Raw(kol.Name.Replace("\"", "\\\""))", platform: "@Html.Raw(kol.Platform.Replace("\"", "\\\""))" },
+  }
+];
+
+// Map kolId -> số tiền override thủ công (dùng cho cả create + edit)
+let manualCastMap = {};
+
 document.addEventListener('DOMContentLoaded', () => {
- const price = document.getElementById('bookingPrice');
- price.addEventListener('input', () => {
-   document.getElementById('bookingActualCost').value = (Math.round(Number(price.value) * commissionRate) / 100 + Math.round(Number(price.value) * castRate) / 100).toFixed(2);
-   document.querySelector('#createWageAllocation .wage-editor').wageEditor?.setPool(Math.round(Number(price.value) * commissionRate) / 100);
- });
+  const price = document.getElementById('bookingPrice');
+  price.addEventListener('input', () => {
+    const p = Number(price.value) || 0;
+    const company = Math.round(p * COMPANY_PCT) / 100;
+    const q1 = Math.round(p * COMMISSION_PCT) / 100;
+    const cast = Math.round(p * CAST_PCT) / 100;
+    const actualCost = q1 + cast;
+    document.getElementById('bookingActualCost').value = actualCost.toFixed(2);
+    refreshWageTotals();
+  });
 });
 
   function syncCampaignDetails(select) {
     const selectedOption = select.options[select.selectedIndex];
     const clientNameInput = document.getElementById('bookingClientName');
     const campaignNameInput = document.getElementById('bookingCampaignName');
-    
+
     if (selectedOption && selectedOption.value) {
       clientNameInput.value = selectedOption.getAttribute('data-client') || '';
       campaignNameInput.value = selectedOption.text;
-      campaignNameInput.readOnly = true;
-    } else {
-      campaignNameInput.readOnly = true;
     }
   }
 
   function openCreateModal() {
-    commissionRate = defaultCommission; castRate = defaultCast;
     document.getElementById('modalTitle').innerText = 'Tạo Booking mới';
     document.getElementById('bookingForm').action = '/Bookings/Create';
     document.getElementById('bookingForm').reset();
-    const allocation = document.getElementById('createWageAllocation');
-    allocation.hidden = false; allocation.disabled = false;
-    document.getElementById('editWageHint').hidden = true;
-    allocation.querySelector('.wage-editor').wageEditor?.reset();
+    manualCastMap = {};
+    rebuildKolWageTable();
     document.getElementById('bookingPrice').dispatchEvent(new Event('input'));
-    document.getElementById('bookingCampaignName').readOnly = true;
-    
-    // Uncheck participants
-    const checkboxes = document.querySelectorAll('#bookingForm input[name="participantIds"]');
-    checkboxes.forEach(cb => cb.checked = false);
-
+    clearKolSelection();
+    closeKolDropdown();
     document.getElementById('bookingModal').classList.add('active');
   }
 
@@ -656,48 +819,278 @@ document.addEventListener('DOMContentLoaded', () => {
     const booking = JSON.parse(btn.getAttribute('data-booking'));
     const deadline = btn.getAttribute('data-deadline');
     const postingDate = btn.getAttribute('data-postingdate');
-    const allocation = document.getElementById('createWageAllocation');
-    allocation.hidden = true; allocation.disabled = true;
-    document.getElementById('editWageHint').hidden = false;
 
     document.getElementById('modalTitle').innerText = 'Cập nhật Booking ID: ' + booking.id;
     document.getElementById('bookingForm').action = '/Bookings/Edit/' + booking.id;
-    
+
     document.getElementById('bookingCampaignId').value = booking.campaignId || '';
     document.getElementById('bookingClientName').value = booking.clientName || '';
     document.getElementById('bookingCampaignName').value = booking.campaignName || '';
-    Array.from(document.getElementById('bookingKolId').options).forEach(o => o.selected = (booking.kolIds?.length ? booking.kolIds : [booking.kolId]).includes(Number(o.value)));
+
+    // Multi-select KOL + load CastAmount hiện tại (nếu backend trả kèm bookingKols)
+    const kolIds = booking.kolIds?.length ? booking.kolIds : (booking.kolId ? [booking.kolId] : []);
+    manualCastMap = {};
+    if (Array.isArray(booking.bookingKols) && booking.bookingKols.length) {
+      booking.bookingKols.forEach(bk => { manualCastMap[bk.kolId] = bk.castAmount; });
+    } else if (booking.castAmount) {
+      manualCastMap[kolIds[0]] = booking.castAmount;
+    }
+    document.querySelectorAll('.kol-checkbox').forEach(cb => {
+      cb.checked = kolIds.includes(Number(cb.value));
+    });
+    updateKolSelection();
+    rebuildKolWageTable();
+    closeKolDropdown();
+
     document.getElementById('bookingJobDescription').value = booking.jobDescription || '';
     document.getElementById('bookingDeadline').value = deadline || '';
     document.getElementById('bookingPostingDate').value = postingDate || '';
     document.getElementById('bookingPrice').value = booking.bookingPrice || 0;
-    commissionRate = booking.financeVersion === 1 ? booking.commissionPercent : defaultCommission;
-    castRate = booking.financeVersion === 1 ? booking.castPercent : defaultCast;
     document.getElementById('bookingPrice').dispatchEvent(new Event('input'));
     document.getElementById('bookingPostLink').value = booking.postLink || '';
     document.getElementById('bookingPrimaryManagerId').value = booking.primaryManagerId || '';
     document.getElementById('bookingStatus').value = booking.status || 'dang_cho';
     document.getElementById('bookingNotes').value = booking.notes || '';
-    
-    if (booking.campaignId) {
-      document.getElementById('bookingCampaignName').readOnly = true;
-    } else {
-      document.getElementById('bookingCampaignName').readOnly = true;
-    }
-
-    // Set participating checkboxes
-    const participantIds = booking.participantIds || [];
-    const checkboxes = document.querySelectorAll('#bookingForm input[name="participantIds"]');
-    checkboxes.forEach(cb => {
-      cb.checked = participantIds.includes(parseInt(cb.value));
-    });
-
     document.getElementById('bookingModal').classList.add('active');
   }
 
   function closeModal() {
     document.getElementById('bookingModal').classList.remove('active');
+    closeKolDropdown();
   }
+
+  // ===== KOL Multi-select =====
+  // Sử dụng "portal": khi mở, panel được gắn vào document.body để tránh mọi ancestor có
+  // transform/overflow/position gây cản trở position: fixed. Khi đóng, trả về vị trí cũ.
+  let _kolPanelOriginalParent = null;
+  let _kolPanelOriginalNextSibling = null;
+  function toggleKolDropdown(e) {
+    e.stopPropagation();
+    const panel = document.getElementById('kolDropdownPanel');
+    const btn = document.getElementById('kolDropdownBtn');
+    if (!panel.classList.contains('open')) {
+      // Portal panel ra body
+      if (panel.parentElement !== document.body) {
+        _kolPanelOriginalParent = panel.parentElement;
+        _kolPanelOriginalNextSibling = panel.nextSibling;
+        document.body.appendChild(panel);
+      }
+      const rect = btn.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      const MIN_PANEL_H = 200;
+      // LUÔN mở dưới button. Nếu không đủ chỗ, tự co chiều cao panel (không flip-up).
+      let top = rect.bottom + 4;
+      const availableBelow = viewportH - top - 16;
+      const desiredH = 380;
+      const finalH = Math.max(MIN_PANEL_H, Math.min(desiredH, availableBelow));
+      panel.style.position = 'fixed';
+      panel.style.top = top + 'px';
+      panel.style.left = rect.left + 'px';
+      panel.style.width = Math.max(420, rect.width) + 'px';
+      panel.style.height = finalH + 'px';
+      panel.style.maxHeight = finalH + 'px';
+      panel.classList.add('open');
+      btn.classList.add('active');
+      btn.setAttribute('aria-expanded', 'true');
+      setTimeout(() => document.getElementById('kolSearchInput')?.focus(), 50);
+    } else {
+      closeKolDropdown();
+    }
+  }
+  function closeKolDropdown() {
+    const panel = document.getElementById('kolDropdownPanel');
+    const btn = document.getElementById('kolDropdownBtn');
+    if (panel) {
+      panel.classList.remove('open');
+      panel.style.height = '';
+      panel.style.maxHeight = '';
+      // Trả panel về vị trí ban đầu
+      if (_kolPanelOriginalParent && panel.parentElement === document.body) {
+        if (_kolPanelOriginalNextSibling) {
+          _kolPanelOriginalParent.insertBefore(panel, _kolPanelOriginalNextSibling);
+        } else {
+          _kolPanelOriginalParent.appendChild(panel);
+        }
+      }
+    }
+    if (btn) { btn.classList.remove('active'); btn.setAttribute('aria-expanded', 'false'); }
+  }
+  // Cập nhật vị trí panel khi window resize / scroll bên trong modal-body
+  function repositionKolPanelIfOpen() {
+    const panel = document.getElementById('kolDropdownPanel');
+    const btn = document.getElementById('kolDropdownBtn');
+    if (!panel || !panel.classList.contains('open') || !btn) return;
+    const rect = btn.getBoundingClientRect();
+    const viewportH = window.innerHeight;
+    let top = rect.bottom + 4;
+    const availableBelow = viewportH - top - 16;
+    const MIN_PANEL = 200, DESIRED = 380;
+    const finalH = Math.max(MIN_PANEL, Math.min(DESIRED, availableBelow));
+    panel.style.top = top + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.width = Math.max(420, rect.width) + 'px';
+    panel.style.height = finalH + 'px';
+    panel.style.maxHeight = finalH + 'px';
+  }
+  window.addEventListener('resize', repositionKolPanelIfOpen);
+  document.addEventListener('scroll', (e) => {
+    if (e.target && (e.target.classList?.contains('modal-body') || e.target.closest?.('.modal-body'))) {
+      repositionKolPanelIfOpen();
+    }
+  }, true);
+  function updateKolSelection() {
+    const checked = Array.from(document.querySelectorAll('.kol-checkbox:checked'));
+    const label = document.getElementById('kolDropdownLabel');
+    const btn = document.getElementById('kolDropdownBtn');
+    const hint = document.getElementById('kolHint');
+    if (checked.length === 0) {
+      label.innerHTML = '<i class="ti ti-users-group" style="margin-right:6px;color:var(--blue-500);"></i>-- Chọn KOL/KOC --';
+      btn.classList.remove('has-selection');
+      hint.textContent = 'Có thể chọn nhiều KOL; cát-xê sẽ chia đều theo quy tắc booking — có thể chỉnh tay bên dưới.';
+    } else {
+      const names = checked.map(cb => cb.closest('.kol-item').querySelector('strong').textContent);
+      label.innerHTML = `<i class="ti ti-users-group" style="margin-right:6px;color:var(--green);"></i>Đã chọn ${checked.length}: <strong style="color:var(--primary-blue);margin-left:4px;">${names.slice(0, 2).join(', ')}${names.length > 2 ? ` +${names.length - 2}` : ''}</strong>`;
+      btn.classList.add('has-selection');
+      hint.innerHTML = `<i class="ti ti-info-circle" style="color:var(--secondary-blue);"></i> Đã chọn <strong>${checked.length}</strong> KOL/KOC. Có thể chỉnh tay cát-xê bên dưới.`;
+    }
+    rebuildKolWageTable();
+  }
+  function clearKolSelection() {
+    document.querySelectorAll('.kol-checkbox').forEach(cb => cb.checked = false);
+    updateKolSelection();
+  }
+  function filterKolList() {
+    const q = document.getElementById('kolSearchInput').value.toLowerCase().trim();
+    document.querySelectorAll('.kol-item').forEach(item => {
+      const name = item.getAttribute('data-name');
+      item.classList.toggle('hidden', q && !name.includes(q));
+    });
+  }
+  // ===== KOL Wage Table (chia thù lao thủ công) =====
+  function getSelectedKols() {
+    return Array.from(document.querySelectorAll('.kol-checkbox:checked'))
+      .map(cb => {
+        const id = Number(cb.value);
+        const meta = KOL_CATALOG.find(k => k.id === id);
+        return { id, name: meta?.name || '#' + id, platform: meta?.platform || '' };
+      });
+  }
+  function rebuildKolWageTable() {
+    const wrapper = document.getElementById('kolWageTableWrapper');
+    const body = document.getElementById('kolWageTableBody');
+    if (!wrapper || !body) return;
+    const kols = getSelectedKols();
+    if (kols.length === 0) {
+      wrapper.hidden = true;
+      body.innerHTML = '';
+      refreshWageTotals();
+      return;
+    }
+    wrapper.hidden = false;
+    const price = Number(document.getElementById('bookingPrice').value) || 0;
+    const defaultShare = price * CAST_PCT / 100 / kols.length;
+    kols.forEach(k => {
+      if (manualCastMap[k.id] == null || isNaN(manualCastMap[k.id])) {
+        manualCastMap[k.id] = Math.round(defaultShare * 100) / 100;
+      }
+    });
+    Object.keys(manualCastMap).forEach(id => {
+      if (!kols.find(k => k.id === Number(id))) delete manualCastMap[id];
+    });
+    body.innerHTML = kols.map((k, idx) => {
+      const value = manualCastMap[k.id] ?? 0;
+      return '<tr data-kol-id="' + k.id + '">' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td><strong>' + escapeHtml(k.name) + '</strong></td>' +
+        '<td><span class="platform-tag">' + escapeHtml(k.platform) + '</span></td>' +
+        '<td><input type="number" class="kol-wage-amount" data-kol-amount name="kolCastAmount[' + k.id + ']" value="' + value.toFixed(2) + '" min="0" step="0.01" oninput="onWageChanged(' + k.id + ', this.value)" /></td>' +
+        '<td class="num" data-kol-pct>0%</td>' +
+        '<td><button type="button" class="kol-wage-remove" onclick="removeKolFromSelection(' + k.id + ')" title="Bỏ KOL này"><i class="ti ti-x"></i></button></td>' +
+        '</tr>';
+    }).join('');
+    refreshWageTotals();
+  }
+  function onWageChanged(kolId, value) {
+    manualCastMap[kolId] = Number(value) || 0;
+    refreshWageTotals();
+  }
+  function removeKolFromSelection(kolId) {
+    const cb = document.querySelector('.kol-checkbox[value="' + kolId + '"]');
+    if (cb) {
+      cb.checked = false;
+      delete manualCastMap[kolId];
+      updateKolSelection();
+    }
+  }
+  function distributeCastEqually() {
+    const kols = getSelectedKols();
+    if (kols.length === 0) return;
+    const price = Number(document.getElementById('bookingPrice').value) || 0;
+    const castPool = price * CAST_PCT / 100;
+    const share = Math.floor(castPool / kols.length * 100) / 100;
+    kols.forEach((k, idx) => {
+      manualCastMap[k.id] = idx === kols.length - 1
+        ? Math.round((castPool - share * (kols.length - 1)) * 100) / 100
+        : share;
+    });
+    rebuildKolWageTable();
+  }
+  function setCastFromDefault() { distributeCastEqually(); }
+  function refreshWageTotals() {
+    const kols = getSelectedKols();
+    const price = Number(document.getElementById('bookingPrice').value) || 0;
+    let total = 0;
+    kols.forEach(k => { total += Number(manualCastMap[k.id]) || 0; });
+    const totalEl = document.getElementById('kolWageTotal');
+    const pctEl = document.getElementById('kolWageTotalPct');
+    if (totalEl) totalEl.textContent = total.toLocaleString('vi-VN') + ' đ';
+    if (pctEl) pctEl.textContent = price > 0 ? (total / price * 100).toFixed(2) + '%' : '0%';
+    kols.forEach(k => {
+      const tr = document.querySelector('#kolWageTableBody tr[data-kol-id="' + k.id + '"]');
+      if (!tr) return;
+      const pctCell = tr.querySelector('[data-kol-pct]');
+      if (pctCell) pctCell.textContent = price > 0
+        ? ((Number(manualCastMap[k.id]) || 0) / price * 100).toFixed(2) + '%'
+        : '0%';
+    });
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  // Đóng panel khi click ra ngoài
+  document.addEventListener('click', (e) => {
+    const panel = document.getElementById('kolDropdownPanel');
+    if (!panel || !panel.classList.contains('open')) return;
+    if (!e.target.closest('#kolDropdownPanel') && !e.target.closest('#kolDropdownBtn')) {
+      closeKolDropdown();
+    }
+  });
+
+  // Validate trước khi submit
+  document.getElementById('bookingForm').addEventListener('submit', (e) => {
+    const checked = document.querySelectorAll('.kol-checkbox:checked');
+    if (checked.length === 0) {
+      e.preventDefault();
+      alert('Vui lòng chọn ít nhất 1 KOL/KOC.');
+      return;
+    }
+    if (checked.length > 10) {
+      e.preventDefault();
+      alert('Mỗi booking tối đa 10 KOL/KOC. Hiện đã chọn ' + checked.length + '.');
+      return;
+    }
+    const amounts = document.querySelectorAll('#kolWageTableBody [data-kol-amount]');
+    for (const inp of amounts) {
+      const v = Number(inp.value);
+      if (!isFinite(v) || v < 0) {
+        e.preventDefault();
+        alert('Vui lòng nhập số tiền cát-xê hợp lệ (≥ 0) cho tất cả KOL/KOC.');
+        inp.focus();
+        return;
+      }
+    }
+  });
 </script>
 </body>
 </html>

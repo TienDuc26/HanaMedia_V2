@@ -1,0 +1,563 @@
+@model HanaMedia.Models.Booking
+@using System.Globalization
+@using System.Text.Json
+@{
+  var editKols = (ViewBag.EditKols as IEnumerable<HanaMedia.Models.Kol> ?? Enumerable.Empty<HanaMedia.Models.Kol>()).ToList();
+  var editCampaigns = (ViewBag.EditCampaigns as IEnumerable<HanaMedia.Models.Campaign> ?? Enumerable.Empty<HanaMedia.Models.Campaign>()).ToList();
+  var editEmployees = (ViewBag.EditEmployees as IEnumerable<HanaMedia.Models.Employee> ?? Enumerable.Empty<HanaMedia.Models.Employee>()).ToList();
+  var employeeId = (int)(ViewBag.EditEmployeeId ?? 0);
+  var isWritable = ViewBag.IsWritable == true;
+  var allowedStatuses = new[] { "nhap", "tu_choi" }.Contains(Model.ContractStatus ?? "");
+  var canEdit = isWritable && allowedStatuses && Model.Status != "huy";
+
+  // Build JSON for KOL catalog + initial manualCastMap
+  var kolCatalogJson = JsonSerializer.Serialize(editKols.Select(k => new {
+    id = k.Id,
+    name = k.Name ?? "",
+    platform = k.Platform ?? ""
+  }));
+  var initialCastJson = JsonSerializer.Serialize(Model.BookingKols.ToDictionary(bk => bk.KolId, bk => bk.CastAmount));
+  var initialKolIdsJson = JsonSerializer.Serialize(Model.BookingKols.Select(bk => bk.KolId).ToArray());
+}
+
+<style>
+  /* CSS giống Index để đồng bộ */
+  .kol-multiselect { width: 100%; padding: 10px 14px; border: 1px solid #d2ddec; border-radius: 8px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--text-color, #17324D); }
+  .kol-multiselect:hover, .kol-multiselect.active { border-color: var(--secondary-blue, #2563EB); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .kol-multiselect-panel { position: fixed; z-index: 9999; background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); margin-top: 4px; width: 420px; max-height: 380px; display: none; flex-direction: column; }
+  .kol-multiselect-panel.open { display: flex; }
+  .kol-search-row { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+  .kol-list { flex: 1; overflow-y: auto; padding: 6px 0; max-height: 260px; }
+  .kol-item { display: flex; align-items: center; gap: 10px; padding: 8px 14px; cursor: pointer; transition: background 0.15s; }
+  .kol-item:hover { background: #eff6ff; }
+  .kol-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--secondary-blue, #2563EB); cursor: pointer; }
+  .kol-avatar { width: 32px; height: 32px; border-radius: 50%; background: #eff6ff; color: var(--secondary-blue, #2563EB); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .kol-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .kol-meta strong { font-size: 13.5px; color: var(--primary-blue, #0B3A6E); }
+  .kol-platform { font-size: 11.5px; color: var(--muted-text, #64748B); }
+  .kol-item.hidden { display: none; }
+  .kol-footer { padding: 8px 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+  .kol-multiselect.has-selection { border-color: var(--secondary-blue, #2563EB); }
+
+  .kol-section-wrapper { margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; }
+  .kol-section-header { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 2px solid var(--secondary-blue, #2563EB); }
+  .kol-wage-table-wrapper { margin-top: 16px; background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .kol-wage-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .kol-wage-table th, .kol-wage-table td { padding: 8px 10px; border-bottom: 1px solid var(--line, #e2e8f0); text-align: left; }
+  .kol-wage-table th { background: #f1f5f9; font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted, #64748B); }
+  .kol-wage-table td.num, .kol-wage-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .kol-wage-table tfoot td { background: #f8fafc; border-top: 2px solid var(--primary-blue, #0B3A6E); border-bottom: none; color: var(--primary-blue, #0B3A6E); }
+  .kol-wage-amount { width: 100%; padding: 7px 10px; border: 1px solid #d2ddec; border-radius: 6px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .kol-wage-remove { background: transparent; border: none; color: var(--danger, #DC2626); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .kol-wage-remove:hover { background: var(--danger-bg, #FEE2E2); }
+  .finance-legend { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; margin: 4px 0 16px; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border: 1px solid #bfdbfe; border-left: 4px solid var(--secondary-blue, #2563EB); border-radius: 8px; font-size: 13px; color: var(--text-color, #17324D); line-height: 1.55; }
+  .platform-tag { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #eff6ff; color: var(--primary-blue, #0B3A6E); font-size: 11.5px; font-weight: 600; }
+  .form-hint { color: var(--text-muted, #64748B); font-size: 11.5px; margin-top: 6px; display: block; }
+
+  /* Edit modal: panel không bị modal-body clip */
+  .modal-body { overflow-y: auto !important; flex: 1; min-height: 0; }
+  .modal-card { overflow: visible !important; }
+  /* Bỏ transform trên modal-card để position:fixed của KOL panel không bị neo lại */
+  .modal-card { transform: none !important; transition: none !important; }
+  /* Nhưng KHÔNG cho modal-body có overflow:visible vì sẽ mất scroll */
+  .modal-body { overscroll-behavior: contain; }
+  /* Đảm bảo panel dropdown KOL nổi trên modal-body */
+  .kol-multiselect-panel { z-index: 99999 !important; }
+</style>
+
+<div class="modal-overlay" id="editBookingModal" aria-hidden="true">
+  <div class="modal-card" style="max-width: 880px;">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-edit"></i> Sửa Booking #@Model.Id</span>
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    @if (!canEdit)
+    {
+      <div style="padding: 24px; text-align:center;">
+        <i class="ti ti-lock" style="font-size: 36px; color: var(--text-muted, #64748B);"></i>
+        <p style="margin-top:12px; color: var(--text-muted, #64748B);">
+          @if (!isWritable)
+          {
+            <text>Bạn không có quyền sửa Booking này (phải là QL Booking phụ trách).</text>
+          }
+          else if (Model.Status == "huy")
+          {
+            <text>Booking đã hủy — không thể sửa.</text>
+          }
+          else
+          {
+            <text>Booking đang ở giai đoạn "<strong>@Model.ContractStatus</strong>" — đã khóa thông tin.</text>
+          }
+        </p>
+        <button class="btn-secondary" onclick="closeEditModal()" style="margin-top:16px;">Đóng</button>
+      </div>
+    }
+    else
+    {
+      <form id="editBookingForm" method="post" action="/Bookings/Edit/@Model.Id" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="FinanceVersion" value="1" />
+        <input type="hidden" name="CompanyPercent" value="50" />
+        <input type="hidden" name="CommissionPercent" value="10" />
+        <input type="hidden" name="CastPercent" value="40" />
+        <input type="hidden" name="PrimaryManagerId" value="@Model.PrimaryManagerId" />
+
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Chọn Chiến dịch quảng bá</label>
+              <select class="form-control" name="CampaignId" id="editCampaignId" onchange="syncEditCampaignDetails(this)">
+                <option value="">-- Chọn chiến dịch có sẵn --</option>
+                @foreach (var camp in editCampaigns)
+                {
+                  <option value="@camp.Id" data-client="@camp.Client" selected="@(camp.Id == Model.CampaignId)">@camp.Name</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Khách hàng (Client)</label>
+              <input class="form-control" id="editClientName" value="@Model.ClientName" readonly placeholder="Tự điền khi chọn chiến dịch" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">Chiến dịch (tự lấy theo lựa chọn, có thể chỉnh sửa)</label>
+              <input class="form-control" name="CampaignName" id="editCampaignName" value="@Model.CampaignName" placeholder="Tên chiến dịch" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nội dung công việc (Job Description)</label>
+              <textarea class="form-control" name="JobDescription" rows="2">@Model.JobDescription</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Trạng thái Booking</label>
+              <select class="form-control" name="Status" id="editStatus">
+                @{
+                  var statuses = new[] { "dang_cho", "thuong_luong", "da_chot", "huy" };
+                  foreach (var s in statuses)
+                  {
+                    var labelText = s switch
+                    {
+                      "dang_cho" => "Chờ",
+                      "thuong_luong" => "Thương lượng",
+                      "da_chot" => "Chốt",
+                      "huy" => "Hủy",
+                      _ => s
+                    };
+                    <option value="@s" selected="@(s == Model.Status)">@labelText</option>
+                  }
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Hạn chót (Deadline) *</label>
+              <input class="form-control" type="date" name="deadlineStr" value="@Model.Deadline.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngày đăng bài</label>
+              <input class="form-control" type="date" name="postingDateStr" value="@(Model.PostingDate?.ToString("yyyy-MM-dd") ?? "")" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Giá trị Booking (VNĐ) *</label>
+              <input class="form-control" type="number" name="BookingPrice" id="editBookingPrice" min="0.01" step="0.01" value="@Model.BookingPrice" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Link bài viết (HTTPS)</label>
+              <input class="form-control" type="url" name="PostLink" value="@Model.PostLink" placeholder="https://..." />
+            </div>
+          </div>
+
+          <div class="finance-legend">
+            <i class="ti ti-info-circle" style="color: var(--secondary-blue, #2563EB);"></i>
+            <span>
+              Phân bổ cố định:
+              <strong>50%</strong> công ty,
+              <strong>10%</strong> QL Booking,
+              <strong>40%</strong> cát-xê chia cho KOL/KOC (mặc định chia đều, có thể chỉnh tay bên dưới).
+            </span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">File Hợp đồng (Contract File)</label>
+              <p style="font-size:13px; color:var(--text-muted, #64748B); margin:0;">Upload hợp đồng tại trang chi tiết sau khi GĐ duyệt.</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bản nghiệm thu</label>
+              <p style="font-size:13px; color:var(--text-muted, #64748B); margin:0;">Upload bản nghiệm thu tại trang chi tiết khi hoàn thành.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ghi chú</label>
+            <input class="form-control" name="Notes" value="@Model.Notes" />
+          </div>
+
+          <div class="kol-section-wrapper">
+            <div class="kol-section-header">
+              <i class="ti ti-users-group" style="color: var(--secondary-blue, #2563EB); font-size: 18px;"></i>
+              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--primary-blue, #0B3A6E);">KOL / KOC THAM GIA &amp; CHIA THÙ LAO</h3>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Chọn KOL / KOC quảng cáo *</label>
+              <button type="button" class="kol-multiselect" id="editKolDropdownBtn" onclick="toggleEditKolDropdown(event)">
+                <span id="editKolDropdownLabel"><i class="ti ti-users-group" style="margin-right:6px;color:var(--secondary-blue, #2563EB);"></i>-- Chọn KOL/KOC --</span>
+                <i class="ti ti-chevron-down" style="color:var(--text-muted, #64748B);"></i>
+              </button>
+              <div class="kol-multiselect-panel" id="editKolDropdownPanel" role="listbox">
+                <div class="kol-search-row">
+                  <input type="text" class="form-control" id="editKolSearchInput" placeholder="Tìm theo tên hoặc nền tảng..." oninput="filterEditKolList()" />
+                </div>
+                <div class="kol-list" id="editKolList">
+                  @foreach (var kol in editKols)
+                  {
+                    <label class="kol-item" data-name="@(kol.Name.ToLower()) @kol.Platform.ToLower()" data-kol-id="@kol.Id">
+                      <input type="checkbox" name="kolIds" value="@kol.Id" class="edit-kol-checkbox" onchange="updateEditKolSelection()" />
+                      <div class="kol-avatar"><i class="ti ti-user-star"></i></div>
+                      <div class="kol-meta">
+                        <strong>@kol.Name</strong>
+                        <span class="kol-platform">@kol.Platform</span>
+                      </div>
+                    </label>
+                  }
+                </div>
+                <div class="kol-footer">
+                  <button type="button" class="btn-mini" onclick="clearEditKolSelection()" style="color:var(--text-muted, #64748B);">Bỏ chọn</button>
+                  <button type="button" class="btn-mini approve" onclick="closeEditKolDropdown()">Xong</button>
+                </div>
+              </div>
+              <small class="form-hint" id="editKolHint">Có thể chọn nhiều KOL; cát-xê sẽ chia đều — có thể chỉnh tay bên dưới.</small>
+            </div>
+
+            <div class="kol-wage-table-wrapper" id="editKolWageTableWrapper" hidden>
+              <table class="kol-wage-table">
+                <thead>
+                  <tr>
+                    <th style="width:36px;">#</th>
+                    <th>KOL / KOC</th>
+                    <th>Nền tảng</th>
+                    <th style="width:200px;">Cát-xê (VNĐ)</th>
+                    <th style="width:80px;" class="num">%</th>
+                    <th style="width:80px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="editKolWageTableBody"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3"><strong>Tổng cát-xê</strong></td>
+                    <td><strong id="editKolWageTotal">0 đ</strong></td>
+                    <td colspan="2" id="editKolWageTotalPct" class="num">0%</td>
+                  </tr>
+                  <tr>
+                    <td colspan="6" style="font-size:12px; color:var(--text-muted, #64748B);">
+                      <i class="ti ti-info-circle"></i> Quỹ cát-xê mặc định = <strong>40% × Booking Price</strong>. Bạn có thể nhập tay từng người.
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+              <div style="display:flex; gap:8px; margin-top:10px;">
+                <button type="button" class="btn-mini" onclick="distributeEditCastEqually()"><i class="ti ti-equal"></i> Chia đều lại</button>
+                <button type="button" class="btn-mini" onclick="setEditCastFromDefault()"><i class="ti ti-calculator"></i> Đặt theo 40% mặc định</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeEditModal()">Hủy</button>
+          <button type="submit" class="btn-primary-blue" style="padding: 9px 20px;"><i class="ti ti-device-floppy"></i> Lưu thay đổi</button>
+        </div>
+      </form>
+    }
+  </div>
+</div>
+
+<script>
+  (function() {
+    const CAST_PCT = 40;
+    const EDIT_KOL_CATALOG = @Html.Raw(kolCatalogJson);
+    let editManualCastMap = @Html.Raw(initialCastJson);
+    const initialKolIds = @Html.Raw(initialKolIdsJson);
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function getEditSelectedKols() {
+      return Array.from(document.querySelectorAll('.edit-kol-checkbox:checked'))
+        .map(cb => {
+          const id = Number(cb.value);
+          const meta = EDIT_KOL_CATALOG.find(k => k.id === id);
+          return { id, name: meta?.name || '#' + id, platform: meta?.platform || '' };
+        });
+    }
+    function updateEditKolSelection() {
+      const checked = Array.from(document.querySelectorAll('.edit-kol-checkbox:checked'));
+      const label = document.getElementById('editKolDropdownLabel');
+      const btn = document.getElementById('editKolDropdownBtn');
+      const hint = document.getElementById('editKolHint');
+      if (!label) return;
+      if (checked.length === 0) {
+        label.innerHTML = '<i class="ti ti-users-group" style="margin-right:6px;color:var(--secondary-blue, #2563EB);"></i>-- Chọn KOL/KOC --';
+        if (btn) btn.classList.remove('has-selection');
+        if (hint) hint.textContent = 'Có thể chọn nhiều KOL; cát-xê sẽ chia đều — có thể chỉnh tay bên dưới.';
+      } else {
+        const names = checked.map(cb => cb.closest('.kol-item').querySelector('strong').textContent);
+        label.innerHTML = '<i class="ti ti-users-group" style="margin-right:6px;color:var(--success, #16A34A);"></i>Đã chọn ' + checked.length + ': <strong style="color:var(--primary-blue, #0B3A6E);margin-left:4px;">' + names.slice(0, 2).join(', ') + (names.length > 2 ? ' +' + (names.length - 2) : '') + '</strong>';
+        if (btn) btn.classList.add('has-selection');
+        if (hint) hint.innerHTML = '<i class="ti ti-info-circle"></i> Đã chọn <strong>' + checked.length + '</strong> KOL/KOC. Có thể chỉnh tay cát-xê bên dưới.';
+      }
+      rebuildEditKolWageTable();
+    }
+    function rebuildEditKolWageTable() {
+      const wrapper = document.getElementById('editKolWageTableWrapper');
+      const body = document.getElementById('editKolWageTableBody');
+      if (!wrapper || !body) return;
+      const kols = getEditSelectedKols();
+      if (kols.length === 0) {
+        wrapper.hidden = true;
+        body.innerHTML = '';
+        refreshEditWageTotals();
+        return;
+      }
+      wrapper.hidden = false;
+      const price = Number(document.getElementById('editBookingPrice').value) || 0;
+      const defaultShare = price * CAST_PCT / 100 / kols.length;
+      kols.forEach(k => {
+        if (editManualCastMap[k.id] == null || isNaN(editManualCastMap[k.id])) {
+          editManualCastMap[k.id] = Math.round(defaultShare * 100) / 100;
+        }
+      });
+      Object.keys(editManualCastMap).forEach(id => {
+        if (!kols.find(k => k.id === Number(id))) delete editManualCastMap[id];
+      });
+      body.innerHTML = kols.map((k, idx) => {
+        const value = editManualCastMap[k.id] ?? 0;
+        return '<tr data-kol-id="' + k.id + '">' +
+          '<td>' + (idx + 1) + '</td>' +
+          '<td><strong>' + escapeHtml(k.name) + '</strong></td>' +
+          '<td><span class="platform-tag">' + escapeHtml(k.platform) + '</span></td>' +
+          '<td><input type="number" class="kol-wage-amount" data-kol-amount name="kolCastAmount[' + k.id + ']" value="' + value.toFixed(2) + '" min="0" step="0.01" oninput="onEditWageChanged(' + k.id + ', this.value)" /></td>' +
+          '<td class="num" data-kol-pct>0%</td>' +
+          '<td><button type="button" class="kol-wage-remove" onclick="removeEditKolFromSelection(' + k.id + ')" title="Bỏ KOL này"><i class="ti ti-x"></i></button></td>' +
+          '</tr>';
+      }).join('');
+      refreshEditWageTotals();
+    }
+    function onEditWageChanged(kolId, value) {
+      editManualCastMap[kolId] = Number(value) || 0;
+      refreshEditWageTotals();
+    }
+    function removeEditKolFromSelection(kolId) {
+      const cb = document.querySelector('.edit-kol-checkbox[value="' + kolId + '"]');
+      if (cb) {
+        cb.checked = false;
+        delete editManualCastMap[kolId];
+        updateEditKolSelection();
+      }
+    }
+    function distributeEditCastEqually() {
+      const kols = getEditSelectedKols();
+      if (kols.length === 0) return;
+      const price = Number(document.getElementById('editBookingPrice').value) || 0;
+      const castPool = price * CAST_PCT / 100;
+      const share = Math.floor(castPool / kols.length * 100) / 100;
+      kols.forEach((k, idx) => {
+        editManualCastMap[k.id] = idx === kols.length - 1
+          ? Math.round((castPool - share * (kols.length - 1)) * 100) / 100
+          : share;
+      });
+      rebuildEditKolWageTable();
+    }
+    function setEditCastFromDefault() { distributeEditCastEqually(); }
+    function refreshEditWageTotals() {
+      const kols = getEditSelectedKols();
+      const price = Number(document.getElementById('editBookingPrice').value) || 0;
+      let total = 0;
+      kols.forEach(k => { total += Number(editManualCastMap[k.id]) || 0; });
+      const totalEl = document.getElementById('editKolWageTotal');
+      const pctEl = document.getElementById('editKolWageTotalPct');
+      if (totalEl) totalEl.textContent = total.toLocaleString('vi-VN') + ' đ';
+      if (pctEl) pctEl.textContent = price > 0 ? (total / price * 100).toFixed(2) + '%' : '0%';
+      kols.forEach(k => {
+        const tr = document.querySelector('#editKolWageTableBody tr[data-kol-id="' + k.id + '"]');
+        if (!tr) return;
+        const pctCell = tr.querySelector('[data-kol-pct]');
+        if (pctCell) pctCell.textContent = price > 0
+          ? ((Number(editManualCastMap[k.id]) || 0) / price * 100).toFixed(2) + '%'
+          : '0%';
+      });
+    }
+
+    // Khởi tạo KOL đã chọn từ server
+    initialKolIds.forEach(id => {
+      const cb = document.querySelector('.edit-kol-checkbox[value="' + id + '"]');
+      if (cb) cb.checked = true;
+    });
+    updateEditKolSelection();
+
+    // Lắng nghe giá thay đổi để cập nhật %
+    document.getElementById('editBookingPrice')?.addEventListener('input', refreshEditWageTotals);
+
+    window.syncEditCampaignDetails = function(select) {
+      const selectedOption = select.options[select.selectedIndex];
+      const clientNameInput = document.getElementById('editClientName');
+      const campaignNameInput = document.getElementById('editCampaignName');
+      if (selectedOption && selectedOption.value) {
+        clientNameInput.value = selectedOption.getAttribute('data-client') || '';
+        campaignNameInput.value = selectedOption.text;
+      }
+    };
+
+    window.toggleEditKolDropdown = function(e) {
+      e.stopPropagation();
+      const panel = document.getElementById('editKolDropdownPanel');
+      const btn = document.getElementById('editKolDropdownBtn');
+      if (!panel.classList.contains('open')) {
+        // Portal panel ra body để không bị ancestor có transform/overflow clip
+        if (panel.parentElement !== document.body) {
+          panel._origParent = panel.parentElement;
+          panel._origNext = panel.nextSibling;
+          document.body.appendChild(panel);
+        }
+        const rect = btn.getBoundingClientRect();
+        const viewportH = window.innerHeight;
+        const MIN_PANEL_H = 200;
+        // LUÔN mở dưới button. Nếu không đủ chỗ thì tự co chiều cao panel (không flip-up).
+        let top = rect.bottom + 4;
+        const availableBelow = viewportH - top - 16;
+        const desiredH = 380;
+        const finalH = Math.max(MIN_PANEL_H, Math.min(desiredH, availableBelow));
+        panel.style.position = 'fixed';
+        panel.style.top = top + 'px';
+        panel.style.left = rect.left + 'px';
+        panel.style.width = Math.max(420, rect.width) + 'px';
+        panel.style.height = finalH + 'px';
+        panel.style.maxHeight = finalH + 'px';
+        panel.classList.add('open');
+        btn.classList.add('active');
+        setTimeout(() => document.getElementById('editKolSearchInput')?.focus(), 50);
+      } else {
+        closeEditKolDropdown();
+      }
+    };
+    window.closeEditKolDropdown = function() {
+      const panel = document.getElementById('editKolDropdownPanel');
+      const btn = document.getElementById('editKolDropdownBtn');
+      if (panel) {
+        panel.classList.remove('open');
+        panel.style.height = '';
+        panel.style.maxHeight = '';
+        if (panel._origParent && panel.parentElement === document.body) {
+          if (panel._origNext) panel._origParent.insertBefore(panel, panel._origNext);
+          else panel._origParent.appendChild(panel);
+        }
+      }
+      if (btn) btn.classList.remove('active');
+    };
+    window.addEventListener('resize', () => {
+      const panel = document.getElementById('editKolDropdownPanel');
+      const btn = document.getElementById('editKolDropdownBtn');
+      if (!panel || !panel.classList.contains('open') || !btn) return;
+      const rect = btn.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      let top = rect.bottom + 4;
+      const availableBelow = viewportH - top - 16;
+      const MIN_PANEL = 200, DESIRED = 380;
+      const finalH = Math.max(MIN_PANEL, Math.min(DESIRED, availableBelow));
+      panel.style.top = top + 'px';
+      panel.style.left = rect.left + 'px';
+      panel.style.width = Math.max(420, rect.width) + 'px';
+      panel.style.height = finalH + 'px';
+      panel.style.maxHeight = finalH + 'px';
+    });
+    document.addEventListener('scroll', (e) => {
+      if (e.target && (e.target.classList?.contains('modal-body') || e.target.closest?.('.modal-body'))) {
+        const panel = document.getElementById('editKolDropdownPanel');
+        const btn = document.getElementById('editKolDropdownBtn');
+        if (!panel || !panel.classList.contains('open') || !btn) return;
+        const rect = btn.getBoundingClientRect();
+        const viewportH = window.innerHeight;
+        let top = rect.bottom + 4;
+        const availableBelow = viewportH - top - 16;
+        const MIN_PANEL = 200, DESIRED = 380;
+        const finalH = Math.max(MIN_PANEL, Math.min(DESIRED, availableBelow));
+        panel.style.top = top + 'px';
+        panel.style.left = rect.left + 'px';
+        panel.style.width = Math.max(420, rect.width) + 'px';
+        panel.style.height = finalH + 'px';
+        panel.style.maxHeight = finalH + 'px';
+      }
+    }, true);
+    window.updateEditKolSelection = updateEditKolSelection;
+    window.clearEditKolSelection = function() {
+      document.querySelectorAll('.edit-kol-checkbox').forEach(cb => cb.checked = false);
+      editManualCastMap = {};
+      updateEditKolSelection();
+    };
+    window.filterEditKolList = function() {
+      const q = document.getElementById('editKolSearchInput').value.toLowerCase().trim();
+      document.querySelectorAll('#editKolList .kol-item').forEach(item => {
+        const name = item.getAttribute('data-name');
+        item.classList.toggle('hidden', q && !name.includes(q));
+      });
+    };
+    window.distributeEditCastEqually = distributeEditCastEqually;
+    window.setEditCastFromDefault = setEditCastFromDefault;
+    window.rebuildEditKolWageTable = rebuildEditKolWageTable;
+    window.onEditWageChanged = onEditWageChanged;
+    window.removeEditKolFromSelection = removeEditKolFromSelection;
+
+    window.openEditModal = function() {
+      const m = document.getElementById('editBookingModal');
+      m.classList.add('active');
+      m.setAttribute('aria-hidden', 'false');
+    };
+    window.closeEditModal = function() {
+      const m = document.getElementById('editBookingModal');
+      m.classList.remove('active');
+      m.setAttribute('aria-hidden', 'true');
+      closeEditKolDropdown();
+    };
+    // Đóng khi click ngoài
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('editKolDropdownPanel');
+      if (!panel || !panel.classList.contains('open')) return;
+      if (!e.target.closest('#editKolDropdownPanel') && !e.target.closest('#editKolDropdownBtn')) closeEditKolDropdown();
+    });
+    // Validate trước khi submit
+    document.getElementById('editBookingForm')?.addEventListener('submit', (e) => {
+      const checked = document.querySelectorAll('.edit-kol-checkbox:checked');
+      if (checked.length === 0) {
+        e.preventDefault();
+        alert('Vui lòng chọn ít nhất 1 KOL/KOC.');
+        return;
+      }
+      if (checked.length > 10) {
+        e.preventDefault();
+        alert('Mỗi booking tối đa 10 KOL/KOC. Hiện đã chọn ' + checked.length + '.');
+        return;
+      }
+      const amounts = document.querySelectorAll('#editKolWageTableBody [data-kol-amount]');
+      for (const inp of amounts) {
+        const v = Number(inp.value);
+        if (!isFinite(v) || v < 0) {
+          e.preventDefault();
+          alert('Vui lòng nhập số tiền cát-xê hợp lệ (≥ 0) cho tất cả KOL/KOC.');
+          inp.focus();
+          return;
+        }
+      }
+    });
+  })();
+</script>

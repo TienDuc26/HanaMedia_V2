@@ -9,10 +9,11 @@
 <section class="v4-card v4-grid"><div>Doanh thu<h2>@Model.Sum(b=>b.BookingPrice).ToString("N0") đ</h2></div><div>Chi phí<h2>@Model.Sum(b=>b.ActualCost).ToString("N0") đ</h2></div><div>Lợi nhuận<h2>@Model.Sum(b=>b.BookingPrice-b.ActualCost).ToString("N0") đ</h2></div><div>Cát-xê<h2>@Model.Sum(b=>b.CastPool).ToString("N0") đ</h2></div><div>Hoa hồng<h2>@Model.Sum(b=>b.CommissionPool).ToString("N0") đ</h2></div></section>
 @if(Model.Count==0){<p>Không có Booking trong kỳ.</p>}
 @foreach(var b in Model){<section class="v4-card"><h2>#@b.Id — @b.ClientName</h2><p>@b.CampaignName · @ContractWorkflow.Label(b.ContractStatus)</p><p>Doanh thu @b.BookingPrice.ToString("N0") đ · Chi phí @b.ActualCost.ToString("N0") đ · Lợi nhuận @((b.BookingPrice-b.ActualCost).ToString("N0")) đ</p>
-@if(b.ContractStatus=="da_ky"&&!string.IsNullOrEmpty(b.ContractFileUrl)){<a class="btn-mini" href="@b.ContractFileUrl">Hợp đồng đã ký</a>}
+@if(b.ContractStatus=="da_ky"&&!string.IsNullOrEmpty(b.ContractFileUrl)){<button type="button" class="btn-mini" data-booking-id="@b.Id" data-kind="contract" data-name="Hợp đồng đã ký" onclick="checkAndDownload(this)">Hợp đồng đã ký</button>}
 @if(b.FinanceVersion==0){<p class="v4-muted">Dữ liệu lịch sử: giữ nguyên số tiền cũ, chưa có phân bổ v4. Không đánh dấu thanh toán từ dữ liệu chưa đối chiếu.</p>}
 else{<div class="table-scroll"><table><thead><tr><th>Khoản chi</th><th>Người nhận</th><th>Số tiền</th><th>Thanh toán</th></tr></thead><tbody>
 @foreach(var p in BookingPayables.For(b)){<tr><td>@(p.Kind=="cast"?"Cát-xê KOL":p.Kind=="manager"?"Hoa hồng QL còn lại":"Hoa hồng chia NV")</td><td>@p.Name</td><td>@p.Amount.ToString("#,0.##") đ</td><td>@(p.Paid?"Đã thanh toán":"Chưa thanh toán")
 @if(canEdit&&b.ContractStatus=="da_ky"&&p.Amount>0){<form method="post" action="/Accounting/Payment/@b.Id">@Html.AntiForgeryToken()<input type="hidden" name="kind" value="@p.Kind"><input type="hidden" name="payeeId" value="@p.PayeeId"><input type="hidden" name="paid" value="@((!p.Paid).ToString().ToLowerInvariant())"><input type="hidden" name="amount" value="@p.Amount.ToString(CultureInfo.InvariantCulture)"><button class="btn-mini">@(p.Paid?"Đánh dấu chưa thanh toán":"Xác nhận đã thanh toán")</button></form>}</td></tr>}
 </tbody></table></div>}
 </section>}
+<partial name="_DocumentDownloaderPartial" />

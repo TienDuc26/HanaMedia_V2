@@ -1,13 +1,46 @@
 @model HanaMedia.Models.Booking
 @using HanaMedia.Models
 @using System.Globalization
-@{var writable=ViewBag.IsWritable==true && !Model.Payments.Any(p=>p.IsPaid) && Model.Status!="huy";var staff=ViewBag.Participants as IEnumerable<Employee> ?? Enumerable.Empty<Employee>();}
-<section class="enterprise-card"><h2 class="card-title-text">NHÂN VIÊN THAM GIA &amp; HOA HỒNG</h2>
-@if(Model.FinanceVersion==1){<p>Quỹ hoa hồng @Model.CommissionPercent%: <strong>@Model.CommissionPool.ToString("N0") đ</strong>. QL phụ trách giữ phần còn lại sau khi chia nhân viên.</p>}
-else{<p>Dữ liệu lịch sử: chưa áp dụng công thức v4. Nếu muốn chuyển, cần điều chỉnh thù lao không vượt quỹ mới rồi sửa Booking.</p>}
-@if(writable){<form method="post" action="/Bookings/UpdateWages/@Model.Id">@Html.AntiForgeryToken()
- <partial name="_BookingWageEditor" model="Model" />
- <button class="btn-mini approve" style="margin-top:16px">Lưu nhân viên &amp; phân bổ</button></form>}
-else{<div class="table-responsive"><table class="ledger-table"><thead><tr><th>Nhân viên</th><th>Thù lao</th></tr></thead><tbody>@foreach(var wage in Model.BookingWages){<tr><td>@wage.Employee?.FullName</td><td>@wage.AllocatedWage.ToString("N0") đ</td></tr>}</tbody></table></div>}
-@if(Model.FinanceVersion==1 && !User.IsInRole(HanaMedia.Constants.AppRoles.BookingStaff)){<p>Đã chia: @Model.BookingWages.Sum(w=>w.AllocatedWage).ToString("N0") đ · QL phụ trách còn: @((Model.CommissionPool-Model.BookingWages.Sum(w=>w.AllocatedWage)).ToString("N0")) đ</p>}
-</section>
+@*
+  Phân bổ thù lao theo công thức mới (50/10/40):
+   - 50% lợi nhuận công ty
+   - 10% hoa hồng QL Booking (hiển thị trong card "PHÂN BỔ GIÁ TRỊ BOOKING")
+   - 40% cát-xê chia đều cho các KOL/KOC (hiển thị trong bảng "KOL / KOC THAM GIA")
+  Phần này không còn picker "Chọn nhân viên" — chỉ lưu thông tin tham khảo về các nhân viên cũ (nếu có).
+*@
+@{
+  var hasLegacyWages = Model.BookingWages.Any();
+}
+@if (hasLegacyWages)
+{
+  <section class="enterprise-card" style="border-left: 4px solid var(--warning-color);">
+    <div class="card-header-clean">
+      <h2 class="card-title-text"><i class="ti ti-archive" style="color: var(--warning);"></i> PHÂN BỔ NHÂN VIÊN (CŨ - CHỈ THAM KHẢO)</h2>
+      <span class="card-subtitle-text">Booking này được tạo trước khi áp dụng quy tắc 50/10/40. Phân bổ dưới đây chỉ lưu lại, không còn hiệu lực tính tiền.</span>
+    </div>
+    <table class="kol-table">
+      <thead><tr><th>Nhân viên</th><th class="num">Thù lao (lịch sử)</th></tr></thead>
+      <tbody>
+        @foreach (var wage in Model.BookingWages)
+        {
+          <tr>
+            <td>@wage.Employee?.FullName</td>
+            <td class="num">@wage.AllocatedWage.ToString("N0") đ</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <p style="margin-top:8px; color: var(--text-muted); font-size: 12.5px;">
+      <i class="ti ti-info-circle"></i> Quy tắc hiện hành: chỉ KOL/KOC được chia cát-xê (40%). Không còn chọn nhân viên cho Booking mới.
+    </p>
+  </section>
+}
+else
+{
+  <section class="enterprise-card" style="background: linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%); border-left: 4px solid var(--success-color);">
+    <h2 class="card-title-text" style="color: var(--success);"><i class="ti ti-shield-check"></i> QUY TẮC PHÂN BỔ MỚI</h2>
+    <p style="margin: 6px 0 0; color: var(--text-color); font-size: 14px;">
+      Theo quy tắc hiện hành, Booking này chỉ chia cát-xê cho KOL/KOC đã chọn — không chọn nhân viên tham gia. Toàn bộ quy tắc phân bổ được hiển thị chi tiết trong các thẻ "PHÂN BỔ GIÁ TRỊ BOOKING" và "KOL / KOC THAM GIA" phía trên.
+    </p>
+  </section>
+}

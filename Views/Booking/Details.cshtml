@@ -143,6 +143,10 @@
       gap: 12px;
       flex-wrap: wrap;
     }
+    .header-actions {
+      display: flex; gap: 10px; align-items: center;
+      margin-left: auto;
+    }
     .booking-id-tag {
       font-size: 12px;
       font-weight: 700;
@@ -167,6 +171,66 @@
       display: flex;
       align-items: center;
       gap: 16px;
+    }
+
+    /* FINANCE GRID (50/10/40) — 1 cột mỗi ô 1 hàng (phù hợp sidebar 360px) */
+    .finance-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @@media (max-width: 720px) { .finance-grid { grid-template-columns: 1fr; } }
+    .finance-cell {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: #fafbfc;
+    }
+    .finance-cell.company { background: linear-gradient(135deg,#eef2ff,#e0e7ff); border-color: #c7d2fe; }
+    .finance-cell.q1 { background: linear-gradient(135deg,#fef3c7,#fde68a); border-color: #fcd34d; }
+    .finance-cell.cast { background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color: #86efac; }
+    .finance-cell-label {
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.3px;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .finance-cell-label i { font-size: 14px; }
+    .finance-pct {
+      margin-left: auto;
+      background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; color: var(--primary-blue);
+    }
+    .finance-cell-value {
+      font-size: 16px; font-weight: 700; color: var(--primary-blue); margin-top: 6px;
+    }
+
+    /* KOL TABLE */
+    .kol-table {
+      width: 100%; border-collapse: collapse; font-size: 14px;
+    }
+    .kol-table th, .kol-table td {
+      padding: 10px 12px; border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+    .kol-table th {
+      background: #f8fafc; font-weight: 600; font-size: 11.5px;
+      text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+    }
+    .kol-table td.num, .kol-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .kol-table tfoot td {
+      background: #f1f5f9; border-top: 2px solid var(--primary-blue);
+      border-bottom: none; color: var(--primary-blue);
+    }
+    .kol-cell-name { display: flex; align-items: center; gap: 10px; }
+    .kol-avatar-sm {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--blue-50); color: var(--blue-600);
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+      flex-shrink: 0;
+    }
+    .platform-tag {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      background: var(--blue-50); color: var(--blue-700); font-size: 11.5px; font-weight: 600;
     }
 
     /* STATUS BADGES */
@@ -762,7 +826,7 @@
             <span class="booking-id-tag">BOOKING #@Model.Id</span>
             <h1 class="page-title">@Model.ClientName</h1>
             <span class="status-badge @statusClass" title="Trạng thái vận hành Booking">@statusLabel</span>
-            
+
             @{
               var cHeadStatus = Model.ContractStatus ?? "nhap";
               var cHeadClass = cHeadStatus switch
@@ -786,6 +850,8 @@
             }
             <span class="status-badge @cHeadClass" title="Trạng thái quy trình hợp đồng"><i class="ti ti-file-certificate" style="margin-right:4px;"></i> @cHeadLabel</span>
           </div>
+          <div class="header-actions">
+            </div>
         </div>
         <div class="header-sub">
           <span><i class="ti ti-target" style="color: var(--primary);"></i> Chiến dịch: <strong>@(Model.Campaign?.Name ?? Model.CampaignName)</strong></span>
@@ -808,8 +874,16 @@
             <div class="info-grid-2">
               <div class="info-cell">
                 <span class="info-label">KOL / KOC HỢP TÁC</span>
-                <div class="info-value">
-                  @if (Model.Kol != null)
+                <div class="info-value" style="display:flex; flex-direction:column; gap:4px;">
+                  @if (Model.BookingKols.Any())
+                  {
+                    foreach(var bk in Model.BookingKols) {
+                      <a href="/Kols/Details/@bk.KolId" class="kol-link">
+                        <i class="ti ti-user-star"></i> @bk.Kol?.Name <span class="platform-chip">@bk.Kol?.Platform</span>
+                      </a>
+                    }
+                  }
+                  else if (Model.Kol != null)
                   {
                     <a href="/Kols/Details/@Model.KolId" class="kol-link">
                       <i class="ti ti-user-star"></i> @Model.KolNames <span class="platform-chip">@Model.Kol.Platform</span>
@@ -898,6 +972,60 @@
           </div>
 
           <partial name="_BookingWagesV4" model="Model" />
+
+          @* === BẢNG KOL/KOC THAM GIA + CÁT-XÊ TỪNG NGƯỜI === *@
+          @if (Model.BookingKols.Any())
+          {
+            var kolCastPool = Model.CastPool;
+            <div class="enterprise-card">
+              <div class="card-header-clean">
+                <h2 class="card-title-text"><i class="ti ti-user-star" style="color: var(--secondary-blue);"></i> KOL / KOC THAM GIA &amp; THÙ LAO</h2>
+                <span class="card-subtitle-text">Chi tiết cát-xê từng người trong booking này.</span>
+              </div>
+              <div class="table-responsive">
+                <table class="kol-table">
+                  <thead>
+                    <tr>
+                      <th style="width:42px;">#</th>
+                      <th>KOL / KOC</th>
+                      <th>Nền tảng</th>
+                      <th class="num">Cát-xê</th>
+                      <th class="num">%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @{
+                      var kIdx = 0;
+                      foreach (var k in Model.BookingKols)
+                      {
+                        kIdx++;
+                        var kPct = kolCastPool > 0 ? Math.Round(k.CastAmount / Model.BookingPrice * 100m, 2) : 0;
+                        <tr>
+                          <td>@kIdx</td>
+                          <td>
+                            <div class="kol-cell-name">
+                              <span class="kol-avatar-sm"><i class="ti ti-user-star"></i></span>
+                              <strong>@k.Kol?.Name</strong>
+                            </div>
+                          </td>
+                          <td><span class="platform-tag">@k.Kol?.Platform</span></td>
+                          <td class="num"><strong>@k.CastAmount.ToString("N0") đ</strong></td>
+                          <td class="num">@kPct.ToString("0.##")%</td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="3"><strong>Tổng cát-xê KOL/KOC</strong></td>
+                      <td class="num"><strong>@kolCastPool.ToString("N0") đ</strong></td>
+                      <td class="num"><strong>@Model.CastPercent%</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          }
         </div>
 
         <!-- RIGHT SIDEBAR (30%) -->
@@ -941,8 +1069,33 @@
             </div>
           </div>
 
-          @if(Model.FinanceVersion==1){<div class="enterprise-card"><h3>Phân bổ giá trị Booking</h3><p>Công ty @Model.CompanyPercent% · Hoa hồng @Model.CommissionPercent% · Cát-xê @Model.CastPercent%</p><p>Quỹ hoa hồng: @Model.CommissionPool.ToString("N0") đ</p><p>Quỹ cát-xê: @Model.CastPool.ToString("N0") đ</p><p class="card-subtitle-text">Cát-xê mặc định chia đều giữa các KOL, phần lẻ vào KOL cuối.</p>@foreach(var k in Model.BookingKols){<p>@k.Kol.Name: @k.CastAmount.ToString("#,0.##") đ</p>}</div>}
-          @if(Model.AcceptanceFileUrl!=null){<div class="enterprise-card"><a href="@Model.AcceptanceFileUrl">Tải bản nghiệm thu</a></div>}
+          @* === PHÂN BỔ GIÁ TRỊ BOOKING (50% công ty / 10% QL / 40% KOL/KOC) === *@
+          @if (Model.FinanceVersion == 1)
+          {
+            var commissionPool = Model.CommissionPool;
+            var castPool = Model.CastPool;
+            <div class="enterprise-card">
+              <div class="card-header-clean">
+                <h2 class="card-title-text"><i class="ti ti-coin" style="color: var(--primary);"></i> PHÂN BỔ GIÁ TRỊ BOOKING</h2>
+                <span class="card-subtitle-text">Tổng giá trị @Model.BookingPrice.ToString("N0") đ · Công ty @(Model.CompanyPercent)% · QL @(Model.CommissionPercent)% · KOL/KOC @(Model.CastPercent)%</span>
+              </div>
+              <div class="finance-grid">
+                <div class="finance-cell company">
+                  <div class="finance-cell-label"><i class="ti ti-building-bank"></i> Lợi nhuận công ty <span class="finance-pct">@(Model.CompanyPercent)%</span></div>
+                  <div class="finance-cell-value">@((Model.BookingPrice * Model.CompanyPercent / 100m).ToString("N0")) đ</div>
+                </div>
+                <div class="finance-cell q1">
+                  <div class="finance-cell-label"><i class="ti ti-user-shield"></i> Hoa hồng QL Booking (@(Model.PrimaryManager?.FullName ?? "—")) <span class="finance-pct">@(Model.CommissionPercent)%</span></div>
+                  <div class="finance-cell-value">@commissionPool.ToString("N0") đ</div>
+                </div>
+                <div class="finance-cell cast">
+                  <div class="finance-cell-label"><i class="ti ti-users-group"></i> Cát-xê chia KOL/KOC <span class="finance-pct">@(Model.CastPercent)%</span></div>
+                  <div class="finance-cell-value">@castPool.ToString("N0") đ</div>
+                </div>
+              </div>
+            </div>
+          }
+
           <!-- Documents Card -->
           <div class="enterprise-card">
             <div class="card-header-clean">
@@ -950,44 +1103,133 @@
               <span class="card-subtitle-text">Hợp đồng, bản nghiệm thu và tài liệu lịch sử</span>
             </div>
 
-            <div class="document-list">
-              <div class="document-item">
-                <div class="doc-icon pdf"><i class="ti ti-file-text"></i></div>
-                <div class="doc-info">
-                  <span class="doc-name">Hợp đồng pháp lý</span>
+            @* ====== HỢP ĐỒNG PHÁP LÝ ====== *@
+            <div class="enterprise-card" style="border-left: 4px solid @(string.IsNullOrEmpty(Model.ContractFileUrl) ? "#CBD5E1" : "var(--primary)");">
+              <div class="card-header-clean">
+                <h2 class="card-title-text">
+                  <i class="ti ti-file-text" style="color: @(string.IsNullOrEmpty(Model.ContractFileUrl) ? "var(--text-muted)" : "var(--primary)");"></i>
+                  HỢP ĐỒNG PHÁP LÝ
+                </h2>
+                <span class="card-subtitle-text">
                   @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
                   {
-                    <a href="@Model.ContractFileUrl" target="_blank" download class="doc-action-btn">
-                      <i class="ti ti-download"></i> Tải xuống tài liệu
-                    </a>
+                    <span style="color:var(--success); font-weight:600;"><i class="ti ti-circle-check"></i> Đã có file · v@(Model.ContractRevision)</span>
                   }
                   else
                   {
-                    <span class="doc-status-none">Chưa đính kèm</span>
+                    <span style="color:var(--text-muted);">Chưa có file đính kèm</span>
                   }
-                </div>
+                </span>
               </div>
-
-              @if(!string.IsNullOrEmpty(Model.QuotationFileUrl)){
-              <div class="document-item">
-                <div class="doc-icon excel"><i class="ti ti-file-spreadsheet"></i></div>
-                <div class="doc-info">
-                  <span class="doc-name">Báo giá lịch sử (trước v4)</span>
-                  @if (!string.IsNullOrEmpty(Model.QuotationFileUrl))
-                  {
-                    <a href="@Model.QuotationFileUrl" target="_blank" download class="doc-action-btn">
-                      <i class="ti ti-download"></i> Tải xuống báo giá lịch sử
-                    </a>
-                  }
-                  else
-                  {
-                    <span class="doc-status-none">Chưa đính kèm</span>
-                  }
+              @if (!string.IsNullOrEmpty(Model.ContractFileUrl))
+              {
+                <div style="margin-bottom:12px;">
+                  <button type="button" class="doc-action-btn" data-booking-id="@Model.Id" data-kind="contract" data-name="Hợp đồng pháp lý" onclick="checkAndDownload(this)"
+                          style="background:var(--primary); color:#fff; padding:9px 16px; border-radius:8px; font-size:13.5px; font-weight:600; display:inline-flex; align-items:center; gap:6px; border:none; cursor:pointer;">
+                    <i class="ti ti-download"></i> Tải xuống hợp đồng
+                  </button>
                 </div>
-              </div>
+              }
+              @if (ViewBag.CanDraft == true && (Model.ContractStatus == "da_duyet" || Model.ContractStatus == "phap_ly_tu_choi"))
+              {
+                <form method="post" action="/Bookings/UploadContract/@Model.Id" enctype="multipart/form-data" style="margin-top:4px;">
+                  @Html.AntiForgeryToken()
+                  @if (Model.ContractStatus == "phap_ly_tu_choi" && !string.IsNullOrEmpty(Model.LegalFeedback))
+                  {
+                    <div style="background:var(--danger-bg); border:1px solid #FECACA; color:var(--danger); padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:10px; display:flex; gap:8px; align-items:flex-start;">
+                      <i class="ti ti-alert-triangle" style="flex-shrink:0; margin-top:1px;"></i>
+                      <div><strong>Pháp lý yêu cầu sửa:</strong> @Model.LegalFeedback</div>
+                    </div>
+                  }
+                  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="file" name="contractFile" accept=".pdf,.docx,.jpg,.jpeg,.png" required
+                           style="flex:1; min-width:200px; padding:9px 12px; border:1px solid #d2ddec; border-radius:8px; font-size:14px;" />
+                    <button type="submit" class="btn-primary-blue" style="padding:9px 18px; white-space:nowrap;">
+                      <i class="ti ti-cloud-upload"></i> Upload &amp; gửi Pháp lý
+                    </button>
+                  </div>
+                  <p style="margin-top:6px; color:var(--text-muted); font-size:12px;">
+                    <i class="ti ti-info-circle"></i> Upload bản mới sẽ tăng revision (hiện tại v@(Model.ContractRevision)) và đặt lại duyệt pháp lý.
+                  </p>
+                </form>
               }
             </div>
-          </div>
+
+            @* ====== BẢN NGHIỆM THU ====== *@
+            <div class="enterprise-card" style="border-left: 4px solid @(string.IsNullOrEmpty(Model.AcceptanceFileUrl) ? "#CBD5E1" : "var(--success)");">
+              <div class="card-header-clean">
+                <h2 class="card-title-text">
+                  <i class="ti ti-certificate" style="color: @(string.IsNullOrEmpty(Model.AcceptanceFileUrl) ? "var(--text-muted)" : "var(--success)");"></i>
+                  BẢN NGHIỆM THU
+                </h2>
+                <span class="card-subtitle-text">
+                  @if (!string.IsNullOrEmpty(Model.AcceptanceFileUrl))
+                  {
+                    <span style="color:var(--success); font-weight:600;"><i class="ti ti-circle-check"></i> Đã có bản nghiệm thu</span>
+                  }
+                  else if (Model.ContractStatus == "da_ky")
+                  {
+                    <span style="color:var(--warning);">Chờ upload bản nghiệm thu để hoàn thành booking.</span>
+                  }
+                  else
+                  {
+                    <span style="color:var(--text-muted);">Chưa có bản nghiệm thu (cần ký hợp đồng trước).</span>
+                  }
+                </span>
+              </div>
+              @if (!string.IsNullOrEmpty(Model.AcceptanceFileUrl))
+              {
+                <div style="margin-bottom:12px;">
+                  <button type="button" class="doc-action-btn" data-booking-id="@Model.Id" data-kind="acceptance" data-name="Bản nghiệm thu" onclick="checkAndDownload(this)"
+                          style="background:var(--success); color:#fff; padding:9px 16px; border-radius:8px; font-size:13.5px; font-weight:600; display:inline-flex; align-items:center; gap:6px; border:none; cursor:pointer;">
+                    <i class="ti ti-download"></i> Tải bản nghiệm thu
+                  </button>
+                </div>
+              }
+              @if (ViewBag.IsWritable == true && Model.ContractStatus == "da_ky" && Model.Status != "huy")
+              {
+                <form method="post" action="/Bookings/Acceptance/@Model.Id" enctype="multipart/form-data" style="margin-top:4px;">
+                  @Html.AntiForgeryToken()
+                  <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div>
+                      <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">File nghiệm thu *</label>
+                      <input type="file" name="acceptanceFile" accept=".pdf,.docx,.jpg,.jpeg,.png" required
+                             style="width:100%; padding:9px 12px; border:1px solid #d2ddec; border-radius:8px; font-size:14px;" />
+                    </div>
+                    <div>
+                      <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Link bài đăng (HTTPS)</label>
+                      <input type="url" name="postLink" placeholder="https://tiktok.com/..." value="@Model.PostLink"
+                             style="width:100%; padding:9px 12px; border:1px solid #d2ddec; border-radius:8px; font-size:14px;" />
+                    </div>
+                    <div>
+                      <button type="submit" style="background:var(--success); color:#fff; padding:9px 16px; border-radius:8px; font-size:13.5px; font-weight:600; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; width:fit-content;">
+                        <i class="ti ti-check"></i> Nghiệm thu
+                      </button>
+                    </div>
+                  </div>
+                  <p style="color:var(--text-muted); font-size:12px; margin-top:8px;">
+                    <i class="ti ti-info-circle"></i> Nghiệm thu sẽ đánh dấu booking hoàn thành và ghi nhận ngày đăng tải thực tế.
+                  </p>
+                </form>
+              }
+            </div>
+
+            @* ====== PHẢN HỒI PHÁP LÝ ====== *@
+            @if (!string.IsNullOrWhiteSpace(Model.LegalFeedback) && Model.ContractStatus != "phap_ly_tu_choi")
+          {
+            <div class="enterprise-card" style="border-left: 4px solid var(--green);">
+              <div class="card-header-clean">
+                <h2 class="card-title-text"><i class="ti ti-message-2" style="color: var(--green);"></i> PHẢN HỒI TỪ PHÁP LÝ</h2>
+              </div>
+              <p style="margin:0; color:var(--text-color); font-size:14px;">@Model.LegalFeedback</p>
+              @if (Model.LegalReviewedAt.HasValue)
+              {
+                <p style="margin:6px 0 0; color:var(--muted-text); font-size:12.5px;">
+                  <i class="ti ti-clock"></i> @Model.LegalReviewedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                </p>
+              }
+            </div>
+          }
 
         </div>
 
@@ -996,6 +1238,8 @@
     </div>
   </main>
 </div>
+
+<partial name="_DocumentDownloaderPartial" />
 
 
 </body>

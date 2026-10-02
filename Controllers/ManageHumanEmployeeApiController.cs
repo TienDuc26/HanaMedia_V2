@@ -53,7 +53,7 @@ namespace HanaMedia.Controllers
     // Phải trùng với CHECK constraint [chk_emp_dept] trên bảng employees
     private static readonly HashSet<string> DepartmentCodes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "HCNS", "Booking", "Y_tuong", "IT"
+        "HCNS", "Booking", "Y_tuong", "IT", "Phap_Ly", "Ke_Toan"
     };
 
         // GET: /ManageHuman/ApiEmployee/ApiDebug
@@ -654,7 +654,7 @@ namespace HanaMedia.Controllers
             else
             {
                 if (!DepartmentCodes.Contains(input.Department))
-                    errors.Add("Mã phòng ban không hợp lệ (chỉ chấp nhận: HCNS, Booking, Y_tuong, IT).");
+                    errors.Add("Mã phòng ban không hợp lệ (chỉ chấp nhận: HCNS, Booking, Y_tuong, IT, Phap_Ly, Ke_Toan).");
                 else
                 {
                     var deptActive = await _db.Departments.AsNoTracking()

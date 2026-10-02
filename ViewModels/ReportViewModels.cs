@@ -41,6 +41,15 @@ public sealed class BookingReportViewModel
     public decimal MyWage { get; init; }
     public IReadOnlyList<ReportBreakdownRowViewModel> Statuses { get; init; } = [];
     public IReadOnlyList<BookingReportRowViewModel> Rows { get; init; } = [];
+    // Tổng phân bổ 50/10/40
+    public decimal TotalCompanyShare { get; init; }
+    public decimal TotalManagerShare { get; init; }
+    public decimal TotalKolShare { get; init; }
+    public decimal CompanyPercent { get; init; }
+    public decimal ManagerPercent { get; init; }
+    public decimal KolPercent { get; init; }
+    public IReadOnlyList<KolShareRowViewModel> KolShares { get; init; } = [];
+    public IReadOnlyList<ManagerShareRowViewModel> ManagerShares { get; init; } = [];
 }
 
 public sealed class IdeaReportViewModel
@@ -85,6 +94,30 @@ public sealed class BookingReportRowViewModel
     public decimal Cost { get; init; }
     public decimal AllocatedWage { get; init; }
     public decimal MyWage { get; init; }
+    public decimal CompanyShare { get; init; }
+    public decimal ManagerShare { get; init; }
+    public decimal KolShareTotal { get; init; }
+    public decimal CompanyPercent { get; init; }
+    public decimal ManagerPercent { get; init; }
+    public decimal KolPercent { get; init; }
+    public string? ManagerName { get; init; }
+}
+
+public sealed class KolShareRowViewModel
+{
+    public int KolId { get; init; }
+    public string KolName { get; init; } = string.Empty;
+    public string Platform { get; init; } = string.Empty;
+    public int BookingCount { get; init; }
+    public decimal TotalCast { get; init; }
+}
+
+public sealed class ManagerShareRowViewModel
+{
+    public int ManagerId { get; init; }
+    public string ManagerName { get; init; } = string.Empty;
+    public int BookingCount { get; init; }
+    public decimal TotalCommission { get; init; }
 }
 
 public sealed class IdeaPerformanceReportRowViewModel

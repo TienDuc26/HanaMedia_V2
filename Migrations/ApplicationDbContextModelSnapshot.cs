@@ -641,7 +641,7 @@ namespace HanaMedia.Migrations
                         {
                             t.HasCheckConstraint("chk_emp_contract", "[contract_type] IN ('thu_viec', 'chinh_thuc_1_nam', 'vo_thoi_han')");
 
-                            t.HasCheckConstraint("chk_emp_dept", "[department] IN ('HCNS', 'Booking', 'Y_tuong', 'IT')");
+                            t.HasCheckConstraint("chk_emp_dept", "[department] IN ('HCNS', 'Booking', 'Y_tuong', 'IT', 'Phap_Ly', 'Ke_Toan')");
 
                             t.HasCheckConstraint("chk_emp_status", "[status] IN ('dang_lam_viec', 'thu_viec', 'cho_duyet_nghi', 'ngung_hoat_dong')");
                         });

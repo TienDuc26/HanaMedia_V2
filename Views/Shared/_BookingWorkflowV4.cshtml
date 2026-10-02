@@ -7,7 +7,7 @@
  <p><strong>@ContractWorkflow.Label(Model.ContractStatus)</strong> · Phiên bản hợp đồng @Model.ContractRevision</p>
  @if(!string.IsNullOrWhiteSpace(Model.RejectionReason)){<p style="color:var(--danger)">Giám đốc: @Model.RejectionReason</p>}
  @if(!string.IsNullOrWhiteSpace(Model.LegalFeedback)){<p style="color:var(--danger)">Pháp lý: @Model.LegalFeedback</p>}
- @if(Model.ContractFileUrl!=null){<p><a href="@Model.ContractFileUrl" class="btn-mini">Tải hợp đồng hiện tại</a></p>}
+ @if(!string.IsNullOrEmpty(Model.ContractFileUrl)){<p><button type="button" class="btn-mini" data-booking-id="@Model.Id" data-kind="contract" data-name="Hợp đồng" onclick="checkAndDownload(this)">Tải hợp đồng hiện tại</button></p>}
  @if(owner && Model.ContractStatus is "nhap" or "tu_choi"){
   <form action="/Bookings/SubmitApproval/@Model.Id" method="post">@Html.AntiForgeryToken()<button class="btn-mini approve">Gửi Giám đốc duyệt Booking</button></form>
  }

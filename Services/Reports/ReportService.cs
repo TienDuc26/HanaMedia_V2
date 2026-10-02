@@ -146,14 +146,68 @@ public sealed class ReportService : IReportService
         bool limited,
         CancellationToken cancellationToken)
     {
+        var startDate = DateOnly.FromDateTime(startAt);
+        var endDate = DateOnly.FromDateTime(endAt);
+
         var query = _context.Bookings.AsNoTracking()
-            .Include(item => item.Campaign).Include(item => item.Kol).Include(item => item.BookingKols).ThenInclude(k => k.Kol)
+            .Include(item => item.Campaign).Include(item => item.Kol)
+            .Include(item => item.PrimaryManager)
+            .Include(item => item.BookingKols).ThenInclude(k => k.Kol)
             .Include(item => item.BookingWages).ThenInclude(item => item.Employee)
             .Where(item => item.CreatedAt >= startAt && item.CreatedAt < endAt);
         if (limited)
             query = query.Where(item => item.BookingWages.Any(wage => wage.Employee.UserId == actorUserId) || item.PrimaryManager!.UserId == actorUserId);
         var bookings = await query.OrderByDescending(item => item.CreatedAt).ToListAsync(cancellationToken);
+
+        // Lọc booking hợp lệ (không hủy) để tính tài chính
         var valid = bookings.Where(item => item.Status != "huy").ToList();
+
+        // Tính 50/10/40 cho mỗi booking
+        decimal totalCompanyShare = 0, totalManagerShare = 0, totalKolShare = 0;
+        var kolDict = new Dictionary<int, (string Name, string Platform, int Count, decimal Cast)>();
+        var mgrDict = new Dictionary<int, (string Name, int Count, decimal Comm)>();
+
+        foreach (var b in valid)
+        {
+            var companyPct = b.CompanyPercent > 0 ? b.CompanyPercent : 50m;
+            var mgrPct = b.CommissionPercent > 0 ? b.CommissionPercent : 10m;
+            var kolPct = b.CastPercent > 0 ? b.CastPercent : 40m;
+
+            var companyShare = b.BookingPrice * companyPct / 100m;
+            var mgrShare = b.BookingPrice * mgrPct / 100m;
+            var kolShare = b.BookingPrice * kolPct / 100m;
+
+            totalCompanyShare += companyShare;
+            totalManagerShare += mgrShare;
+            totalKolShare += kolShare;
+
+            // Tổng cát-xê KOL từ BookingKols
+            decimal kolShareFromBks = b.BookingKols.Sum(bk => bk.CastAmount);
+            foreach (var bk in b.BookingKols)
+            {
+                if (bk.Kol == null) continue;
+                var key = bk.KolId;
+                if (kolDict.TryGetValue(key, out var existing))
+                    kolDict[key] = (existing.Name, bk.Kol.Platform ?? existing.Platform, existing.Count + 1, existing.Cast + bk.CastAmount);
+                else
+                    kolDict[key] = (bk.Kol.Name ?? $"KOL #{key}", bk.Kol.Platform ?? "—", 1, bk.CastAmount);
+            }
+
+            // Manager share
+            if (b.PrimaryManagerId != null && b.PrimaryManager != null)
+            {
+                var mk = b.PrimaryManagerId.Value;
+                if (mgrDict.TryGetValue(mk, out var ex))
+                    mgrDict[mk] = (ex.Name, ex.Count + 1, ex.Comm + mgrShare);
+                else
+                    mgrDict[mk] = (b.PrimaryManager.FullName ?? $"NV #{mk}", 1, mgrShare);
+            }
+        }
+
+        var avgCompanyPct = valid.Count > 0 ? valid.Average(b => b.CompanyPercent > 0 ? b.CompanyPercent : 50m) : 50m;
+        var avgMgrPct = valid.Count > 0 ? valid.Average(b => b.CommissionPercent > 0 ? b.CommissionPercent : 10m) : 10m;
+        var avgKolPct = valid.Count > 0 ? valid.Average(b => b.CastPercent > 0 ? b.CastPercent : 40m) : 40m;
+
         var rows = bookings.Select(item => new BookingReportRowViewModel
         {
             Id = item.Id,
@@ -164,8 +218,28 @@ public sealed class ReportService : IReportService
             Revenue = item.BookingPrice,
             Cost = item.ActualCost,
             AllocatedWage = item.BookingWages.Sum(wage => wage.AllocatedWage),
-            MyWage = item.BookingWages.Where(wage => wage.Employee.UserId == actorUserId).Sum(wage => wage.AllocatedWage)
+            MyWage = item.BookingWages.Where(wage => wage.Employee.UserId == actorUserId).Sum(wage => wage.AllocatedWage),
+            CompanyShare = item.BookingPrice * (item.CompanyPercent > 0 ? item.CompanyPercent : 50m) / 100m,
+            ManagerShare = item.BookingPrice * (item.CommissionPercent > 0 ? item.CommissionPercent : 10m) / 100m,
+            KolShareTotal = item.BookingKols.Sum(bk => bk.CastAmount),
+            CompanyPercent = item.CompanyPercent > 0 ? item.CompanyPercent : 50m,
+            ManagerPercent = item.CommissionPercent > 0 ? item.CommissionPercent : 10m,
+            KolPercent = item.CastPercent > 0 ? item.CastPercent : 40m,
+            ManagerName = item.PrimaryManager?.FullName
         }).ToList();
+
+        var kolShares = kolDict.OrderByDescending(k => k.Value.Cast).Select(k => new KolShareRowViewModel
+        {
+            KolId = k.Key, KolName = k.Value.Name, Platform = k.Value.Platform,
+            BookingCount = k.Value.Count, TotalCast = k.Value.Cast
+        }).ToList();
+
+        var mgrShares = mgrDict.OrderByDescending(m => m.Value.Comm).Select(m => new ManagerShareRowViewModel
+        {
+            ManagerId = m.Key, ManagerName = m.Value.Name,
+            BookingCount = m.Value.Count, TotalCommission = m.Value.Comm
+        }).ToList();
+
         return new BookingReportViewModel
         {
             TotalBookings = bookings.Count,
@@ -175,7 +249,15 @@ public sealed class ReportService : IReportService
             Cost = limited ? 0 : valid.Sum(item => item.ActualCost),
             MyWage = rows.Sum(item => item.MyWage),
             Statuses = Breakdown(bookings.GroupBy(item => item.Status ?? string.Empty).Select(group => (group.Key, BookingStatusLabel(group.Key), group.Count())), bookings.Count),
-            Rows = rows
+            Rows = rows,
+            TotalCompanyShare = totalCompanyShare,
+            TotalManagerShare = totalManagerShare,
+            TotalKolShare = totalKolShare,
+            CompanyPercent = avgCompanyPct,
+            ManagerPercent = avgMgrPct,
+            KolPercent = avgKolPct,
+            KolShares = kolShares,
+            ManagerShares = mgrShares
         };
     }
 

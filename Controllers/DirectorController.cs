@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HanaMedia.Services.Dashboard;
 using HanaMedia.Models;
+using HanaMedia.Models.ViewModels;
 using HanaMedia.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using HanaMedia.Services.Ideas;
@@ -96,7 +97,62 @@ namespace HanaMedia.Controllers
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync(cancellationToken);
 
-            return View(bookings);
+            var kolSummaries = bookings
+                .Where(b => b.FinanceVersion == 1 && b.BookingKols.Any())
+                .SelectMany(b => b.BookingKols.Select(bk => new { bk.Kol, bk.CastAmount, Booking = b }))
+                .GroupBy(x => x.Kol!.Id)
+                .Select(g => new KolSalarySummary
+                {
+                    KolId = g.Key,
+                    KolName = g.First().Kol?.Name ?? "N/A",
+                    KolPlatform = g.First().Kol?.Platform ?? "",
+                    BookingCount = g.Count(),
+                    TotalCastAmount = g.Sum(x => x.CastAmount),
+                    BookingDetails = g.Select(x => new KolBookingDetail
+                    {
+                        BookingId = x.Booking.Id,
+                        ClientName = x.Booking.ClientName,
+                        CampaignName = x.Booking.Campaign?.Name ?? x.Booking.CampaignName,
+                        CreatedAt = x.Booking.CreatedAt ?? DateTime.Now,
+                        ManagerName = x.Booking.PrimaryManager?.FullName ?? "—",
+                        CastAmount = x.CastAmount
+                    }).ToList()
+                })
+                .OrderByDescending(x => x.TotalCastAmount)
+                .ToList();
+
+            var managerSummaries = bookings
+                .Where(b => b.FinanceVersion == 1 && b.PrimaryManager != null)
+                .GroupBy(b => b.PrimaryManager!.Id)
+                .Select(g => new ManagerSalarySummary
+                {
+                    ManagerId = g.Key,
+                    ManagerName = g.First().PrimaryManager?.FullName ?? "N/A",
+                    BookingCount = g.Count(),
+                    TotalCastPool = g.Sum(x => x.CastPool),
+                    TotalAllocated = g.Sum(x => x.BookingKols.Sum(bk => bk.CastAmount)),
+                    BookingDetails = g.Select(b => new ManagerBookingDetail
+                    {
+                        BookingId = b.Id,
+                        ClientName = b.ClientName,
+                        CampaignName = b.Campaign?.Name ?? b.CampaignName,
+                        CreatedAt = b.CreatedAt ?? DateTime.Now,
+                        KolCount = b.BookingKols.Count,
+                        CastPool = b.CastPool,
+                        Allocated = b.BookingKols.Sum(bk => bk.CastAmount)
+                    }).ToList()
+                })
+                .OrderByDescending(x => x.TotalCastPool)
+                .ToList();
+
+            var vm = new BookingCampaignViewModel
+            {
+                Bookings = bookings,
+                KolSummary = kolSummaries,
+                ManagerSummary = managerSummaries
+            };
+
+            return View(vm);
         }
 
         [HttpGet]

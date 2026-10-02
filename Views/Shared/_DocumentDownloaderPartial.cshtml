@@ -1,0 +1,108 @@
+@*
+  Partial chứa modal popup + script checkAndDownload().
+  Các view có link tải hợp đồng booking cần:
+    1. Dùng <button class="doc-action-btn" data-booking-id="@Model.Id" data-kind="contract|quotation|acceptance" data-name="..." onclick="checkAndDownload(this)">
+    2. Include partial này ở cuối view: <partial name="_DocumentDownloaderPartial" />
+*@
+
+<div id="docUnavailableModal" class="doc-modal-backdrop" style="display:none;">
+  <div class="doc-modal-card" role="dialog" aria-modal="true" aria-labelledby="docUnavailableTitle">
+    <div class="doc-modal-header">
+      <div class="doc-modal-icon"><i class="ti ti-file-x" style="color:#b91c1c;"></i></div>
+      <div>
+        <div id="docUnavailableTitle" class="doc-modal-title">Không thể tải tài liệu</div>
+        <div id="docUnavailableSub" class="doc-modal-sub">Tài liệu không khả dụng trên hệ thống.</div>
+      </div>
+    </div>
+    <div class="doc-modal-body">
+      <p id="docUnavailableMessage" style="margin:0; color:#475569; line-height:1.5; font-size:14px;"></p>
+      <p style="margin:12px 0 0; font-size:12.5px; color:#64748b;">
+        Vui lòng liên hệ <strong>Quản lý Booking</strong> để tải lại tài liệu mới cho Booking này.
+      </p>
+    </div>
+    <div class="doc-modal-footer">
+      <button type="button" class="doc-modal-btn" onclick="closeDocModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .doc-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:3000;animation:docFadeIn .15s ease}
+  .doc-modal-backdrop[style*="display:none"]{display:none !important}
+  @@keyframes docFadeIn{from{opacity:0}to{opacity:1}}
+  .doc-modal-card{background:#fff;width:100%;max-width:460px;border-radius:14px;box-shadow:0 20px 25px -5px rgba(0,0,0,.15),0 10px 10px -5px rgba(0,0,0,.06);overflow:hidden;animation:docPop .18s cubic-bezier(.2,.8,.2,1)}
+  @@keyframes docPop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+  .doc-modal-header{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid #f1f5f9}
+  .doc-modal-icon{width:42px;height:42px;border-radius:10px;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .doc-modal-title{font-size:16px;font-weight:700;color:#0f172a}
+  .doc-modal-sub{font-size:12.5px;color:#64748b;margin-top:2px}
+  .doc-modal-body{padding:16px 22px}
+  .doc-modal-footer{padding:12px 22px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:8px;background:#f8fafc}
+  .doc-modal-btn{background:#0B3A6E;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:600;font-size:13.5px;cursor:pointer;transition:background .15s}
+  .doc-modal-btn:hover{background:#08294f}
+</style>
+
+<script>
+  // Module 7+ — kiểm tra file booking trước khi tải xuống.
+  // Tránh user gặp trang 404 của browser khi URL trong DB không còn trỏ tới file vật lý.
+  function checkAndDownload(btn) {
+    var id = btn.getAttribute('data-booking-id');
+    var kind = btn.getAttribute('data-kind');
+    var name = btn.getAttribute('data-name') || 'tài liệu';
+    if (!id || !kind) return;
+    if (btn.dataset.loading === '1') return;
+    btn.dataset.loading = '1';
+    var original = btn.innerHTML;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Đang kiểm tra...';
+    btn.disabled = true;
+
+    fetch('/Bookings/' + encodeURIComponent(id) + '/DocumentCheck?kind=' + encodeURIComponent(kind), {
+      method: 'GET',
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) throw new Error('Bạn không có quyền tải tài liệu này.');
+        if (r.status === 404) throw new Error('Không tìm thấy Booking.');
+        if (!r.ok) throw new Error('Không thể kiểm tra tài liệu. Vui lòng thử lại.');
+        return r.json();
+      })
+      .then(function (j) {
+        if (j && j.available && j.url) {
+          window.open(j.url, '_blank', 'noopener');
+          return;
+        }
+        showDocUnavailable(name, (j && j.message) || 'Tài liệu không khả dụng.');
+      })
+      .catch(function (e) {
+        showDocUnavailable(name, e.message || 'Có lỗi khi tải tài liệu.');
+      })
+      .finally(function () {
+        btn.innerHTML = original;
+        btn.disabled = false;
+        btn.dataset.loading = '';
+      });
+  }
+
+  function showDocUnavailable(name, msg) {
+    var modal = document.getElementById('docUnavailableModal');
+    var sub = document.getElementById('docUnavailableSub');
+    var body = document.getElementById('docUnavailableMessage');
+    if (sub) sub.textContent = 'Không thể tải ' + name + '.';
+    if (body) body.textContent = msg;
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeDocModal() {
+    var modal = document.getElementById('docUnavailableModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  document.addEventListener('click', function (e) {
+    var modal = document.getElementById('docUnavailableModal');
+    if (modal && modal.style.display !== 'none' && e.target === modal) closeDocModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDocModal();
+  });
+</script>

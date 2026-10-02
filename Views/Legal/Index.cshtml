@@ -1,11 +1,438 @@
 @model List<HanaMedia.Models.Booking>
-@{Layout="_V4Layout";ViewData["Title"]="Kiểm tra hợp đồng — Pháp lý";}
-<p class="v4-muted">Kiểm tra đúng phiên bản hợp đồng. Trả sửa phải ghi rõ lý do; QL Booking phụ trách nhận phản hồi tại trang chi tiết.</p>
-<nav class="v4-form"><a class="btn-mini" href="/Legal">Chờ kiểm tra</a><a class="btn-mini" href="/Legal?status=all">Lịch sử</a></nav>
-@if(Model.Count==0){<div class="v4-card">Không có hợp đồng trong danh sách.</div>}
-@foreach(var b in Model){<section class="v4-card"><h2>Booking #@b.Id — @b.ClientName</h2><p>@b.CampaignName · QL phụ trách: @b.PrimaryManager?.FullName · Phiên bản @b.ContractRevision</p>
-<p>Trạng thái: @HanaMedia.Constants.ContractWorkflow.Label(b.ContractStatus)</p>
-@if(!string.IsNullOrEmpty(b.ContractFileUrl)){<a class="btn-mini" href="@b.ContractFileUrl">Tải hợp đồng để kiểm tra</a>}
-@if(!string.IsNullOrWhiteSpace(b.LegalFeedback)){<p>Phản hồi: @b.LegalFeedback</p>}
-@if(b.ContractStatus=="cho_phap_ly"){<form method="post" action="/Legal/Review/@b.Id" class="v4-form">@Html.AntiForgeryToken()<input type="hidden" name="revision" value="@b.ContractRevision"><label>Ghi chú / lý do trả sửa<textarea name="feedback" maxlength="2000"></textarea></label><button class="btn-mini approve" name="approve" value="true">Hợp lệ — chuyển Giám đốc ký</button><button class="btn-mini" name="approve" value="false">Trả sửa</button></form>}
-</section>}
+@using HanaMedia.Constants
+@{
+  Layout = null;
+  var pendingList = Model?.Where(b => b.ContractStatus == "cho_phap_ly").ToList() ?? new List<HanaMedia.Models.Booking>();
+  var historyList = Model?.Where(b => b.ContractStatus is "cho_ky" or "phap_ly_tu_choi" or "da_ky").ToList() ?? new List<HanaMedia.Models.Booking>();
+  var statusFilter = ViewBag.Status as string ?? "pending";
+  var showPending = statusFilter != "all";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HanaMedia — Kiểm tra hợp đồng (Pháp lý)</title>
+  <link rel="stylesheet" href="~/css/tabler-icons/tabler-icons.min.css">
+  <link rel="stylesheet" href="~/css/design-system.css">
+  <link rel="stylesheet" href="~/css/layout.css">
+  <link rel="stylesheet" href="~/css/components.css">
+  <style>
+    :root {
+      --primary-blue: #0B3A6E;
+      --secondary-blue: #2563EB;
+      --bg-color: #F5F8FC;
+      --white: #FFFFFF;
+      --text-color: #17324D;
+      --muted-text: #64748B;
+      --success-color: #16A34A;
+      --warning-color: #D97706;
+      --danger-color: #DC2626;
+      --amber: #D97706;
+      --green: #16A34A;
+      --red: #DC2626;
+      --blue-50: #EFF6FF;
+      --blue-100: #DBEAFE;
+      --blue-500: #3B82F6;
+      --blue-600: #2563EB;
+      --blue-700: #1D4ED8;
+      --green-bg: #DCFCE7;
+      --amber-bg: #FEF3C7;
+      --red-bg: #FEE2E2;
+      --line: #E2E8F0;
+      --muted: #64748B;
+    }
+    body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Inter', sans-serif; }
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(11, 58, 110, 0.05);
+      border: 1px solid rgba(11, 58, 110, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom: 16px; }
+    .card-title { font-size: 17px; font-weight: 700; color: var(--primary-blue); display:flex; align-items:center; gap:8px; }
+    .topbar {
+      display:flex; justify-content:space-between; align-items:flex-end;
+      gap:16px; padding: 4px 4px 18px;
+      flex-wrap: wrap;
+    }
+    .page-title { font-size: 22px; font-weight: 700; color: var(--primary-blue); }
+    .page-sub { font-size: 13px; color: var(--muted-text); margin-top: 4px; }
+    .btn-primary-blue {
+      background-color: var(--primary-blue) !important; color: var(--white) !important;
+      border: none !important; padding: 9px 18px; border-radius: 8px;
+      font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: background-color 0.15s ease; text-decoration: none;
+    }
+    .btn-primary-blue:hover { background-color: var(--secondary-blue) !important; }
+    .btn-mini {
+      padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      transition: all 0.15s ease; background: transparent; border: 1px solid transparent;
+      color: var(--primary-blue);
+    }
+    .btn-mini.approve { color: var(--green); border-color: rgba(22,163,74,0.2); background: #f0fdf4; }
+    .btn-mini.approve:hover { background: #dcfce7; }
+    .btn-mini.reject { color: var(--red); border-color: rgba(220,38,38,0.2); background: #fff5f5; }
+    .btn-mini.reject:hover { background: #fee2e2; }
+    .btn-mini.view { color: var(--primary-blue); border-color: rgba(11,58,110,0.15); background: #f8fafc; }
+    .btn-mini.view:hover { background: #f1f5f9; }
+
+    .tab-headers {
+      display: flex; gap: 4px; border-bottom: 1px solid var(--line);
+      padding-bottom: 0; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .tab-header {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      cursor: pointer; padding: 8px 16px; position: relative;
+      border-radius: 8px 8px 0 0; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .tab-header:hover { color: var(--blue-600); background: var(--blue-50); }
+    .tab-header.active { color: var(--blue-600); background: var(--blue-50); font-weight: 700; }
+    .tab-header .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 20px; height: 20px; padding: 0 6px; font-size: 11px; font-weight: 700;
+      color: #fff; background: var(--amber); border-radius: 10px;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+    th { color: var(--muted-text); font-weight: 700; background: #f8fafc; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    tr:hover td { background: #fafbfc; }
+
+    .contract-status-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    }
+    .contract-status-tag.pending { background: var(--amber-bg); color: var(--amber); }
+    .contract-status-tag.legal { background: var(--blue-100); color: var(--blue-700); }
+    .contract-status-tag.signed { background: var(--green-bg); color: var(--green); }
+    .contract-status-tag.rejected { background: var(--red-bg); color: var(--red); }
+
+    .review-row td { background: #fffaf2; }
+    .review-form {
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: stretch;
+      width: 100%;
+    }
+    .review-form textarea {
+      width: 100%; min-height: 44px; max-height: 110px; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 8px; resize: vertical;
+      font-family: inherit; font-size: 13.5px;
+    }
+    .review-actions { display:flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .feedback-note {
+      display:inline-flex; align-items:center; gap: 6px;
+      color: var(--red); font-weight: 600; font-size: 13px;
+      background: #fff5f5; border: 1px solid #fecaca; padding: 6px 10px; border-radius: 8px;
+    }
+    .feedback-success {
+      display:inline-flex; align-items:center; gap: 6px;
+      color: var(--green); font-weight: 600; font-size: 13px;
+      background: #f0fdf4; border: 1px solid #bbf7d0; padding: 6px 10px; border-radius: 8px;
+    }
+    .legal-flow {
+      display: flex; align-items: center; gap: 12px; padding: 8px 0;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .legal-flow .step {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      min-width: 84px;
+    }
+    .legal-flow .circle {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .legal-flow .step h6 { margin: 0; font-size: 11.5px; font-weight: 700; text-align: center; max-width: 100px; }
+    .legal-flow .arrow { color: var(--muted); font-size: 20px; }
+    .flow-pass { background: var(--green-bg); color: var(--green); }
+    .flow-active { background: var(--blue-100); color: var(--blue-700); border: 3px solid var(--blue-500); }
+    .flow-wait { background: var(--line); color: var(--muted); }
+    .flow-current { background: var(--amber-bg); color: var(--amber); border: 3px solid var(--amber); }
+    .empty-row td { text-align:center; color: var(--muted-text); padding: 36px !important; font-style: italic; }
+
+    .pdf-thumb {
+      display:inline-flex; align-items:center; gap: 6px;
+      color: var(--blue-700); font-weight: 600; font-size: 12.5px;
+    }
+    .pdf-thumb i { font-size: 16px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <partial name="_SidebarPartial" />
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Kiểm tra hợp đồng</div>
+        <div class="page-sub">Xét duyệt hợp đồng do QL Booking gửi lên. Trả sửa phải ghi rõ lý do; QL Booking nhận phản hồi tại trang chi tiết.</div>
+      </div>
+      <a href="/Legal?status=all" class="btn-primary-blue" style="background-color: var(--secondary-blue) !important;">
+        <i class="ti ti-history"></i> Lịch sử duyệt
+      </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+      <div style="background:#F0FDF4; border:1px solid #BBF7D0; color:#168A4A; padding:12px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+        <i class="ti ti-circle-check" style="font-size:18px;"></i> @TempData["SuccessMessage"]
+      </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+      <div style="background:#FEF2F2; border:1px solid #FECACA; color:#D92D20; padding:12px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+        <i class="ti ti-alert-triangle" style="font-size:18px;"></i> @TempData["ErrorMessage"]
+      </div>
+    }
+
+    <!-- TAB -->
+    <div class="card" style="padding: 16px 20px 0 20px; margin-bottom: 0;">
+      <div class="tab-headers">
+        <a href="/Legal" class="tab-header @(showPending ? "active" : "")" style="text-decoration:none;">
+          <i class="ti ti-clock"></i> Chờ kiểm tra
+          <span class="badge">@pendingList.Count</span>
+        </a>
+        <a href="/Legal?status=all" class="tab-header @(!showPending ? "active" : "")" style="text-decoration:none;">
+          <i class="ti ti-history"></i> Lịch sử duyệt
+          <span class="badge" style="background: var(--blue-500);">@historyList.Count</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- TAB: CHỜ KIỂM TRA -->
+    <div id="tab-pending" class="tab-content active">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-scale" style="color: var(--amber);"></i> Hợp đồng chờ Pháp lý kiểm tra
+          </div>
+          <div style="font-size: 13px; color: var(--muted-text);">
+            Tải hợp đồng, đối chiếu đúng phiên bản (revision). Duyệt để chuyển Giám đốc ký.
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Booking</th>
+              <th>Khách hàng / Chiến dịch</th>
+              <th>KOL/KOC</th>
+              <th>QL phụ trách</th>
+              <th style="text-align:right;">Giá trị</th>
+              <th>Phiên bản</th>
+              <th>Hồ sơ</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (!pendingList.Any())
+            {
+              <tr class="empty-row">
+                <td colspan="8">Hiện không có hợp đồng nào chờ kiểm tra.</td>
+              </tr>
+            }
+            else
+            {
+              foreach (var b in pendingList)
+              {
+                <tr class="review-row">
+                  <td>
+                    <strong style="color: var(--primary-blue);">#@b.Id</strong>
+                    <div style="font-size:11.5px; color: var(--muted-text);">@(b.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? b.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "")</div>
+                  </td>
+                  <td>
+                    <strong>@b.ClientName</strong>
+                    <div style="color: var(--muted-text); font-size:12px;">Chiến dịch: @(b.Campaign?.Name ?? b.CampaignName)</div>
+                  </td>
+                  <td>@b.KolNames</td>
+                  <td>@(b.PrimaryManager?.FullName ?? "—")</td>
+                  <td style="text-align:right; color: var(--blue-700); font-weight:700;">@b.BookingPrice.ToString("N0") đ</td>
+                  <td>
+                    <span class="contract-status-tag legal">
+                      <i class="ti ti-file-certificate"></i> v@(b.ContractRevision)
+                    </span>
+                  </td>
+                  <td>
+                    @if (!string.IsNullOrEmpty(b.ContractFileUrl))
+                    {
+                      <button type="button" class="btn-mini view" data-booking-id="@b.Id" data-kind="contract" data-name="Hợp đồng" onclick="checkAndDownload(this)">
+                        <i class="ti ti-download"></i> Tải HĐ
+                      </button>
+                    }
+                    else
+                    {
+                      <span style="color: var(--muted-text); font-style: italic;">Chưa đính kèm</span>
+                    }
+                  </td>
+                  <td style="text-align:right; white-space:nowrap;">
+                    <a href="/Bookings/Details/@b.Id" class="btn-mini view" style="text-decoration:none;"><i class="ti ti-eye"></i> Xem</a>
+                  </td>
+                </tr>
+                <tr class="review-row">
+                  <td colspan="8" style="padding-top: 8px;">
+                    <form method="post" action="/Legal/Review/@b.Id" class="review-form" id="legalForm-@b.Id">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="revision" value="@b.ContractRevision">
+                      <textarea name="feedback" maxlength="2000" placeholder="Ghi chú / lý do trả sửa (bắt buộc nếu từ chối)..." id="feedback-@b.Id"></textarea>
+                      <div class="review-actions">
+                        <button type="submit" name="approve" value="false" class="btn-mini reject" onclick="return confirmReject(@b.Id);">
+                          <i class="ti ti-arrow-back-up"></i> Trả sửa
+                        </button>
+                        <button type="submit" name="approve" value="true" class="btn-mini approve">
+                          <i class="ti ti-shield-check"></i> Hợp lệ — chuyển Giám đốc ký
+                        </button>
+                      </div>
+                    </form>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FLOW -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-git-branch" style="color: var(--blue-500);"></i> Luồng duyệt &amp; ký hợp đồng
+          </div>
+        </div>
+        <div class="legal-flow">
+          <div class="step"><div class="circle flow-pass"><i class="ti ti-check"></i></div><h6>1. Booking<br>đã duyệt</h6></div>
+          <div class="arrow"><i class="ti ti-arrow-right"></i></div>
+          <div class="step"><div class="circle flow-pass"><i class="ti ti-edit"></i></div><h6>2. QL Booking<br>soạn HĐ</h6></div>
+          <div class="arrow"><i class="ti ti-arrow-right"></i></div>
+          <div class="step"><div class="circle flow-current"><i class="ti ti-scale"></i></div><h6 style="color: var(--amber);">3. Pháp lý kiểm tra<br>(Bạn ở đây)</h6></div>
+          <div class="arrow"><i class="ti ti-arrow-right"></i></div>
+          <div class="step"><div class="circle flow-wait"><i class="ti ti-pen"></i></div><h6>4. GĐ Ký HĐ</h6></div>
+          <div class="arrow"><i class="ti ti-arrow-right"></i></div>
+          <div class="step"><div class="circle flow-wait"><i class="ti ti-file-check"></i></div><h6>5. Đã ký<br>(Hiệu lực)</h6></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: LỊCH SỬ -->
+    <div id="tab-history" class="tab-content">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <i class="ti ti-history" style="color: var(--blue-500);"></i> Lịch sử kiểm tra hợp đồng
+          </div>
+          <div style="font-size: 13px; color: var(--muted-text);">
+            Bao gồm đã chuyển GĐ ký, đã ký, và các hợp đồng QL Booking đang sửa lại.
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Booking</th>
+              <th>Khách hàng / Chiến dịch</th>
+              <th>QL phụ trách</th>
+              <th style="text-align:right;">Giá trị</th>
+              <th>Phiên bản</th>
+              <th>Trạng thái</th>
+              <th>Phản hồi / Ghi chú</th>
+              <th style="text-align:right;">Hồ sơ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (!historyList.Any())
+            {
+              <tr class="empty-row">
+                <td colspan="8">Chưa có lịch sử duyệt hợp đồng.</td>
+              </tr>
+            }
+            else
+            {
+              foreach (var b in historyList)
+            {
+              var tagClass = b.ContractStatus switch
+              {
+                "cho_ky" => "pending",
+                "da_ky" => "signed",
+                _ => "rejected"
+              };
+              var tagLabel = ContractWorkflow.Label(b.ContractStatus);
+              <tr>
+                <td>
+                  <strong style="color: var(--primary-blue);">#@b.Id</strong>
+                  <div style="font-size:11.5px; color: var(--muted-text);">@(b.LegalReviewedAt?.ToString("dd/MM/yyyy HH:mm") ?? b.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "")</div>
+                </td>
+                <td>
+                  <strong>@b.ClientName</strong>
+                  <div style="color: var(--muted-text); font-size:12px;">Chiến dịch: @(b.Campaign?.Name ?? b.CampaignName)</div>
+                </td>
+                <td>@(b.PrimaryManager?.FullName ?? "—")</td>
+                <td style="text-align:right; color: var(--blue-700); font-weight:700;">@b.BookingPrice.ToString("N0") đ</td>
+                <td>
+                  <span class="contract-status-tag legal">v@(b.LegalApprovedRevision ?? b.ContractRevision)</span>
+                </td>
+                <td>
+                  <span class="contract-status-tag @tagClass">
+                    @if (b.ContractStatus == "cho_ky")
+                    {
+                      <i class="ti ti-clock"></i>
+                    }
+                    else if (b.ContractStatus == "da_ky")
+                    {
+                      <i class="ti ti-check"></i>
+                    }
+                    else
+                    {
+                      <i class="ti ti-x"></i>
+                    }
+                    @tagLabel
+                  </span>
+                </td>
+                <td>
+                  @if (!string.IsNullOrWhiteSpace(b.LegalFeedback))
+                  {
+                    <div class="@(b.ContractStatus == "phap_ly_tu_choi" ? "feedback-note" : "feedback-success")">
+                      <i class="ti @(b.ContractStatus == "phap_ly_tu_choi" ? "ti-arrow-back-up" : "ti-message-2")"></i>
+                      <span>@b.LegalFeedback</span>
+                    </div>
+                  }
+                  else
+                  {
+                    <span style="color: var(--muted-text); font-style: italic;">—</span>
+                  }
+                </td>
+                <td style="text-align:right; white-space:nowrap;">
+                  @if (!string.IsNullOrEmpty(b.ContractFileUrl))
+                  {
+                    <button type="button" class="btn-mini view" data-booking-id="@b.Id" data-kind="contract" data-name="Hợp đồng" onclick="checkAndDownload(this)">
+                      <i class="ti ti-download"></i> Tải HĐ
+                    </button>
+                  }
+                  <a href="/Bookings/Details/@b.Id" class="btn-mini view" style="text-decoration:none;"><i class="ti ti-eye"></i> Xem</a>
+                </td>
+              </tr>
+            }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<partial name="_DocumentDownloaderPartial" />
+
+<script>
+  function confirmReject(id) {
+    const form = document.getElementById('legalForm-' + id);
+    const feedback = form ? form.querySelector('textarea[name="feedback"]').value.trim() : '';
+    if (!feedback) {
+      alert('Vui lòng nhập lý do trả sửa trước khi từ chối.');
+      return false;
+    }
+    return confirm('Xác nhận TRẢ SỬA hợp đồng này về QL Booking?');
+  }
+</script>
+</body>
+</html>

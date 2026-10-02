@@ -247,7 +247,7 @@ public partial class ApplicationDbContext : DbContext
             {
                 table.HasCheckConstraint(
                     "chk_emp_dept",
-                    "[department] IN ('HCNS', 'Booking', 'Y_tuong', 'IT')");
+                    "[department] IN ('HCNS', 'Booking', 'Y_tuong', 'IT', 'Phap_Ly', 'Ke_Toan')");
                 table.HasCheckConstraint(
                     "chk_emp_contract",
                     "[contract_type] IN ('thu_viec', 'chinh_thuc_1_nam', 'vo_thoi_han')");

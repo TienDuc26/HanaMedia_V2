@@ -270,22 +270,82 @@
 
       <!-- Right side: Placeholders for booking & ideas -->
       <div>
-        <!-- Section 2: Bookings Placeholder -->
+        <!-- Section 2: Bookings liên quan -->
         <div class="card" style="margin-bottom: 20px;">
           <div class="section-title">Booking liên quan (Module 9)</div>
-          <div class="empty-placeholder" style="padding: 24px 16px;">
-            <i class="ti ti-lock" style="font-size: 20px; display: block; margin-bottom: 6px; color: var(--muted-text);"></i>
-            Chưa có dữ liệu
-          </div>
+          @if (ViewBag.RelatedBookings != null && ViewBag.RelatedBookings.Count > 0)
+          {
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: #F8FAFC;">
+                  <th style="padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Client</th>
+                  <th style="padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">QL phụ trách</th>
+                  <th style="padding: 8px 12px; text-align: right; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Giá booking</th>
+                  <th style="padding: 8px 12px; text-align: center; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">KOL/KOC</th>
+                  <th style="padding: 8px 12px; text-align: right; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Quỹ cát-xê</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var b in (List<HanaMedia.Models.Booking>)ViewBag.RelatedBookings)
+                {
+                  <tr style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 8px 12px; font-weight: 600;">@b.ClientName</td>
+                    <td style="padding: 8px 12px; color: var(--ink-2);">@(b.PrimaryManager?.FullName ?? "—")</td>
+                    <td style="padding: 8px 12px; text-align: right; font-weight: 700; color: var(--blue-600);">@b.BookingPrice.ToString("N0") đ</td>
+                    <td style="padding: 8px 12px; text-align: center;">@b.BookingKols.Count</td>
+                    <td style="padding: 8px 12px; text-align: right; font-weight: 700; color: var(--green);">@b.CastPool.ToString("N0") đ</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          else
+          {
+            <div class="empty-placeholder" style="padding: 24px 16px;">
+              <i class="ti ti-calendar-off" style="font-size: 20px; display: block; margin-bottom: 6px; color: var(--muted-text);"></i>
+              Chưa có booking nào liên quan đến chiến dịch này
+            </div>
+          }
         </div>
 
-        <!-- Section 3: Ideas Placeholder -->
+        <!-- Section 3: Ý tưởng liên quan -->
         <div class="card">
           <div class="section-title">Ý tưởng liên quan (Module 13)</div>
-          <div class="empty-placeholder" style="padding: 24px 16px;">
-            <i class="ti ti-lock" style="font-size: 20px; display: block; margin-bottom: 6px; color: var(--muted-text);"></i>
-            Chưa có dữ liệu
-          </div>
+          @if (ViewBag.RelatedIdeas != null && ViewBag.RelatedIdeas.Count > 0)
+          {
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: #F8FAFC;">
+                  <th style="padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Tiêu đề ý tưởng</th>
+                  <th style="padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Người phụ trách</th>
+                  <th style="padding: 8px 12px; text-align: center; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Trạng thái</th>
+                  <th style="padding: 8px 12px; text-align: right; font-weight: 700; font-size: 11.5px; color: var(--muted-text);">Ngày tạo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var idea in (List<HanaMedia.Models.Idea>)ViewBag.RelatedIdeas)
+                {
+                  <tr style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 8px 12px;">
+                      <a href="/Ideas/Details/@idea.Id" style="color: var(--primary); font-weight: 600; text-decoration: none;">@idea.Title</a>
+                    </td>
+                    <td style="padding: 8px 12px; color: var(--ink-2);">@(idea.PrimaryStaff?.FullName ?? "—")</td>
+                    <td style="padding: 8px 12px; text-align: center;">
+                      <span class="status-chip @(idea.Status == "da_duyet" ? "status-good" : idea.Status == "bi_tu_choi" ? "status-bad" : "status-warn")">@idea.Status</span>
+                    </td>
+                    <td style="padding: 8px 12px; text-align: right; color: var(--muted-text);">@idea.CreatedAt?.ToString("dd/MM/yyyy")</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          else
+          {
+            <div class="empty-placeholder" style="padding: 24px 16px;">
+              <i class="ti ti-bulb-off" style="font-size: 20px; display: block; margin-bottom: 6px; color: var(--muted-text);"></i>
+              Chưa có ý tưởng nào liên quan đến chiến dịch này
+            </div>
+          }
         </div>
       </div>
     </div>

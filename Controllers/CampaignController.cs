@@ -88,7 +88,22 @@ public sealed class CampaignController : Controller
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
 
+        var relatedBookings = await _context.Bookings
+            .Include(b => b.PrimaryManager)
+            .Include(b => b.BookingKols)
+            .Where(b => b.CampaignId == id)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var relatedIdeas = await _context.Ideas
+            .Include(i => i.PrimaryStaff)
+            .Where(i => i.CampaignId == id)
+            .OrderByDescending(i => i.CreatedAt)
+            .ToListAsync(cancellationToken);
+
         ViewBag.RelatedTasks = relatedTasks;
+        ViewBag.RelatedBookings = relatedBookings;
+        ViewBag.RelatedIdeas = relatedIdeas;
 
         return View(campaign);
     }

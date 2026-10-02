@@ -78,31 +78,91 @@ public class BookingController : Controller
         ViewBag.CanDraft = Owns(booking) || Role == AppRoles.BookingStaff;
         ViewBag.Participants = await EligibleParticipants().OrderBy(e => e.FullName).ToListAsync(cancellationToken);
         ViewBag.WagePool = booking.FinanceVersion == 1 ? booking.CommissionPool : decimal.Round(booking.BookingPrice * (await _businessConfigService.GetAsync(cancellationToken)).CommissionPercent / 100m, 2);
+        ViewBag.EditKols = await _context.Kols.Where(k => k.IsActive).OrderBy(k => k.Name).ToListAsync(cancellationToken);
+        ViewBag.EditCampaigns = await _context.Campaigns.Where(c => c.Status == "running" && c.ConfirmedAt != null).OrderBy(c => c.Name).ToListAsync(cancellationToken);
+        ViewBag.EditEmployees = await _context.Employees.OrderBy(e => e.FullName).ToListAsync(cancellationToken);
+        ViewBag.EditEmployeeId = EmployeeId;
         return View(booking);
     }
 
+    // GET /Bookings/{id}/DocumentCheck?kind=contract|quotation|acceptance
+    // Trả JSON để trang chi tiết kiểm tra file vật lý còn tồn tại trước khi cho tải.
+    // Tránh user bấm "Tải hợp đồng" mà server trả 404 trang trắng.
+    [HttpGet("Bookings/{id:int}/DocumentCheck")]
+    public async Task<IActionResult> CheckDocument(int id, string kind, CancellationToken cancellationToken)
+    {
+        var b = await Visible().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (b == null) return NotFound(new { available = false, message = "Không tìm thấy Booking." });
+
+        string? url = kind.ToLowerInvariant() switch
+        {
+            "contract" => b.ContractFileUrl,
+            "quotation" => b.QuotationFileUrl,
+            "acceptance" => b.AcceptanceFileUrl,
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return Ok(new
+            {
+                available = false,
+                code = "empty",
+                message = "Booking chưa đính kèm tài liệu này."
+            });
+        }
+
+        var fileName = Path.GetFileName(new Uri("http://x" + (url.StartsWith("/") ? url : "/" + url)).AbsolutePath);
+        if (string.IsNullOrEmpty(fileName))
+        {
+            return Ok(new { available = false, code = "bad_url", message = "Đường dẫn tài liệu không hợp lệ." });
+        }
+
+        // Tìm ở cả 2 vị trí: legacy (wwwroot/uploads/bookings) và mới (App_Data/booking-documents).
+        var appData = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "booking-documents", fileName);
+        var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "bookings", fileName);
+        var exists = System.IO.File.Exists(appData) || System.IO.File.Exists(webRoot);
+
+        if (!exists)
+        {
+            // Ghi audit để admin biết tài liệu booking mất trên disk.
+            await _auditService.WriteAsync(new AuditEvent(
+                AuditModules.Booking,
+                AuditActions.Deleted,
+                $"Phát hiện tài liệu booking #{id} ({kind}) không còn trên disk: {fileName}. URL DB: {url}",
+                UserId > 0 ? UserId : null,
+                "Booking",
+                id.ToString()
+            ), cancellationToken);
+
+            return Ok(new
+            {
+                available = false,
+                code = "file_missing",
+                message = $"Tài liệu \"{fileName}\" không còn trên hệ thống. Có thể đã bị xóa sau khi Booking được tạo. Vui lòng liên hệ QL Booking để tải lại.",
+                fileName
+            });
+        }
+
+        return Ok(new { available = true, url });
+    }
+
     [HttpPost("Bookings/Create"), ValidateAntiForgeryToken]
-    public Task<IActionResult> Create(Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, [Bind(Prefix = "wages")] Dictionary<int, decimal> wages, CancellationToken cancellationToken)
-        => Save(0, input, kolIds, acceptanceFile, deadlineStr, postingDateStr, cancellationToken, wages);
+    public Task<IActionResult> Create(Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, [Bind(Prefix = "kolCastAmount")] Dictionary<int, decimal> kolCastAmount, CancellationToken cancellationToken)
+        => Save(0, input, kolIds, acceptanceFile, deadlineStr, postingDateStr, kolCastAmount, cancellationToken);
     [HttpPost("Bookings/Edit/{id}"), ValidateAntiForgeryToken]
-    public Task<IActionResult> Edit(int id, Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, CancellationToken cancellationToken)
-        => Save(id, input, kolIds, acceptanceFile, deadlineStr, postingDateStr, cancellationToken);
+    public Task<IActionResult> Edit(int id, Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, [Bind(Prefix = "kolCastAmount")] Dictionary<int, decimal> kolCastAmount, CancellationToken cancellationToken)
+        => Save(id, input, kolIds, acceptanceFile, deadlineStr, postingDateStr, kolCastAmount, cancellationToken);
 
     private IQueryable<Employee> EligibleParticipants() => _context.Employees.Where(e =>
         e.Status == "dang_lam_viec" || e.Status == "thu_viec");
 
-    private async Task<string?> ValidateWages(Dictionary<int, decimal> wages, decimal pool, CancellationToken ct)
-    {
-        if (ModelState.Any(x => x.Key.StartsWith("wages", StringComparison.OrdinalIgnoreCase) && x.Value!.Errors.Count > 0))
-            return "Số tiền phân bổ không hợp lệ.";
-        var ids = wages.Keys.ToArray();
-        if (wages.Values.Any(v => v < 0 || v > 9999999999999.99m || decimal.Round(v, 2) != v) ||
-            await EligibleParticipants().CountAsync(e => ids.Contains(e.Id), ct) != ids.Length)
-            return "Chọn nhân viên đang làm việc hoặc thử việc ở bất kỳ phòng ban; số tiền không âm, tối đa 2 chữ số thập phân.";
-        return wages.Values.Sum() > pool ? "Tổng thù lao không được vượt quỹ hoa hồng QL Booking." : null;
-    }
+    // Quy tắc phân bổ cố định: 50% lợi nhuận công ty, 10% hoa hồng QL Booking phụ trách, 40% cát-xê chia cho KOL/KOC
+    private const decimal FixedCompanyPercent = 50m;
+    private const decimal FixedCommissionPercent = 10m;
+    private const decimal FixedCastPercent = 40m;
 
-    private async Task<IActionResult> Save(int id, Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, CancellationToken ct, Dictionary<int, decimal>? wages = null)
+    private async Task<IActionResult> Save(int id, Booking input, int[] kolIds, IFormFile? acceptanceFile, string deadlineStr, string? postingDateStr, Dictionary<int, decimal>? kolCastAmount, CancellationToken ct)
     {
         if (Role != AppRoles.BookingManager || EmployeeId == 0) return Forbid();
         await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
@@ -122,26 +182,21 @@ public class BookingController : Controller
             return Result(id, false, "Trạng thái Booking không hợp lệ.");
         if (input.JobDescription?.Length > 4000 || input.Notes?.Length > 4000 || input.PostLink?.Length > 255)
             return Result(id, false, "Nội dung/ghi chú tối đa 4.000 ký tự, link tối đa 255 ký tự.");
-        var config = await _businessConfigService.GetAsync(ct);
-        if (b.FinanceVersion == 0)
-        { b.CompanyPercent = config.CompanyPercent; b.CommissionPercent = config.CommissionPercent; b.CastPercent = config.CastPercent; }
+
         b.BookingPrice = decimal.Round(input.BookingPrice, 2, MidpointRounding.AwayFromZero);
-        if (id == 0 && wages != null)
-        {
-            var error = await ValidateWages(wages, b.CommissionPool, ct);
-            if (error != null) return Result(id, false, error);
-            foreach (var wage in wages)
-                b.BookingWages.Add(new BookingWage { EmployeeId = wage.Key, AllocatedWage = wage.Value, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now });
-        }
-        if (b.BookingWages.Sum(w => w.AllocatedWage) > b.CommissionPool)
-            return Result(id, false, "Thù lao cũ vượt quỹ hoa hồng. Điều chỉnh phân bổ trước khi chuyển Booking sang công thức mới.");
+        // Áp dụng quy tắc phân bổ cố định
+        b.FinanceVersion = 1;
+        b.CompanyPercent = FixedCompanyPercent;
+        b.CommissionPercent = FixedCommissionPercent;
+        b.CastPercent = FixedCastPercent;
+
         if (acceptanceFile != null)
         {
             var path = await SaveDocument(acceptanceFile, "acceptance", ct);
             if (path == null) return Result(id, false, "Tài liệu phải là PDF/DOCX/JPG/PNG, tối đa 25 MB.");
             b.AcceptanceFileUrl = path;
         }
-        b.FinanceVersion = 1; b.ActualCost = b.CommissionPool + b.CastPool;
+        b.ActualCost = b.CommissionPool + b.CastPool;
         b.CampaignId = campaign.Id; b.CampaignName = campaign.Name; b.ClientName = campaign.Client;
         b.PrimaryManagerId = EmployeeId; b.KolId = kolIds[0]; b.Deadline = deadline;
         b.PostingDate = DateOnly.TryParse(postingDateStr, out var posted) ? posted : null;
@@ -149,22 +204,37 @@ public class BookingController : Controller
             return Result(id, false, "Link bài đăng phải là HTTP/HTTPS.");
         b.JobDescription = input.JobDescription; b.Notes = input.Notes; b.PostLink = input.PostLink; b.Status = input.Status;
         foreach (var removed in b.BookingKols.Where(k => !kolIds.Contains(k.KolId)).ToList()) _context.BookingKols.Remove(removed);
-        var share = decimal.Floor(b.CastPool / kolIds.Length * 100m) / 100m;
-        foreach (var k in kolIds)
+        // Nếu có manual override từ form, dùng số tiền đó; ngược lại chia đều CastPool
+        var hasManual = kolCastAmount != null && kolCastAmount.Count > 0;
+        if (!hasManual)
         {
-            var row = b.BookingKols.FirstOrDefault(x => x.KolId == k);
-            if (row == null) { row = new BookingKol { KolId = k }; b.BookingKols.Add(row); }
-            row.CastAmount = k == kolIds[^1] ? b.CastPool - share * (kolIds.Length - 1) : share;
+            var share = decimal.Floor(b.CastPool / kolIds.Length * 100m) / 100m;
+            foreach (var k in kolIds)
+            {
+                var row = b.BookingKols.FirstOrDefault(x => x.KolId == k);
+                if (row == null) { row = new BookingKol { KolId = k }; b.BookingKols.Add(row); }
+                row.CastAmount = k == kolIds[^1] ? b.CastPool - share * (kolIds.Length - 1) : share;
+            }
+        }
+        else
+        {
+            foreach (var k in kolIds)
+            {
+                var row = b.BookingKols.FirstOrDefault(x => x.KolId == k);
+                if (row == null) { row = new BookingKol { KolId = k }; b.BookingKols.Add(row); }
+                row.CastAmount = kolCastAmount.TryGetValue(k, out var amt) && amt >= 0
+                    ? decimal.Round(amt, 2, MidpointRounding.AwayFromZero)
+                    : 0m;
+            }
         }
         if (id == 0) { b.ContractStatus = "nhap"; b.CreatedAt = DateTime.Now; _context.Bookings.Add(b); }
         b.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync(ct);
-        Audit(b, id == 0 ? AuditActions.Created : AuditActions.Updated, $"Lưu Booking #{b.Id}; phân bổ {b.CompanyPercent}/{b.CommissionPercent}/{b.CastPercent}, {kolIds.Length} KOL.");
-        if (id == 0 && b.BookingWages.Count > 0)
-            Audit(b, AuditActions.WageChanged, "Phân bổ khi tạo Booking: " + string.Join("; ", b.BookingWages.Select(w => $"NV #{w.EmployeeId}: {w.AllocatedWage:N2} đ")));
+        Audit(b, id == 0 ? AuditActions.Created : AuditActions.Updated,
+            $"Lưu Booking #{b.Id}; phân bổ {b.CompanyPercent}/{b.CommissionPercent}/{b.CastPercent} (cố định), {kolIds.Length} KOL, tổng cát-xê {(int)b.CastPool:N0} đ" + (hasManual ? " (chia thủ công)." : "."));
         await _context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        return Result(b.Id, true, "Đã lưu Booking. Có thể quản lý nhân viên và phân bổ tại trang chi tiết.");
+        return Result(b.Id, true, "Đã lưu Booking. Tiền cát-xê được chia đều cho các KOL/KOC theo quy tắc 50/10/40.");
     }
 
     private async Task<string?> SaveDocument(IFormFile file, string kind, CancellationToken ct)
@@ -184,42 +254,19 @@ public class BookingController : Controller
     {
         var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (b == null) return NotFound();
-        if (!Owns(b)) return Forbid();
+        // QL Booking: chỉ cần là BookingManager, không cần là người tạo
+        if (Role != AppRoles.BookingManager && !Owns(b)) return Forbid();
         if (b.ContractStatus is not ("nhap" or "tu_choi") || b.Payments.Any(p => p.IsPaid)) return Result(id, false, "Không thể hủy Booking đã trình duyệt hoặc đã thanh toán.");
         b.Status = "huy";
         return await Persist(b, AuditActions.Deleted, "Đã hủy Booking; giữ lịch sử.", cancellationToken);
     }
 
     [HttpPost("Bookings/UpdateWages/{id}"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateWages(int id, [Bind(Prefix = "wages")] Dictionary<int, decimal> wages, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateWages(int id, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return Result(id, false, "Số tiền phân bổ không hợp lệ.");
-        await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-        var b = await Query().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (b == null) return NotFound();
-        if (!Owns(b)) return Forbid();
-        if (b.Status == "huy" || b.Payments.Any(p => p.IsPaid)) return Result(id, false, "Đã có thanh toán hoặc Booking đã hủy, không thể đổi phân bổ.");
-        var ids = wages.Keys.ToArray();
-        var pool = b.FinanceVersion == 1 ? b.CommissionPool : decimal.Round(b.BookingPrice * (await _businessConfigService.GetAsync(cancellationToken)).CommissionPercent / 100m, 2);
-        var wageError = await ValidateWages(wages, pool, cancellationToken);
-        if (wageError != null) return Result(id, false, wageError);
-        foreach (var employeeId in ids.Union(b.BookingWages.Select(w => w.EmployeeId)))
-        {
-            var old = b.BookingWages.FirstOrDefault(w => w.EmployeeId == employeeId)?.AllocatedWage;
-            var next = wages.TryGetValue(employeeId, out var amount) ? amount : (decimal?)null;
-            if (old != next) Audit(b, AuditActions.WageChanged,
-                $"Nhân viên #{employeeId}: {old?.ToString("N2") ?? "chưa tham gia"} → {next?.ToString("N2") ?? "gỡ khỏi Booking"}.");
-        }
-        foreach (var removed in b.BookingWages.Where(w => !ids.Contains(w.EmployeeId)).ToList()) _context.BookingWages.Remove(removed);
-        foreach (var item in wages)
-        {
-            var row = b.BookingWages.FirstOrDefault(w => w.EmployeeId == item.Key);
-            if (row == null) { row = new BookingWage { EmployeeId = item.Key, CreatedAt = DateTime.Now }; b.BookingWages.Add(row); }
-            row.AllocatedWage = item.Value; row.UpdatedAt = DateTime.Now;
-        }
-        var result = await Persist(b, AuditActions.WageChanged, $"Đã phân bổ {wages.Values.Sum():N0} đ cho {ids.Length} NV; phần còn lại thuộc QL phụ trách.", cancellationToken);
-        await tx.CommitAsync(cancellationToken);
-        return result;
+        // Theo quy tắc mới (50/10/40 cố định), Booking chỉ chia cát-xê cho KOL/KOC — không còn phân bổ wages cho nhân viên.
+        // Action giữ lại để tương thích route cũ nhưng không làm gì.
+        return await Task.FromResult(Result(id, false, "Phân bổ thù lao nhân viên đã được thay thế bằng quy tắc 50/10/40. Vui lòng quản lý KOL/KOC qua trang chi tiết."));
     }
 
     [HttpPost("Bookings/SubmitApproval/{id}"), ValidateAntiForgeryToken]
